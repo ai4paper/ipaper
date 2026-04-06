@@ -2,17 +2,7 @@ import { createDeepAgent, LocalShellBackend } from "deepagents";
 import { ChatOpenAI } from "@langchain/openai";
 import { MemorySaver } from "@langchain/langgraph";
 
-// ---------------------------------------------------------------------------
-// Backend — LocalShellBackend gives the agent built-in:
-//   ls, read_file, write_file, edit_file, glob, grep  (filesystem tools)
-//   execute                                            (shell command tool)
-// ---------------------------------------------------------------------------
-
 const backend = new LocalShellBackend({ rootDir: process.cwd() });
-
-// ---------------------------------------------------------------------------
-// Model
-// ---------------------------------------------------------------------------
 
 const model = new ChatOpenAI({
   model: process.env.OPENAI_MODEL ?? "gpt-4o",
@@ -21,11 +11,7 @@ const model = new ChatOpenAI({
   },
 });
 
-// ---------------------------------------------------------------------------
-// Agent
-// ---------------------------------------------------------------------------
-
-export const agent = createDeepAgent({
+const deepAgent = createDeepAgent({
   model,
   backend,
   checkpointer: new MemorySaver(),
@@ -41,3 +27,8 @@ Guidelines:
 - Use write_todos to plan multi-step tasks before starting them.
 - Be concise. Show relevant output; trim noise.`,
 });
+
+// Export the compiled graph directly so @langchain/langgraph-cli can load it.
+// The CLI expects a CompiledGraph (or factory) as the named export referenced
+// in langgraph.json.
+export const agent = deepAgent.graph;

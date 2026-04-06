@@ -14,5 +14,5 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["agent.ts", "server.ts"]
+  "include": ["agent.ts"]
 }

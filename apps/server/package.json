@@ -4,18 +4,17 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "bun --env-file=../../.env --watch server.ts",
+    "dev": "langgraphjs dev --no-browser",
     "build": "tsc -b"
   },
   "dependencies": {
     "@langchain/core": "^1.1.38",
     "@langchain/langgraph": "^1.2.6",
     "@langchain/openai": "^1.4.1",
-    "deepagents": "^1.8.8",
-    "hono": "^4.12.11"
+    "deepagents": "^1.8.8"
   },
   "devDependencies": {
-
+    "@langchain/langgraph-cli": "^1.1.17",
     "@types/node": "^22",
     "typescript": "^5"
   }
