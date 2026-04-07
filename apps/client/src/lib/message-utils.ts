@@ -1,16 +1,65 @@
-import type {
-  ThreadMessageLike,
-  ImageMessagePart,
-  FileMessagePart,
-  ReasoningMessagePart,
-  TextMessagePart,
-  ThreadAssistantMessagePart,
-  ThreadUserMessagePart,
-  ToolCallMessagePart,
-} from "@assistant-ui/react";
 import type { BaseMessage, ContentBlock } from "@langchain/core/messages";
 
-function isComposerTextPart(part: unknown): part is TextMessagePart {
+export type ComposerTextPart = {
+  text: string;
+  type: "text";
+};
+
+export type ComposerImagePart = {
+  image: string;
+  type: "image";
+};
+
+export type ComposerFilePart = {
+  data?: string;
+  filename: string;
+  mimeType?: string;
+  type: "file";
+};
+
+export type ComposerPart =
+  | ComposerFilePart
+  | ComposerImagePart
+  | ComposerTextPart;
+
+export type ChatTextPart = {
+  text: string;
+  type: "text";
+};
+
+export type ChatReasoningPart = {
+  text: string;
+  type: "reasoning";
+};
+
+export type ChatImagePart = {
+  image: string;
+  type: "image";
+};
+
+export type ChatToolCallPart = {
+  args: Record<string, unknown>;
+  argsText: string;
+  isError?: boolean;
+  result?: unknown;
+  toolCallId: string;
+  toolName: string;
+  type: "tool-call";
+};
+
+export type ChatMessagePart =
+  | ChatImagePart
+  | ChatReasoningPart
+  | ChatTextPart
+  | ChatToolCallPart;
+
+export type ChatMessage = {
+  content: ChatMessagePart[];
+  id: string;
+  role: "assistant" | "user";
+};
+
+function isComposerTextPart(part: unknown): part is ComposerTextPart {
   return (
     typeof part === "object" &&
     part !== null &&
@@ -21,7 +70,7 @@ function isComposerTextPart(part: unknown): part is TextMessagePart {
   );
 }
 
-function isComposerImagePart(part: unknown): part is ImageMessagePart {
+function isComposerImagePart(part: unknown): part is ComposerImagePart {
   return (
     typeof part === "object" &&
     part !== null &&
@@ -32,7 +81,7 @@ function isComposerImagePart(part: unknown): part is ImageMessagePart {
   );
 }
 
-function isComposerFilePart(part: unknown): part is FileMessagePart {
+function isComposerFilePart(part: unknown): part is ComposerFilePart {
   return (
     typeof part === "object" &&
     part !== null &&
@@ -104,10 +153,10 @@ function getImageUrl(part: ContentBlock[]): string[] {
 
 function toUserThreadContent(
   content: string | ContentBlock[],
-): ThreadUserMessagePart[] {
+): ChatTextPart[] {
   const text = getTextFromContent(content).trim();
   const imageCount = getImageCount(content);
-  const parts: ThreadUserMessagePart[] = [];
+  const parts: ChatTextPart[] = [];
 
   if (text.length > 0) {
     parts.push({ text, type: "text" });
@@ -169,13 +218,13 @@ function safeJsonStringify(value: unknown) {
   }
 }
 
-function toReadonlyJsonObject(value: unknown): ToolCallMessagePart["args"] {
+function toReadonlyJsonObject(value: unknown): ChatToolCallPart["args"] {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
     return {};
   }
 
   try {
-    return JSON.parse(JSON.stringify(value)) as ToolCallMessagePart["args"];
+    return JSON.parse(JSON.stringify(value)) as ChatToolCallPart["args"];
   } catch {
     return {};
   }
@@ -196,8 +245,8 @@ function toToolResult(message: LangChainToolMessage): unknown {
 
 function toAssistantThreadContent(
   message: BaseMessage,
-): ThreadAssistantMessagePart[] {
-  const parts: ThreadAssistantMessagePart[] = [];
+): ChatMessagePart[] {
+  const parts: ChatMessagePart[] = [];
   // message.content may be a string or an array of content blocks (plain objects from LangGraph)
   const rawContent = message.content;
   const contentArray: unknown[] =
@@ -227,7 +276,7 @@ function toAssistantThreadContent(
       typeof p.reasoning === "string" &&
       (p.reasoning as string).trim().length > 0
     ) {
-      const reasoningPart: ReasoningMessagePart = {
+      const reasoningPart: ChatReasoningPart = {
         text: p.reasoning as string,
         type: "reasoning",
       };
@@ -240,7 +289,7 @@ function toAssistantThreadContent(
       (p.type === "tool_use" || p.type === "tool_call") &&
       typeof p.name === "string"
     ) {
-      const toolCallPart: ToolCallMessagePart = {
+      const toolCallPart: ChatToolCallPart = {
         args: toReadonlyJsonObject(p.input ?? p.args ?? {}),
         argsText: safeJsonStringify(p.input ?? p.args ?? {}),
         toolCallId:
@@ -266,7 +315,7 @@ function toAssistantThreadContent(
     const existingIds = new Set(
       parts
         .filter(
-          (part): part is ToolCallMessagePart => part.type === "tool-call",
+          (part): part is ChatToolCallPart => part.type === "tool-call",
         )
         .map((part) => part.toolCallId),
     );
@@ -289,7 +338,7 @@ function toAssistantThreadContent(
 }
 
 function attachToolResult(
-  threadMessages: ThreadMessageLike[],
+  threadMessages: ChatMessage[],
   toolMessage: LangChainToolMessage,
 ) {
   for (let index = threadMessages.length - 1; index >= 0; index -= 1) {
@@ -323,8 +372,8 @@ function attachToolResult(
 
 export function toThreadMessages(
   messages: readonly BaseMessage[],
-): ThreadMessageLike[] {
-  const threadMessages: ThreadMessageLike[] = [];
+): ChatMessage[] {
+  const threadMessages: ChatMessage[] = [];
 
   for (const [index, message] of messages.entries()) {
     const fallbackId = `${message.type}-${index}`;
@@ -400,4 +449,52 @@ export function toLangGraphMessageContent(parts: readonly ContentBlock[]) {
   }
 
   return content;
+}
+
+export function getAssistantText(content: unknown) {
+  if (typeof content === "string") return content;
+  if (!Array.isArray(content)) return "";
+
+  return content
+    .flatMap((part) => {
+      if (typeof part === "string") return [part];
+      if (
+        typeof part === "object" &&
+        part !== null &&
+        "type" in part &&
+        part.type === "text" &&
+        "text" in part &&
+        typeof part.text === "string"
+      ) {
+        return [part.text];
+      }
+
+      return [];
+    })
+    .join("");
+}
+
+export function createUserMessage(id: string, text: string, imageCount = 0): ChatMessage {
+  const content: ChatMessagePart[] = [];
+
+  if (text.trim()) {
+    content.push({ text, type: "text" });
+  }
+
+  if (imageCount > 0) {
+    content.push({
+      text: imageCount === 1 ? "[Image attached]" : `[${imageCount} images attached]`,
+      type: "text",
+    });
+  }
+
+  if (content.length === 0) {
+    content.push({ text: "", type: "text" });
+  }
+
+  return {
+    content,
+    id,
+    role: "user",
+  };
 }

@@ -1,26 +1,18 @@
-"use client";
+export function getThreadIdParam() {
+  if (typeof window === "undefined") return undefined;
 
-import { useCallback, useState } from "react";
+  return new URLSearchParams(window.location.search).get("threadId") ?? undefined;
+}
 
-export function useThreadIdParam() {
-  const [threadId, setThreadId] = useState<string | undefined>(() => {
-    if (typeof window === "undefined") return undefined;
-    return (
-      new URLSearchParams(window.location.search).get("threadId") ?? undefined
-    );
-  });
+export function setThreadIdParam(threadId?: string) {
+  if (typeof window === "undefined") return;
 
-  const updateThreadId = useCallback((newThreadId?: string) => {
-    setThreadId(newThreadId);
+  const url = new URL(window.location.href);
+  if (threadId === undefined) {
+    url.searchParams.delete("threadId");
+  } else {
+    url.searchParams.set("threadId", threadId);
+  }
 
-    const url = new URL(window.location.href);
-    if (newThreadId === undefined) {
-      url.searchParams.delete("threadId");
-    } else {
-      url.searchParams.set("threadId", newThreadId);
-    }
-    window.history.replaceState({}, "", url.toString());
-  }, []);
-
-  return [threadId, updateThreadId] as const;
+  window.history.replaceState({}, "", url.toString());
 }

@@ -1,11 +1,6 @@
-import { StrictMode } from "react";
-import { createRoot } from "react-dom/client";
+import { render } from "solid-js/web";
 
 import "./globals.css";
 import { MyAssistant } from "./components/my-assistant";
 
-createRoot(document.getElementById("root")!).render(
-  <StrictMode>
-    <MyAssistant />
-  </StrictMode>,
-);
+render(() => <MyAssistant />, document.getElementById("root")!);
