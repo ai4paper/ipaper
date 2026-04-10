@@ -12,6 +12,8 @@ interface CreateBrowserSessionInput {
   agent: ManagedAcpClient;
   capabilities?: BrowserSessionRecord["capabilities"];
   agentInfo?: BrowserSessionRecord["agentInfo"];
+  modes?: BrowserSessionRecord["modes"];
+  models?: BrowserSessionRecord["models"];
 }
 
 export function createSessionManager() {
@@ -36,6 +38,8 @@ export function createSessionManager() {
         agent: input.agent,
         capabilities: input.capabilities,
         agentInfo: input.agentInfo,
+        modes: input.modes,
+        models: input.models,
       };
 
       sessions.set(session.id, session);
@@ -94,6 +98,32 @@ export function createSessionManager() {
       }
 
       session.runningPrompt = runningPrompt;
+      touch(session);
+    },
+
+    updateMode(id: string, currentModeId: string) {
+      const session = sessions.get(id);
+      if (!session?.modes) {
+        return;
+      }
+
+      session.modes = {
+        ...session.modes,
+        currentModeId,
+      };
+      touch(session);
+    },
+
+    updateModel(id: string, currentModelId: string) {
+      const session = sessions.get(id);
+      if (!session?.models) {
+        return;
+      }
+
+      session.models = {
+        ...session.models,
+        currentModelId,
+      };
       touch(session);
     },
 

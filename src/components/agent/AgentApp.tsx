@@ -26,8 +26,15 @@ export default function AgentApp() {
         status={session.status()}
         canSend={session.canSend()}
         canCancel={session.canCancel()}
+        canConfigure={session.canConfigure()}
+        modeOptions={session.modeOptions()}
+        selectedModeId={session.selectedModeId()}
+        modelOptions={session.modelOptions()}
+        selectedModelId={session.selectedModelId()}
         onSend={session.sendPrompt}
         onCancel={session.cancelPrompt}
+        onModeChange={session.updateMode}
+        onModelChange={session.updateModel}
       />
     </div>
   );

@@ -1,10 +1,25 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { createSessionManager } from "~/lib/acp/session-manager";
-import type { BrowserEvent } from "~/lib/acp/types";
+import type { BrowserEvent, ManagedAcpClient } from "~/lib/acp/types";
 
 function createEvent(type: BrowserEvent["type"]): BrowserEvent {
   return { type, timestamp: Date.now() } as BrowserEvent;
+}
+
+function createAgent(overrides: Partial<ManagedAcpClient> = {}): ManagedAcpClient {
+  return {
+    initialize: vi.fn(async () => ({ protocolVersion: "1", agentCapabilities: {}, agentInfo: { name: "test", version: "1" } })),
+    createSession: vi.fn(async () => ({ sessionId: "acp-session" })),
+    setSessionMode: vi.fn(async () => {}),
+    setSessionModel: vi.fn(async () => {}),
+    prompt: vi.fn(async () => ({ stopReason: "end_turn" })),
+    cancel: vi.fn(async () => {}),
+    onUpdate: vi.fn(() => () => undefined),
+    onClose: vi.fn(() => () => undefined),
+    dispose: vi.fn(async () => {}),
+    ...overrides,
+  };
 }
 
 describe("createSessionManager", () => {
@@ -14,7 +29,7 @@ describe("createSessionManager", () => {
     const session = manager.createBrowserSession({
       acpSessionId: "acp-1",
       cwd: "/tmp/project",
-      agent: { dispose: vi.fn(async () => {}) },
+      agent: createAgent(),
     });
 
     expect(session.id).toBeTruthy();
@@ -27,7 +42,7 @@ describe("createSessionManager", () => {
     const session = manager.createBrowserSession({
       acpSessionId: "acp-2",
       cwd: "/tmp/project",
-      agent: { dispose: vi.fn(async () => {}) },
+      agent: createAgent(),
     });
     const first = vi.fn();
     const second = vi.fn();
@@ -54,7 +69,7 @@ describe("createSessionManager", () => {
     const session = manager.createBrowserSession({
       acpSessionId: "acp-3",
       cwd: "/tmp/project",
-      agent: { dispose },
+      agent: createAgent({ dispose }),
     });
 
     manager.markRunningPrompt(session.id, true);
@@ -67,5 +82,28 @@ describe("createSessionManager", () => {
 
     expect(dispose).toHaveBeenCalledTimes(1);
     expect(manager.getBrowserSession(session.id)).toBeUndefined();
+  });
+
+  it("updates stored mode and model selections", () => {
+    const manager = createSessionManager();
+    const session = manager.createBrowserSession({
+      acpSessionId: "acp-4",
+      cwd: "/tmp/project",
+      agent: createAgent(),
+      modes: {
+        currentModeId: "ask",
+        availableModes: [{ id: "ask", name: "Ask" }, { id: "code", name: "Code" }],
+      },
+      models: {
+        currentModelId: "gpt-5",
+        availableModels: [{ modelId: "gpt-5", name: "GPT-5" }, { modelId: "gpt-4.1", name: "GPT-4.1" }],
+      },
+    });
+
+    manager.updateMode(session.id, "code");
+    manager.updateModel(session.id, "gpt-4.1");
+
+    expect(manager.getBrowserSession(session.id)?.modes?.currentModeId).toBe("code");
+    expect(manager.getBrowserSession(session.id)?.models?.currentModelId).toBe("gpt-4.1");
   });
 });

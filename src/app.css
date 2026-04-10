@@ -216,14 +216,42 @@ textarea {
   backdrop-filter: blur(18px);
 }
 
+.composer-config-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.85rem;
+  margin-bottom: 0.9rem;
+}
+
+.composer-config-field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.composer-config-field span {
+  font-size: 0.76rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8ea0bf;
+}
+
+.composer-config-field select,
 .composer textarea {
   width: 100%;
-  resize: vertical;
   border: 0;
   border-radius: 16px;
-  padding: 1rem;
   color: inherit;
   background: rgba(2, 6, 23, 0.65);
+}
+
+.composer-config-field select {
+  padding: 0.82rem 1rem;
+  appearance: none;
+}
+
+.composer textarea {
+  resize: vertical;
+  padding: 1rem;
 }
 
 .composer-actions {
@@ -282,6 +310,10 @@ textarea {
 
 @media (max-width: 900px) {
   .workspace-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .composer-config-grid {
     grid-template-columns: 1fr;
   }
 

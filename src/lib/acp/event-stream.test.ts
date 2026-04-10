@@ -84,6 +84,24 @@ describe("mapSessionUpdateToEvents", () => {
       }),
     );
   });
+
+  it("maps current mode changes into browser events", () => {
+    const events = mapSessionUpdateToEvents({
+      sessionId: "acp-1",
+      update: {
+        sessionUpdate: "current_mode_update",
+        currentModeId: "code",
+      },
+    });
+
+    expect(events).toEqual([
+      expect.objectContaining({
+        type: "mode-update",
+        sessionId: "acp-1",
+        currentModeId: "code",
+      }),
+    ]);
+  });
 });
 
 describe("mapPromptResultToEvent", () => {

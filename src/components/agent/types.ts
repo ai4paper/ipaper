@@ -18,3 +18,15 @@ export interface PlanEntryView {
   priority: "high" | "medium" | "low";
   status: "pending" | "in_progress" | "completed";
 }
+
+export interface SessionModeOptionView {
+  id: string;
+  name: string;
+  description?: string | null;
+}
+
+export interface SessionModelOptionView {
+  id: string;
+  name: string;
+  description?: string | null;
+}

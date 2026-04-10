@@ -89,6 +89,14 @@ export async function createManagedAcpClient(cwd: string): Promise<ManagedAcpCli
       });
     },
 
+    async setSessionMode(sessionId: string, modeId: string): Promise<void> {
+      await connection.setSessionMode({ sessionId, modeId });
+    },
+
+    async setSessionModel(sessionId: string, modelId: string): Promise<void> {
+      await connection.unstable_setSessionModel({ sessionId, modelId });
+    },
+
     prompt(sessionId: string, text: string): Promise<PromptResponse> {
       return connection.prompt({
         sessionId,

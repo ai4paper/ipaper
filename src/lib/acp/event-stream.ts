@@ -78,6 +78,15 @@ export function mapSessionUpdateToEvents(notification: SessionNotification): Bro
           })),
         },
       ];
+    case "current_mode_update":
+      return [
+        {
+          type: "mode-update",
+          timestamp: now(),
+          sessionId,
+          currentModeId: update.currentModeId,
+        },
+      ];
     case "tool_call":
       return [
         {

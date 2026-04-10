@@ -1,11 +1,20 @@
 import { createSignal } from "solid-js";
 
+import type { SessionModelOptionView, SessionModeOptionView } from "~/components/agent/types";
+
 export default function PromptComposer(props: {
   canSend: boolean;
   canCancel: boolean;
+  canConfigure: boolean;
   status: string;
+  modeOptions: SessionModeOptionView[];
+  selectedModeId: string | null;
+  modelOptions: SessionModelOptionView[];
+  selectedModelId: string | null;
   onSend: (value: string) => Promise<void>;
   onCancel: () => Promise<void>;
+  onModeChange: (modeId: string) => Promise<void>;
+  onModelChange: (modelId: string) => Promise<void>;
 }) {
   const [value, setValue] = createSignal("");
 
@@ -21,6 +30,44 @@ export default function PromptComposer(props: {
 
   return (
     <div class="composer">
+      <div class="composer-config-grid">
+        <label class="composer-config-field">
+          <span>Mode</span>
+          <select
+            value={props.selectedModeId ?? ""}
+            disabled={!props.canConfigure || props.modeOptions.length === 0}
+            onChange={event => void props.onModeChange(event.currentTarget.value)}
+          >
+            <option value="" disabled>
+              Select a mode
+            </option>
+            {props.modeOptions.map(mode => (
+              <option value={mode.id} title={mode.description ?? undefined}>
+                {mode.name}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label class="composer-config-field">
+          <span>Model</span>
+          <select
+            value={props.selectedModelId ?? ""}
+            disabled={!props.canConfigure || props.modelOptions.length === 0}
+            onChange={event => void props.onModelChange(event.currentTarget.value)}
+          >
+            <option value="" disabled>
+              Select a model
+            </option>
+            {props.modelOptions.map(model => (
+              <option value={model.id} title={model.description ?? undefined}>
+                {model.name}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
+
       <textarea
         value={value()}
         onInput={event => setValue(event.currentTarget.value)}

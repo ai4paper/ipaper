@@ -11,6 +11,8 @@ export async function POST(_event: APIEvent) {
       status: result.session.status,
       capabilities: result.initialize.agentCapabilities,
       agentInfo: result.initialize.agentInfo,
+      modes: result.session.modes ?? null,
+      models: result.session.models ?? null,
     });
   } catch (error) {
     return Response.json(

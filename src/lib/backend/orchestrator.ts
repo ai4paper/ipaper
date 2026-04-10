@@ -3,7 +3,7 @@ import { mapPromptResultToEvent, mapSessionUpdateToEvents } from "~/lib/acp/even
 import { sessionManager } from "~/lib/acp/session-manager";
 import type { BrowserEvent, SessionCreateResult } from "~/lib/acp/types";
 import { backendContextService } from "~/lib/backend/services";
-import type { AgentPromptInput } from "~/lib/backend/types";
+import type { AgentPromptInput, AgentSessionModelInput, AgentSessionModeInput } from "~/lib/backend/types";
 
 const DEFAULT_CWD = process.cwd();
 
@@ -28,10 +28,15 @@ export async function createAgentSession(cwd = DEFAULT_CWD): Promise<SessionCrea
     agent,
     capabilities: initialize.agentCapabilities,
     agentInfo: initialize.agentInfo,
+    modes: newSession.modes,
+    models: newSession.models,
   });
 
   agent.onUpdate(notification => {
     for (const event of mapSessionUpdateToEvents(notification)) {
+      if (event.type === "mode-update") {
+        sessionManager.updateMode(session.id, event.currentModeId);
+      }
       sessionManager.broadcast(session.id, event);
     }
   });
@@ -103,4 +108,40 @@ export async function cancelAgentSession(browserSessionId: string): Promise<void
 
   broadcastStatus(session.id, "cancelling");
   await session.agent.cancel(session.acpSessionId);
+}
+
+export async function setAgentSessionMode(input: AgentSessionModeInput) {
+  const session = sessionManager.getBrowserSession(input.browserSessionId);
+  if (!session) {
+    throw new Error("Unknown session");
+  }
+  if (!session.modes) {
+    throw new Error("This agent session does not expose selectable modes");
+  }
+
+  await session.agent.setSessionMode(session.acpSessionId, input.modeId);
+  sessionManager.updateMode(session.id, input.modeId);
+  sessionManager.broadcast(session.id, {
+    type: "mode-update",
+    timestamp: Date.now(),
+    sessionId: session.id,
+    currentModeId: input.modeId,
+  });
+
+  return sessionManager.getBrowserSession(session.id)?.modes ?? null;
+}
+
+export async function setAgentSessionModel(input: AgentSessionModelInput) {
+  const session = sessionManager.getBrowserSession(input.browserSessionId);
+  if (!session) {
+    throw new Error("Unknown session");
+  }
+  if (!session.models) {
+    throw new Error("This agent session does not expose selectable models");
+  }
+
+  await session.agent.setSessionModel(session.acpSessionId, input.modelId);
+  sessionManager.updateModel(session.id, input.modelId);
+
+  return sessionManager.getBrowserSession(session.id)?.models ?? null;
 }

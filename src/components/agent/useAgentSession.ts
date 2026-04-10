@@ -1,10 +1,20 @@
-import { createSignal, onCleanup } from "solid-js";
+import type { SessionModelState, SessionModeState } from "@agentclientprotocol/sdk";
+import { createSignal, onCleanup, onMount } from "solid-js";
 
 import type { BrowserEvent } from "~/lib/acp/types";
-import type { ChatMessage, PlanEntryView, ToolCallView } from "~/components/agent/types";
+import type {
+  ChatMessage,
+  PlanEntryView,
+  SessionModelOptionView,
+  SessionModeOptionView,
+  ToolCallView,
+} from "~/components/agent/types";
 
 interface SessionResponse {
   sessionId: string;
+  modes?: SessionModeState | null;
+  models?: SessionModelState | null;
+  error?: string;
 }
 
 export function useAgentSession() {
@@ -14,8 +24,36 @@ export function useAgentSession() {
   const [plan, setPlan] = createSignal<PlanEntryView[]>([]);
   const [status, setStatus] = createSignal<"idle" | "connecting" | "ready" | "prompting" | "cancelling" | "closed">("idle");
   const [error, setError] = createSignal<string | null>(null);
+  const [modeOptions, setModeOptions] = createSignal<SessionModeOptionView[]>([]);
+  const [selectedModeId, setSelectedModeId] = createSignal<string | null>(null);
+  const [modelOptions, setModelOptions] = createSignal<SessionModelOptionView[]>([]);
+  const [selectedModelId, setSelectedModelId] = createSignal<string | null>(null);
+  const [isUpdatingConfig, setIsUpdatingConfig] = createSignal(false);
   let source: EventSource | undefined;
   let currentAssistantMessageId: string | null = null;
+  let sessionPromise: Promise<string> | null = null;
+
+  function applyModeState(modes?: SessionModeState | null) {
+    setModeOptions(
+      modes?.availableModes.map(mode => ({
+        id: mode.id,
+        name: mode.name,
+        description: mode.description,
+      })) ?? [],
+    );
+    setSelectedModeId(modes?.currentModeId ?? null);
+  }
+
+  function applyModelState(models?: SessionModelState | null) {
+    setModelOptions(
+      models?.availableModels.map(model => ({
+        id: model.modelId,
+        name: model.name,
+        description: model.description,
+      })) ?? [],
+    );
+    setSelectedModelId(models?.currentModelId ?? null);
+  }
 
   function ensureAssistantMessage() {
     if (currentAssistantMessageId) {
@@ -59,6 +97,9 @@ export function useAgentSession() {
         }
         currentAssistantMessageId = null;
         break;
+      case "mode-update":
+        setSelectedModeId(event.currentModeId);
+        break;
       case "tool-call":
         setToolCalls(prev => {
           const next = prev.filter(call => call.toolCallId !== event.toolCallId);
@@ -98,25 +139,38 @@ export function useAgentSession() {
     if (sessionId()) {
       return sessionId()!;
     }
-
-    setStatus("connecting");
-    const response = await fetch("/api/agent/session", { method: "POST" });
-    const body = (await response.json()) as SessionResponse & { error?: string };
-    if (!response.ok || !body.sessionId) {
-      throw new Error(body.error ?? "Failed to create session");
+    if (sessionPromise) {
+      return sessionPromise;
     }
 
-    setSessionId(body.sessionId);
-    source = new EventSource(`/api/agent/events?sessionId=${encodeURIComponent(body.sessionId)}`);
-    source.onmessage = message => {
-      applyEvent(JSON.parse(message.data) as BrowserEvent);
-    };
-    source.onerror = () => {
-      setError("Connection to the agent event stream was lost.");
-      setStatus("closed");
-    };
+    sessionPromise = (async () => {
+      setStatus("connecting");
+      const response = await fetch("/api/agent/session", { method: "POST" });
+      const body = (await response.json()) as SessionResponse;
+      if (!response.ok || !body.sessionId) {
+        throw new Error(body.error ?? "Failed to create session");
+      }
 
-    return body.sessionId;
+      setSessionId(body.sessionId);
+      applyModeState(body.modes);
+      applyModelState(body.models);
+      source = new EventSource(`/api/agent/events?sessionId=${encodeURIComponent(body.sessionId)}`);
+      source.onmessage = message => {
+        applyEvent(JSON.parse(message.data) as BrowserEvent);
+      };
+      source.onerror = () => {
+        setError("Connection to the agent event stream was lost.");
+        setStatus("closed");
+      };
+
+      return body.sessionId;
+    })();
+
+    try {
+      return await sessionPromise;
+    } finally {
+      sessionPromise = null;
+    }
   }
 
   async function sendPrompt(text: string) {
@@ -176,6 +230,73 @@ export function useAgentSession() {
     }
   }
 
+  async function updateMode(modeId: string) {
+    const activeSessionId = await createSessionIfNeeded();
+    if (!modeId || modeId === selectedModeId()) {
+      return;
+    }
+
+    setIsUpdatingConfig(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/agent/mode", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ sessionId: activeSessionId, modeId }),
+      });
+      const body = (await response.json()) as { error?: string; modes?: SessionModeState | null };
+      if (!response.ok) {
+        throw new Error(body.error ?? "Failed to update mode");
+      }
+
+      applyModeState(body.modes);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Failed to update mode");
+    } finally {
+      setIsUpdatingConfig(false);
+    }
+  }
+
+  async function updateModel(modelId: string) {
+    const activeSessionId = await createSessionIfNeeded();
+    if (!modelId || modelId === selectedModelId()) {
+      return;
+    }
+
+    setIsUpdatingConfig(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/agent/model", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ sessionId: activeSessionId, modelId }),
+      });
+      const body = (await response.json()) as { error?: string; models?: SessionModelState | null };
+      if (!response.ok) {
+        throw new Error(body.error ?? "Failed to update model");
+      }
+
+      applyModelState(body.models);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Failed to update model");
+    } finally {
+      setIsUpdatingConfig(false);
+    }
+  }
+
+  onMount(() => {
+    void createSessionIfNeeded().catch(caught => {
+      setError(caught instanceof Error ? caught.message : "Failed to create session");
+      setStatus("closed");
+    });
+  });
+
   onCleanup(() => {
     source?.close();
   });
@@ -186,9 +307,16 @@ export function useAgentSession() {
     plan,
     status,
     error,
+    modeOptions,
+    selectedModeId,
+    modelOptions,
+    selectedModelId,
     sendPrompt,
     cancelPrompt,
-    canSend: () => status() === "idle" || status() === "ready" || status() === "closed",
+    updateMode,
+    updateModel,
+    canSend: () => status() === "ready" || status() === "closed",
     canCancel: () => status() === "prompting" || status() === "cancelling",
+    canConfigure: () => !isUpdatingConfig() && (status() === "ready" || status() === "closed"),
   };
 }

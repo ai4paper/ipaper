@@ -3,7 +3,9 @@ import type {
   NewSessionResponse,
   PlanEntry,
   PromptResponse,
+  SessionModelState,
   SessionNotification,
+  SessionModeState,
   StopReason,
 } from "@agentclientprotocol/sdk";
 
@@ -52,6 +54,12 @@ export type BrowserEvent =
       entries: Pick<PlanEntry, "content" | "priority" | "status">[];
     }
   | {
+      type: "mode-update";
+      timestamp: number;
+      sessionId: string;
+      currentModeId: string;
+    }
+  | {
       type: "error";
       timestamp: number;
       sessionId?: string;
@@ -69,6 +77,8 @@ export type BrowserSessionStatus = "connecting" | "ready" | "prompting" | "cance
 export interface ManagedAcpClient {
   initialize(): Promise<InitializeResponse>;
   createSession(cwd: string): Promise<NewSessionResponse>;
+  setSessionMode(sessionId: string, modeId: string): Promise<void>;
+  setSessionModel(sessionId: string, modelId: string): Promise<void>;
   prompt(sessionId: string, text: string): Promise<PromptResponse>;
   cancel(sessionId: string): Promise<void>;
   onUpdate(listener: (update: SessionNotification) => void): () => void;
@@ -87,6 +97,8 @@ export interface BrowserSessionRecord {
   agent: ManagedAcpClient;
   capabilities?: InitializeResponse["agentCapabilities"];
   agentInfo?: InitializeResponse["agentInfo"];
+  modes?: SessionModeState | null;
+  models?: SessionModelState | null;
 }
 
 export type BrowserEventListener = (event: BrowserEvent) => void;
