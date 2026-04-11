@@ -1,46 +1,55 @@
 import MessageList from "~/components/agent/MessageList";
 import PromptComposer from "~/components/agent/PromptComposer";
 import ActivityPanel from "~/components/agent/ActivityPanel";
-import { Card, CardContent } from "~/components/ui/card";
+import { Badge } from "~/components/ui/badge";
+import { Card, CardDescription, CardHeader, CardTitle } from "~/components/ui/card";
+import { Separator } from "~/components/ui/separator";
 import { useAgentSession } from "~/components/agent/useAgentSession";
 
 export default function AgentApp(props: { restoreLastCwd?: boolean }) {
   const session = useAgentSession({ restoreLastCwd: props.restoreLastCwd });
 
   return (
-    <div class="space-y-4">
-      <Card class="bg-white/5 px-4 py-3 sm:px-5">
-        <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div class="min-w-0">
-            <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-200">iPaper Web Agent</p>
-            <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-slate-300">
-              <h1 class="text-balance text-base font-semibold text-white sm:text-lg">Compact Local Agent Workspace</h1>
-              <span class="hidden text-slate-500 sm:inline">/</span>
-              <span class="min-w-0 break-words">Conversation, plan, and tools in one view</span>
+    <div class="flex flex-col gap-4">
+      <Card class="overflow-hidden border-border/70 bg-card/90">
+        <CardHeader class="gap-4 sm:gap-5">
+          <div class="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
+            <div class="min-w-0">
+              <Badge variant="outline" class="mb-3 w-fit">iPaper Web Agent</Badge>
+              <CardTitle class="text-balance text-xl sm:text-2xl">Compact Local Agent Workspace</CardTitle>
+              <CardDescription class="mt-1 max-w-2xl text-sm leading-6">
+                Conversation, planning, and tool execution are surfaced together so you can drive the local ACP session from a single view.
+              </CardDescription>
             </div>
-          </div>
 
-          <div class="grid grid-cols-3 gap-2 lg:min-w-[20rem]">
-            <div class="rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
-              <p class="text-[10px] uppercase tracking-[0.18em] text-slate-500">Status</p>
-              <p class="mt-1 text-sm font-semibold capitalize text-white">{session.status()}</p>
-            </div>
-            <div class="rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
-              <p class="text-[10px] uppercase tracking-[0.18em] text-slate-500">Messages</p>
-              <p class="mt-1 text-sm font-semibold text-white">{session.messages().length}</p>
-            </div>
-            <div class="rounded-2xl border border-white/10 bg-slate-950/40 px-3 py-2.5">
-              <p class="text-[10px] uppercase tracking-[0.18em] text-slate-500">Tools</p>
-              <p class="mt-1 text-sm font-semibold text-white">{session.toolCalls().length}</p>
+            <div class="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:min-w-[24rem]">
+              <div class="rounded-lg border border-border bg-background/80 px-3 py-2.5">
+                <p class="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Status</p>
+                <p class="mt-1 text-sm font-semibold capitalize text-foreground">{session.status()}</p>
+              </div>
+              <div class="rounded-lg border border-border bg-background/80 px-3 py-2.5">
+                <p class="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Messages</p>
+                <p class="mt-1 text-sm font-semibold text-foreground">{session.messages().length}</p>
+              </div>
+              <div class="rounded-lg border border-border bg-background/80 px-3 py-2.5">
+                <p class="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Tools</p>
+                <p class="mt-1 text-sm font-semibold text-foreground">{session.toolCalls().length}</p>
+              </div>
             </div>
           </div>
-        </div>
+          <Separator />
+          <div class="flex flex-wrap gap-2 text-sm text-muted-foreground">
+            <Badge variant="secondary">Local workspace</Badge>
+            <Badge variant="secondary">ACP session</Badge>
+            <Badge variant="secondary">Tool streaming</Badge>
+          </div>
+        </CardHeader>
       </Card>
 
-      <CardContent class="grid items-start gap-4 px-0 pt-0 xl:grid-cols-[minmax(0,1.7fr)_minmax(18rem,0.9fr)]">
+      <div class="grid items-start gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(18rem,0.9fr)]">
         <MessageList messages={session.messages()} error={session.error()} />
         <ActivityPanel plan={session.plan()} toolCalls={session.toolCalls()} />
-      </CardContent>
+      </div>
 
       <PromptComposer
         status={session.status()}

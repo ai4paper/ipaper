@@ -11,7 +11,7 @@ type TextFieldRootProps<T extends ValidComponent = "div"> = TextFieldPrimitive.T
 
 const TextField = <T extends ValidComponent = "div">(props: PolymorphicProps<T, TextFieldRootProps<T>>) => {
   const [local, others] = splitProps(props as TextFieldRootProps, ["class"]);
-  return <TextFieldPrimitive.Root class={cn("flex flex-col gap-1.5", local.class)} {...others} />;
+  return <TextFieldPrimitive.Root class={cn("flex flex-col gap-2", local.class)} {...others} />;
 };
 
 type TextFieldInputProps<T extends ValidComponent = "input"> = TextFieldPrimitive.TextFieldInputProps<T> & {
@@ -48,14 +48,14 @@ const TextFieldInput = <T extends ValidComponent = "input">(
   const [local, others] = splitProps(props as TextFieldInputProps, ["type", "class"]);
 
   return (
-    <TextFieldPrimitive.Input
-      type={local.type}
-      class={cn(
-        "w-full rounded-2xl border border-white/10 bg-slate-950/70 px-3.5 py-2.5 text-sm text-white outline-none transition placeholder:text-slate-500 focus-visible:border-sky-400/40 focus-visible:ring-2 focus-visible:ring-sky-400/20 disabled:cursor-not-allowed disabled:opacity-50",
-        local.class,
-      )}
-      {...others}
-    />
+      <TextFieldPrimitive.Input
+        type={local.type}
+        class={cn(
+          "flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs transition-colors outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50",
+          local.class,
+        )}
+        {...others}
+      />
   );
 };
 
@@ -70,7 +70,7 @@ const TextFieldTextArea = <T extends ValidComponent = "textarea">(
   return (
     <TextFieldPrimitive.TextArea
       class={cn(
-        "w-full resize-y rounded-2xl border border-white/10 bg-slate-950/70 px-3.5 py-3 text-sm leading-6 text-white outline-none transition placeholder:text-slate-500 focus-visible:border-sky-400/40 focus-visible:ring-2 focus-visible:ring-sky-400/20 disabled:cursor-not-allowed disabled:opacity-50",
+        "flex min-h-24 w-full resize-y rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs transition-colors outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50",
         local.class,
       )}
       {...others}
@@ -88,7 +88,7 @@ const TextFieldLabel = <T extends ValidComponent = "label">(
   const [local, others] = splitProps(props as TextFieldLabelProps, ["class"]);
   return (
     <TextFieldPrimitive.Label
-      class={cn("text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400", local.class)}
+      class={cn("text-sm font-medium text-foreground", local.class)}
       {...others}
     />
   );
