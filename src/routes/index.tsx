@@ -13,7 +13,7 @@ export default function Home() {
       <main id="main-content" class="min-h-screen px-3 py-4 sm:px-5 sm:py-5 lg:px-6">
         <Title>iPaper Web Agent</Title>
         <div class="mx-auto w-full max-w-6xl">
-          <AgentApp />
+          <AgentApp restoreLastCwd={false} />
         </div>
       </main>
     </>

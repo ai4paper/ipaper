@@ -40,16 +40,20 @@ function jsonResponse(body: unknown, init?: ResponseInit) {
 
 describe("useAgentSession", () => {
   const originalEventSource = globalThis.EventSource;
+  let eventSourceInstances: Array<{ onmessage: ((event: MessageEvent<string>) => void) | null; onerror: (() => void) | null; close: () => void }>;
 
   beforeEach(() => {
     vi.restoreAllMocks();
+    eventSourceInstances = [];
     vi.stubGlobal(
       "EventSource",
       class {
         onmessage: ((event: MessageEvent<string>) => void) | null = null;
         onerror: (() => void) | null = null;
 
-        constructor(_url: string) {}
+        constructor(_url: string) {
+          eventSourceInstances.push(this);
+        }
 
         close() {}
       },
@@ -75,6 +79,22 @@ describe("useAgentSession", () => {
       const session = useAgentSession();
 
       expect(session.cwd()).toBe("/tmp/remembered");
+
+      dispose();
+    });
+  });
+
+  it("starts with an empty working directory when restoreLastCwd is disabled", () => {
+    localStorage.setItem(
+      "agent-session-preferences",
+      JSON.stringify({ lastCwd: "/tmp/remembered", byCwd: {} }),
+    );
+
+    createRoot(dispose => {
+      const session = useAgentSession({ restoreLastCwd: false });
+
+      expect(session.cwd()).toBe("");
+      expect(localStorage.getItem("agent-session-preferences")).toContain('"lastCwd":""');
 
       dispose();
     });
@@ -182,6 +202,99 @@ describe("useAgentSession", () => {
           }
         }, reject);
       });
+    });
+  });
+
+  it("closes the active session and resets client state", async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          sessionId: "browser-session",
+          modes: null,
+          models: null,
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ ok: true }));
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await new Promise<void>((resolve, reject) => {
+      createRoot(dispose => {
+        const session = useAgentSession();
+        session.setCwd("/tmp/project");
+
+        void session
+          .startSession()
+          .then(() => session.closeSession())
+          .then(() => {
+            try {
+              expect(fetchMock).toHaveBeenNthCalledWith(
+                2,
+                "/api/agent/session",
+                expect.objectContaining({
+                  method: "DELETE",
+                  body: JSON.stringify({ sessionId: "browser-session" }),
+                }),
+              );
+              expect(session.status()).toBe("idle");
+              expect(session.canStartSession()).toBe(true);
+              expect(session.canSend()).toBe(false);
+              dispose();
+              resolve();
+            } catch (error) {
+              dispose();
+              reject(error);
+            }
+          }, reject);
+      });
+    });
+  });
+
+  it("enables starting a new session after the event stream disconnects", async () => {
+    const fetchMock = vi.fn<typeof fetch>().mockResolvedValueOnce(
+      jsonResponse({
+        sessionId: "browser-session",
+        modes: null,
+        models: null,
+      }),
+    );
+
+    vi.stubGlobal("fetch", fetchMock);
+
+    await new Promise<void>((resolve, reject) => {
+      createRoot(dispose => {
+        const session = useAgentSession();
+        session.setCwd("/tmp/project");
+
+        void session.startSession().then(() => {
+          try {
+            expect(session.canCloseSession()).toBe(true);
+            eventSourceInstances[0]?.onerror?.();
+            expect(session.canStartSession()).toBe(true);
+            expect(session.canCloseSession()).toBe(false);
+            expect(session.status()).toBe("idle");
+            expect(session.error()).toBe("Connection to the agent event stream was lost.");
+            dispose();
+            resolve();
+          } catch (error) {
+            dispose();
+            reject(error);
+          }
+        }, reject);
+      });
+    });
+  });
+
+  it("enables starting a session after typing a working directory", () => {
+    createRoot(dispose => {
+      const session = useAgentSession();
+
+      expect(session.canStartSession()).toBe(false);
+      session.setCwd("  /tmp/project  ");
+      expect(session.canStartSession()).toBe(true);
+
+      dispose();
     });
   });
 });

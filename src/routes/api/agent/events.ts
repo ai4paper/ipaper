@@ -39,6 +39,7 @@ export async function GET(event: APIEvent) {
         () => {
           detach();
           controller.close();
+          void sessionManager.disposeBrowserSession(sessionId).catch(() => undefined);
         },
         { once: true },
       );

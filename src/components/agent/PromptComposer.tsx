@@ -5,12 +5,14 @@ import type { SessionModelOptionView, SessionModeOptionView } from "~/components
 export default function PromptComposer(props: {
   cwd: string;
   canStartSession: boolean;
+  canCloseSession: boolean;
   canSend: boolean;
   canCancel: boolean;
   canConfigure: boolean;
   status: string;
   onCwdInput: (value: string) => void;
   onStartSession: () => Promise<void>;
+  onCloseSession: () => Promise<void>;
   modeOptions: SessionModeOptionView[];
   selectedModeId: string | null;
   modelOptions: SessionModelOptionView[];
@@ -117,6 +119,14 @@ export default function PromptComposer(props: {
           onClick={() => void props.onStartSession()}
         >
           Start Session
+        </button>
+        <button
+          type="button"
+          class="rounded-full border border-white/10 bg-white/5 px-3.5 py-2 text-sm font-medium text-slate-100 transition hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-sky-400/60 disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={!props.canCloseSession}
+          onClick={() => void props.onCloseSession()}
+        >
+          Close Session
         </button>
         <button
           type="button"

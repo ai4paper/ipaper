@@ -47,10 +47,10 @@ The backend now rejects session creation requests without a non-empty `cwd`.
 
 ```mermaid
 flowchart TD
-  A[Browser tab closes] --> B[EventSource closes in frontend]
-  B --> C[SSE disconnects]
-  C --> D[Backend session remains in sessionManager]
-  D --> E[opencode acp may keep running]
+  A[Browser tab closes<br/>or EventSource disconnects] --> B[SSE request aborts]
+  B --> C[events route detaches listener]
+  C --> D[disposeBrowserSession(sessionId)]
+  D --> E[agent.dispose() stops<br/>opencode acp]
 ```
 
 There is a disposal path:
@@ -59,11 +59,19 @@ There is a disposal path:
 
 That method calls `agent.dispose()`, which stops the `opencode acp` process.
 
-But it is not currently wired into a runtime route or browser cleanup flow, so sessions may stay alive until explicit disposal or server restart.
+It is now wired to an explicit close-session flow:
+
+- `DELETE /api/agent/session` with `{ sessionId }`
+- `closeAgentSession(sessionId)` in the orchestrator
+- `sessionManager.disposeBrowserSession(id)` to stop the ACP process
+- `useAgentSession.closeSession()` from the browser UI
+
+Closing the session from the UI disposes the matching ACP process and resets the browser-side session state so a new session can be started cleanly.
+
+When the SSE connection aborts, the backend also disposes the same browser session automatically. On the frontend, an event-stream error releases the local session state so the user can start a fresh session again with the chosen working directory.
 
 ## Suggested Management Options
 
 1. Keep explicit session start, or move startup to first prompt if that UX is preferred.
-2. Add an explicit close-session API that calls `disposeBrowserSession(id)`.
-3. Add an idle timeout using `updatedAt`.
-4. Dispose sessions when the owning browser connection is gone.
+2. Add an idle timeout using `updatedAt`.
+3. Dispose sessions when the owning browser connection is gone.

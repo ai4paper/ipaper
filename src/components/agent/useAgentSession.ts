@@ -18,10 +18,19 @@ interface SessionResponse {
   error?: string;
 }
 
-export function useAgentSession() {
+interface UseAgentSessionOptions {
+  restoreLastCwd?: boolean;
+}
+
+export function useAgentSession(options: UseAgentSessionOptions = {}) {
   const preferences = createAgentBrowserPreferences();
+  const restoreLastCwd = options.restoreLastCwd ?? true;
+  if (!restoreLastCwd) {
+    preferences.clearLastCwd();
+  }
+
   const [sessionId, setSessionId] = createSignal<string | null>(null);
-  const [cwd, setCwd] = createSignal(preferences.lastCwd());
+  const [cwd, setCwd] = createSignal(restoreLastCwd ? preferences.lastCwd() : "");
   const [messages, setMessages] = createSignal<ChatMessage[]>([]);
   const [toolCalls, setToolCalls] = createSignal<ToolCallView[]>([]);
   const [plan, setPlan] = createSignal<PlanEntryView[]>([]);
@@ -35,6 +44,27 @@ export function useAgentSession() {
   let source: EventSource | undefined;
   let currentAssistantMessageId: string | null = null;
   let sessionPromise: Promise<string> | null = null;
+
+  function clearSession(clearHistory: boolean, nextError: string | null = null) {
+    source?.close();
+    source = undefined;
+    currentAssistantMessageId = null;
+    sessionPromise = null;
+    setSessionId(null);
+    setModeOptions([]);
+    setSelectedModeId(null);
+    setModelOptions([]);
+    setSelectedModelId(null);
+    setStatus("idle");
+
+    if (clearHistory) {
+      setMessages([]);
+      setToolCalls([]);
+      setPlan([]);
+    }
+
+    setError(nextError);
+  }
 
   function applyModeState(modes?: SessionModeState | null) {
     setModeOptions(
@@ -219,8 +249,7 @@ export function useAgentSession() {
         applyEvent(JSON.parse(message.data) as BrowserEvent);
       };
       source.onerror = () => {
-        setError("Connection to the agent event stream was lost.");
-        setStatus("closed");
+        clearSession(false, "Connection to the agent event stream was lost.");
       };
 
       return body.sessionId;
@@ -240,6 +269,32 @@ export function useAgentSession() {
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Failed to create session");
       setStatus("closed");
+    }
+  }
+
+  async function closeSession() {
+    const activeSessionId = sessionId();
+    if (!activeSessionId) {
+      return;
+    }
+
+    try {
+      setError(null);
+      const response = await fetch("/api/agent/session", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ sessionId: activeSessionId }),
+      });
+      const body = (await response.json()) as { error?: string };
+      if (!response.ok) {
+        throw new Error(body.error ?? "Failed to close session");
+      }
+
+      clearSession(true);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Failed to close session");
     }
   }
 
@@ -377,13 +432,15 @@ export function useAgentSession() {
     selectedModelId,
     setCwd: updateCwd,
     startSession,
+    closeSession,
     sendPrompt,
     cancelPrompt,
     updateMode,
     updateModel,
     canStartSession: () => !sessionId() && !sessionPromise && !!cwd().trim() && status() !== "connecting",
-    canSend: () => !!sessionId() && (status() === "ready" || status() === "closed"),
+    canCloseSession: () => !!sessionId(),
+    canSend: () => !!sessionId() && status() === "ready",
     canCancel: () => status() === "prompting" || status() === "cancelling",
-    canConfigure: () => !!sessionId() && !isUpdatingConfig() && (status() === "ready" || status() === "closed"),
+    canConfigure: () => !!sessionId() && !isUpdatingConfig() && status() === "ready",
   };
 }

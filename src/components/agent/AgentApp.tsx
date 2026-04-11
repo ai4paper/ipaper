@@ -3,8 +3,8 @@ import PromptComposer from "~/components/agent/PromptComposer";
 import ActivityPanel from "~/components/agent/ActivityPanel";
 import { useAgentSession } from "~/components/agent/useAgentSession";
 
-export default function AgentApp() {
-  const session = useAgentSession();
+export default function AgentApp(props: { restoreLastCwd?: boolean }) {
+  const session = useAgentSession({ restoreLastCwd: props.restoreLastCwd });
 
   return (
     <div class="space-y-4">
@@ -46,7 +46,9 @@ export default function AgentApp() {
         cwd={session.cwd()}
         onCwdInput={session.setCwd}
         onStartSession={session.startSession}
+        onCloseSession={session.closeSession}
         canStartSession={session.canStartSession()}
+        canCloseSession={session.canCloseSession()}
         canSend={session.canSend()}
         canCancel={session.canCancel()}
         canConfigure={session.canConfigure()}

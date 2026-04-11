@@ -46,6 +46,10 @@ export function createAgentBrowserPreferences() {
   return {
     lastCwd: () => state.lastCwd,
     getConfig: (cwd: string) => state.byCwd[normalizeCwd(cwd)],
+    clearLastCwd: () => {
+      setState("lastCwd", "");
+      save();
+    },
     rememberCwd: (cwd: string) => {
       setState("lastCwd", normalizeCwd(cwd));
       save();

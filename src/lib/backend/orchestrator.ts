@@ -110,6 +110,15 @@ export async function cancelAgentSession(browserSessionId: string): Promise<void
   await session.agent.cancel(session.acpSessionId);
 }
 
+export async function closeAgentSession(browserSessionId: string): Promise<void> {
+  const session = sessionManager.getBrowserSession(browserSessionId);
+  if (!session) {
+    throw new Error("Unknown session");
+  }
+
+  await sessionManager.disposeBrowserSession(browserSessionId);
+}
+
 export async function setAgentSessionMode(input: AgentSessionModeInput) {
   const session = sessionManager.getBrowserSession(input.browserSessionId);
   if (!session) {

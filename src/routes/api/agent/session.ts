@@ -1,6 +1,6 @@
 import type { APIEvent } from "@solidjs/start/server";
 
-import { createAgentSession } from "~/lib/backend/orchestrator";
+import { closeAgentSession, createAgentSession } from "~/lib/backend/orchestrator";
 
 export async function POST(event: APIEvent) {
   try {
@@ -25,5 +25,22 @@ export async function POST(event: APIEvent) {
       { error: error instanceof Error ? error.message : "Failed to create session" },
       { status: 500 },
     );
+  }
+}
+
+export async function DELETE(event: APIEvent) {
+  try {
+    const body = (await event.request.json()) as { sessionId?: string };
+    if (!body.sessionId) {
+      return Response.json({ error: "sessionId is required" }, { status: 400 });
+    }
+
+    await closeAgentSession(body.sessionId);
+    return Response.json({ ok: true });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Failed to close session";
+    const status = message === "Unknown session" ? 404 : 500;
+
+    return Response.json({ error: message }, { status });
   }
 }

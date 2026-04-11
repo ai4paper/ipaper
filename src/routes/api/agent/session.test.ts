@@ -1,17 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { createAgentSession } = vi.hoisted(() => ({
+const { closeAgentSession, createAgentSession } = vi.hoisted(() => ({
+  closeAgentSession: vi.fn(),
   createAgentSession: vi.fn(),
 }));
 
 vi.mock("~/lib/backend/orchestrator", () => ({
+  closeAgentSession,
   createAgentSession,
 }));
 
-import { POST } from "~/routes/api/agent/session";
+import { DELETE, POST } from "~/routes/api/agent/session";
 
 describe("POST /api/agent/session", () => {
   beforeEach(() => {
+    closeAgentSession.mockReset();
     createAgentSession.mockReset();
   });
 
@@ -46,5 +49,33 @@ describe("POST /api/agent/session", () => {
     expect(createAgentSession).toHaveBeenCalledWith("/tmp/project");
     expect(response.status).toBe(200);
     await expect(response.json()).resolves.toMatchObject({ sessionId: "browser-session" });
+  });
+
+  it("closes an existing browser session", async () => {
+    const response = await DELETE({
+      request: new Request("http://localhost/api/agent/session", {
+        method: "DELETE",
+        body: JSON.stringify({ sessionId: "browser-session" }),
+        headers: { "Content-Type": "application/json" },
+      }),
+    } as never);
+
+    expect(closeAgentSession).toHaveBeenCalledWith("browser-session");
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({ ok: true });
+  });
+
+  it("rejects close requests without a session id", async () => {
+    const response = await DELETE({
+      request: new Request("http://localhost/api/agent/session", {
+        method: "DELETE",
+        body: JSON.stringify({}),
+        headers: { "Content-Type": "application/json" },
+      }),
+    } as never);
+
+    expect(response.status).toBe(400);
+    await expect(response.json()).resolves.toEqual({ error: "sessionId is required" });
+    expect(closeAgentSession).not.toHaveBeenCalled();
   });
 });
