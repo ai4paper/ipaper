@@ -136,8 +136,9 @@ export function useAgentSession(options: UseAgentSessionOptions = {}) {
     }
 
     const id = crypto.randomUUID();
+    const now = Date.now();
     currentAssistantMessageId = id;
-    setMessages(prev => [...prev, { id, role: "assistant", text: "", status: "streaming" }]);
+    setMessages(prev => [...prev, { id, role: "assistant", text: "", status: "streaming", createdAt: now, updatedAt: now }]);
     return id;
   }
 
@@ -157,7 +158,7 @@ export function useAgentSession(options: UseAgentSessionOptions = {}) {
         const id = ensureAssistantMessage();
         setMessages(prev =>
           prev.map(message =>
-            message.id === id ? { ...message, text: `${message.text}${event.text}`, status: "streaming" } : message,
+            message.id === id ? { ...message, text: `${message.text}${event.text}`, status: "streaming", updatedAt: event.timestamp } : message,
           ),
         );
         break;
@@ -166,7 +167,7 @@ export function useAgentSession(options: UseAgentSessionOptions = {}) {
         if (currentAssistantMessageId) {
           setMessages(prev =>
             prev.map(message =>
-              message.id === currentAssistantMessageId ? { ...message, status: "done" } : message,
+              message.id === currentAssistantMessageId ? { ...message, status: "done", updatedAt: event.timestamp } : message,
             ),
           );
         }
@@ -183,6 +184,8 @@ export function useAgentSession(options: UseAgentSessionOptions = {}) {
             title: event.title,
             kind: event.kind,
             status: event.status,
+            createdAt: event.timestamp,
+            updatedAt: event.timestamp,
           });
           return next;
         });
@@ -191,13 +194,21 @@ export function useAgentSession(options: UseAgentSessionOptions = {}) {
         setToolCalls(prev =>
           prev.map(call =>
             call.toolCallId === event.toolCallId
-              ? { ...call, status: event.status, content: event.content ?? call.content }
+              ? { ...call, status: event.status, content: event.content ?? call.content, updatedAt: event.timestamp }
               : call,
           ),
         );
         break;
       case "plan":
-        setPlan(event.entries);
+        setPlan(
+          event.entries.map(entry => ({
+            id: crypto.randomUUID(),
+            content: entry.content,
+            priority: entry.priority,
+            status: entry.status,
+            updatedAt: event.timestamp,
+          })),
+        );
         break;
       case "error":
         setError(event.message);
@@ -314,6 +325,8 @@ export function useAgentSession(options: UseAgentSessionOptions = {}) {
           role: "user",
           text: trimmed,
           status: "done",
+          createdAt: Date.now(),
+          updatedAt: Date.now(),
         },
       ]);
       currentAssistantMessageId = null;
