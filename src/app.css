@@ -228,6 +228,10 @@ textarea {
   gap: 0.45rem;
 }
 
+.composer-config-field-wide {
+  grid-column: 1 / -1;
+}
+
 .composer-config-field span {
   font-size: 0.76rem;
   letter-spacing: 0.08em;
@@ -236,6 +240,7 @@ textarea {
 }
 
 .composer-config-field select,
+.composer-config-field input,
 .composer textarea {
   width: 100%;
   border: 0;
@@ -247,6 +252,10 @@ textarea {
 .composer-config-field select {
   padding: 0.82rem 1rem;
   appearance: none;
+}
+
+.composer-config-field input {
+  padding: 0.82rem 1rem;
 }
 
 .composer textarea {

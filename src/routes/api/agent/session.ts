@@ -2,9 +2,15 @@ import type { APIEvent } from "@solidjs/start/server";
 
 import { createAgentSession } from "~/lib/backend/orchestrator";
 
-export async function POST(_event: APIEvent) {
+export async function POST(event: APIEvent) {
   try {
-    const result = await createAgentSession();
+    const body = (await event.request.json()) as { cwd?: string };
+    const cwd = body.cwd?.trim();
+    if (!cwd) {
+      return Response.json({ error: "cwd is required" }, { status: 400 });
+    }
+
+    const result = await createAgentSession(cwd);
 
     return Response.json({
       sessionId: result.session.id,

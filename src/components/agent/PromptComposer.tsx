@@ -3,10 +3,14 @@ import { createSignal } from "solid-js";
 import type { SessionModelOptionView, SessionModeOptionView } from "~/components/agent/types";
 
 export default function PromptComposer(props: {
+  cwd: string;
+  canStartSession: boolean;
   canSend: boolean;
   canCancel: boolean;
   canConfigure: boolean;
   status: string;
+  onCwdInput: (value: string) => void;
+  onStartSession: () => Promise<void>;
   modeOptions: SessionModeOptionView[];
   selectedModeId: string | null;
   modelOptions: SessionModelOptionView[];
@@ -31,6 +35,16 @@ export default function PromptComposer(props: {
   return (
     <div class="composer">
       <div class="composer-config-grid">
+        <label class="composer-config-field composer-config-field-wide">
+          <span>Working directory</span>
+          <input
+            type="text"
+            value={props.cwd}
+            placeholder="/path/to/project"
+            onInput={event => props.onCwdInput(event.currentTarget.value)}
+          />
+        </label>
+
         <label class="composer-config-field">
           <span>Mode</span>
           <select
@@ -76,6 +90,9 @@ export default function PromptComposer(props: {
       />
       <div class="composer-actions">
         <span class="status-pill">{props.status}</span>
+        <button type="button" class="secondary-button" disabled={!props.canStartSession} onClick={() => void props.onStartSession()}>
+          Start session
+        </button>
         <button type="button" class="secondary-button" disabled={!props.canCancel} onClick={() => void props.onCancel()}>
           Cancel
         </button>

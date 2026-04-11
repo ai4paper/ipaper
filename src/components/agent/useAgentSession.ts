@@ -1,5 +1,5 @@
 import type { SessionModelState, SessionModeState } from "@agentclientprotocol/sdk";
-import { createSignal, onCleanup, onMount } from "solid-js";
+import { createSignal, onCleanup } from "solid-js";
 
 import type { BrowserEvent } from "~/lib/acp/types";
 import type {
@@ -19,6 +19,7 @@ interface SessionResponse {
 
 export function useAgentSession() {
   const [sessionId, setSessionId] = createSignal<string | null>(null);
+  const [cwd, setCwd] = createSignal("");
   const [messages, setMessages] = createSignal<ChatMessage[]>([]);
   const [toolCalls, setToolCalls] = createSignal<ToolCallView[]>([]);
   const [plan, setPlan] = createSignal<PlanEntryView[]>([]);
@@ -135,7 +136,7 @@ export function useAgentSession() {
     }
   }
 
-  async function createSessionIfNeeded() {
+  async function createSessionIfNeeded(requestedCwd?: string) {
     if (sessionId()) {
       return sessionId()!;
     }
@@ -143,14 +144,26 @@ export function useAgentSession() {
       return sessionPromise;
     }
 
+    const sessionCwd = requestedCwd?.trim() ?? cwd().trim();
+    if (!sessionCwd) {
+      throw new Error("Working directory is required");
+    }
+
     sessionPromise = (async () => {
       setStatus("connecting");
-      const response = await fetch("/api/agent/session", { method: "POST" });
+      const response = await fetch("/api/agent/session", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ cwd: sessionCwd }),
+      });
       const body = (await response.json()) as SessionResponse;
       if (!response.ok || !body.sessionId) {
         throw new Error(body.error ?? "Failed to create session");
       }
 
+      setCwd(sessionCwd);
       setSessionId(body.sessionId);
       applyModeState(body.modes);
       applyModelState(body.models);
@@ -170,6 +183,16 @@ export function useAgentSession() {
       return await sessionPromise;
     } finally {
       sessionPromise = null;
+    }
+  }
+
+  async function startSession() {
+    try {
+      setError(null);
+      await createSessionIfNeeded(cwd());
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Failed to create session");
+      setStatus("closed");
     }
   }
 
@@ -290,18 +313,12 @@ export function useAgentSession() {
     }
   }
 
-  onMount(() => {
-    void createSessionIfNeeded().catch(caught => {
-      setError(caught instanceof Error ? caught.message : "Failed to create session");
-      setStatus("closed");
-    });
-  });
-
   onCleanup(() => {
     source?.close();
   });
 
   return {
+    cwd,
     messages,
     toolCalls,
     plan,
@@ -311,12 +328,15 @@ export function useAgentSession() {
     selectedModeId,
     modelOptions,
     selectedModelId,
+    setCwd,
+    startSession,
     sendPrompt,
     cancelPrompt,
     updateMode,
     updateModel,
-    canSend: () => status() === "ready" || status() === "closed",
+    canStartSession: () => !sessionId() && !sessionPromise && !!cwd().trim() && status() !== "connecting",
+    canSend: () => !!sessionId() && (status() === "ready" || status() === "closed"),
     canCancel: () => status() === "prompting" || status() === "cancelling",
-    canConfigure: () => !isUpdatingConfig() && (status() === "ready" || status() === "closed"),
+    canConfigure: () => !!sessionId() && !isUpdatingConfig() && (status() === "ready" || status() === "closed"),
   };
 }
