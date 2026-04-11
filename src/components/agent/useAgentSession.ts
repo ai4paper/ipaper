@@ -2,6 +2,7 @@ import type { SessionModelState, SessionModeState } from "@agentclientprotocol/s
 import { createSignal, onCleanup } from "solid-js";
 
 import type { BrowserEvent } from "~/lib/acp/types";
+import { createAgentBrowserPreferences } from "~/components/agent/browserPreferences";
 import type {
   ChatMessage,
   PlanEntryView,
@@ -18,8 +19,9 @@ interface SessionResponse {
 }
 
 export function useAgentSession() {
+  const preferences = createAgentBrowserPreferences();
   const [sessionId, setSessionId] = createSignal<string | null>(null);
-  const [cwd, setCwd] = createSignal("");
+  const [cwd, setCwd] = createSignal(preferences.lastCwd());
   const [messages, setMessages] = createSignal<ChatMessage[]>([]);
   const [toolCalls, setToolCalls] = createSignal<ToolCallView[]>([]);
   const [plan, setPlan] = createSignal<PlanEntryView[]>([]);
@@ -43,6 +45,7 @@ export function useAgentSession() {
       })) ?? [],
     );
     setSelectedModeId(modes?.currentModeId ?? null);
+    preferences.rememberMode(cwd(), modes?.currentModeId ?? null);
   }
 
   function applyModelState(models?: SessionModelState | null) {
@@ -54,6 +57,47 @@ export function useAgentSession() {
       })) ?? [],
     );
     setSelectedModelId(models?.currentModelId ?? null);
+    preferences.rememberModel(cwd(), models?.currentModelId ?? null);
+  }
+
+  function updateCwd(value: string) {
+    setCwd(value);
+    preferences.rememberCwd(value);
+  }
+
+  async function restoreStoredConfig(activeSessionId: string, saved?: { modeId?: string; modelId?: string }) {
+
+    if (saved?.modeId && saved.modeId !== selectedModeId()) {
+      const response = await fetch("/api/agent/mode", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ sessionId: activeSessionId, modeId: saved.modeId }),
+      });
+      const body = (await response.json()) as { error?: string; modes?: SessionModeState | null };
+      if (!response.ok) {
+        throw new Error(body.error ?? "Failed to update mode");
+      }
+
+      applyModeState(body.modes);
+    }
+
+    if (saved?.modelId && saved.modelId !== selectedModelId()) {
+      const response = await fetch("/api/agent/model", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ sessionId: activeSessionId, modelId: saved.modelId }),
+      });
+      const body = (await response.json()) as { error?: string; models?: SessionModelState | null };
+      if (!response.ok) {
+        throw new Error(body.error ?? "Failed to update model");
+      }
+
+      applyModelState(body.models);
+    }
   }
 
   function ensureAssistantMessage() {
@@ -163,10 +207,13 @@ export function useAgentSession() {
         throw new Error(body.error ?? "Failed to create session");
       }
 
-      setCwd(sessionCwd);
+      const savedConfig = preferences.getConfig(sessionCwd);
+      const restoredConfig = savedConfig ? { ...savedConfig } : undefined;
+      updateCwd(sessionCwd);
       setSessionId(body.sessionId);
       applyModeState(body.modes);
       applyModelState(body.models);
+      await restoreStoredConfig(body.sessionId, restoredConfig);
       source = new EventSource(`/api/agent/events?sessionId=${encodeURIComponent(body.sessionId)}`);
       source.onmessage = message => {
         applyEvent(JSON.parse(message.data) as BrowserEvent);
@@ -328,7 +375,7 @@ export function useAgentSession() {
     selectedModeId,
     modelOptions,
     selectedModelId,
-    setCwd,
+    setCwd: updateCwd,
     startSession,
     sendPrompt,
     cancelPrompt,
