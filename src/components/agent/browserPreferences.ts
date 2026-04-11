@@ -1,3 +1,4 @@
+import { makePersisted } from "@solid-primitives/storage";
 import { createStore } from "solid-js/store";
 
 interface StoredAgentPreferences {
@@ -29,15 +30,12 @@ function loadStoredPreferences(): StoredAgentPreferences {
 }
 
 export function createAgentBrowserPreferences() {
-  const [state, setState] = createStore<StoredAgentPreferences>(loadStoredPreferences());
-
-  function save() {
-    if (typeof localStorage === "undefined") {
-      return;
-    }
-
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-  }
+  const [state, setState] = typeof localStorage === "undefined"
+    ? createStore<StoredAgentPreferences>(loadStoredPreferences())
+    : makePersisted(createStore<StoredAgentPreferences>(loadStoredPreferences()), {
+        name: STORAGE_KEY,
+        storage: localStorage,
+      });
 
   function normalizeCwd(cwd: string) {
     return cwd.trim();
@@ -48,11 +46,9 @@ export function createAgentBrowserPreferences() {
     getConfig: (cwd: string) => state.byCwd[normalizeCwd(cwd)],
     clearLastCwd: () => {
       setState("lastCwd", "");
-      save();
     },
     rememberCwd: (cwd: string) => {
       setState("lastCwd", normalizeCwd(cwd));
-      save();
     },
     rememberMode: (cwd: string, modeId: string | null) => {
       const key = normalizeCwd(cwd);
@@ -61,7 +57,6 @@ export function createAgentBrowserPreferences() {
       }
 
       setState("byCwd", key, previous => ({ ...previous, modeId }));
-      save();
     },
     rememberModel: (cwd: string, modelId: string | null) => {
       const key = normalizeCwd(cwd);
@@ -70,7 +65,6 @@ export function createAgentBrowserPreferences() {
       }
 
       setState("byCwd", key, previous => ({ ...previous, modelId }));
-      save();
     },
   };
 }

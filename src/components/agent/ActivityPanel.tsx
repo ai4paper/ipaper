@@ -1,24 +1,26 @@
 import { For, Show } from "solid-js";
 
 import type { PlanEntryView, ToolCallView } from "~/components/agent/types";
+import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
 
 export default function ActivityPanel(props: { plan: PlanEntryView[]; toolCalls: ToolCallView[] }) {
   return (
-    <aside class="space-y-4 rounded-3xl border border-white/10 bg-slate-950/55 p-4 shadow-xl shadow-slate-950/20 backdrop-blur sm:p-5">
-      <div class="flex items-center justify-between border-b border-white/10 pb-3">
+    <Card class="space-y-4">
+      <CardHeader class="flex flex-row items-center justify-between border-b border-white/10 pb-3">
         <div>
           <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">Activity</p>
-          <h2 class="mt-0.5 text-base font-semibold text-white">Live Output</h2>
+          <CardTitle class="mt-0.5">Live Output</CardTitle>
         </div>
         <div class="rounded-full border border-white/10 bg-white/5 px-2.5 py-1 text-[11px] text-slate-300">
           {props.toolCalls.length} tools
         </div>
-      </div>
+      </CardHeader>
 
-      <section class="space-y-2.5">
-        <h3 class="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">Plan</h3>
-        <Show when={props.plan.length} fallback={<p class="rounded-2xl border border-dashed border-white/10 bg-white/4 px-3 py-5 text-sm leading-6 text-slate-400">The agent plan will appear here when ACP reports one.</p>}>
-          <ul class="space-y-2">
+      <CardContent class="space-y-4 p-4 pt-0 sm:p-5 sm:pt-0">
+        <section class="space-y-2.5">
+          <h3 class="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">Plan</h3>
+          <Show when={props.plan.length} fallback={<p class="rounded-2xl border border-dashed border-white/10 bg-white/4 px-3 py-5 text-sm leading-6 text-slate-400">The agent plan will appear here when ACP reports one.</p>}>
+            <ul class="space-y-2">
             <For each={props.plan}>
               {entry => (
                 <li
@@ -62,7 +64,8 @@ export default function ActivityPanel(props: { plan: PlanEntryView[]; toolCalls:
             </For>
           </div>
         </Show>
-      </section>
-    </aside>
+        </section>
+      </CardContent>
+    </Card>
   );
 }

@@ -1,6 +1,7 @@
 import MessageList from "~/components/agent/MessageList";
 import PromptComposer from "~/components/agent/PromptComposer";
 import ActivityPanel from "~/components/agent/ActivityPanel";
+import { Card, CardContent } from "~/components/ui/card";
 import { useAgentSession } from "~/components/agent/useAgentSession";
 
 export default function AgentApp(props: { restoreLastCwd?: boolean }) {
@@ -8,7 +9,7 @@ export default function AgentApp(props: { restoreLastCwd?: boolean }) {
 
   return (
     <div class="space-y-4">
-      <section class="rounded-3xl border border-white/10 bg-white/5 px-4 py-3 shadow-xl shadow-slate-950/20 backdrop-blur sm:px-5">
+      <Card class="bg-white/5 px-4 py-3 sm:px-5">
         <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div class="min-w-0">
             <p class="text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-200">iPaper Web Agent</p>
@@ -34,12 +35,12 @@ export default function AgentApp(props: { restoreLastCwd?: boolean }) {
             </div>
           </div>
         </div>
-      </section>
+      </Card>
 
-      <div class="grid items-start gap-4 xl:grid-cols-[minmax(0,1.7fr)_minmax(18rem,0.9fr)]">
+      <CardContent class="grid items-start gap-4 px-0 pt-0 xl:grid-cols-[minmax(0,1.7fr)_minmax(18rem,0.9fr)]">
         <MessageList messages={session.messages()} error={session.error()} />
         <ActivityPanel plan={session.plan()} toolCalls={session.toolCalls()} />
-      </div>
+      </CardContent>
 
       <PromptComposer
         status={session.status()}
