@@ -15,7 +15,7 @@ import catppuccin_light_Raw from './catppuccin-light.json';
 // import cursor_light_Raw from './cursor-light.json';
 import dracula_dark_Raw from './dracula-dark.json';
 import dracula_light_Raw from './dracula-light.json';
-// import github_dark_Raw from './github-dark.json';
+import github_dark_Raw from './github-dark.json';
 // import github_light_Raw from './github-light.json';
 import gruvbox_dark_Raw from './gruvbox-dark.json';
 import gruvbox_light_Raw from './gruvbox-light.json';
@@ -58,6 +58,105 @@ import mono_light_Raw from './mono-light.json';
 import vitesse_dark_dark_Raw from './vitesse-dark-dark.json';
 import vitesse_light_light_Raw from './vitesse-light-light.json';
 
+const githubDarkColorblindTheme: Theme = {
+  ...(github_dark_Raw as Theme),
+  metadata: {
+    ...(github_dark_Raw as Theme).metadata,
+    id: 'github-dark-colorblind',
+    name: 'GitHub Dark Colorblind',
+    description: 'Ported from the iKanban GitHub Dark Colorblind theme',
+    tags: ['dark', 'opencode', 'ported', 'github', 'colorblind'],
+  },
+  colors: {
+    ...(github_dark_Raw as Theme).colors,
+    status: {
+      ...(github_dark_Raw as Theme).colors.status,
+      info: '#79c0ff',
+      infoBackground: '#0d2748',
+      infoBorder: '#1f6feb',
+    },
+    pr: {
+      ...((github_dark_Raw as Theme).colors.pr ?? {}),
+      open: '#3fb950',
+      draft: '#8b949e',
+      blocked: '#d29922',
+      merged: '#58a6ff',
+      closed: '#f85149',
+    },
+    syntax: {
+      ...((github_dark_Raw as Theme).colors.syntax ?? {}),
+      base: {
+        ...((github_dark_Raw as Theme).colors.syntax?.base ?? {}),
+        string: '#56d364',
+        number: '#79c0ff',
+        function: '#79c0ff',
+        variable: '#d2a8ff',
+        type: '#d2a8ff',
+      },
+      tokens: {
+        ...((github_dark_Raw as Theme).colors.syntax?.tokens ?? {}),
+        functionCall: '#79c0ff',
+        method: '#79c0ff',
+        variableProperty: '#79c0ff',
+        variableOther: '#d2a8ff',
+        variableGlobal: '#79c0ff',
+        parameter: '#d2a8ff',
+        constant: '#79c0ff',
+        class: '#d2a8ff',
+        className: '#d2a8ff',
+        interface: '#d2a8ff',
+        struct: '#d2a8ff',
+        enum: '#d2a8ff',
+        typeParameter: '#d2a8ff',
+        namespace: '#d2a8ff',
+        tagAttribute: '#79c0ff',
+        tagAttributeValue: '#79c0ff',
+        boolean: '#79c0ff',
+      },
+      highlights: {
+        ...((github_dark_Raw as Theme).colors.syntax?.highlights ?? {}),
+        diffAdded: '#79c0ff',
+        diffAddedBackground: '#0d2748',
+        diffRemoved: '#ffb77c',
+        diffRemovedBackground: '#3a2312',
+      },
+    },
+    sidebar: {
+      ...((github_dark_Raw as Theme).colors.sidebar ?? {}),
+      active: '#0d2748',
+      accent: '#58a6ff',
+    },
+    markdown: {
+      ...((github_dark_Raw as Theme).colors.markdown ?? {}),
+      heading1: '#79c0ff',
+      heading2: '#79c0ff',
+      link: '#58a6ff',
+      linkHover: '#79c0ff',
+      bold: '#ff7b72',
+      italic: '#d29922',
+      listMarker: '#79c0ff99',
+    },
+    tools: {
+      ...((github_dark_Raw as Theme).colors.tools ?? {}),
+      edit: {
+        ...((github_dark_Raw as Theme).colors.tools?.edit ?? {}),
+        added: '#79c0ff',
+        addedBackground: '#0d2748',
+        removed: '#ffb77c',
+        removedBackground: '#3a2312',
+      },
+      bash: {
+        ...((github_dark_Raw as Theme).colors.tools?.bash ?? {}),
+        info: '#79c0ff',
+      },
+      lsp: {
+        ...((github_dark_Raw as Theme).colors.tools?.lsp ?? {}),
+        info: '#79c0ff',
+      },
+    },
+  },
+};
+
 export const presetThemes: Theme[] = [
   ipaper_dark_Raw as Theme,
   ipaper_light_Raw as Theme,
@@ -75,6 +174,7 @@ export const presetThemes: Theme[] = [
   // cursor_light_Raw as Theme,
   dracula_dark_Raw as Theme,
   dracula_light_Raw as Theme,
+  githubDarkColorblindTheme,
   // github_dark_Raw as Theme,
   // github_light_Raw as Theme,
   gruvbox_dark_Raw as Theme,
