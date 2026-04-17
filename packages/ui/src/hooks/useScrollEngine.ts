@@ -41,40 +41,6 @@ const LERP_FACTOR = 0.14;
 const SNAP_EPSILON = 0.5;
 const FOLLOW_STABLE_FRAME_LIMIT = 8;
 
-const MANUAL_SCROLL_KEYS = new Set([
-    'j',
-    'k',
-    'u',
-    'd',
-    'ArrowUp',
-    'ArrowDown',
-    'PageUp',
-    'PageDown',
-    'Home',
-    'End',
-    ' ',
-]);
-
-const shouldTreatKeydownAsManualScroll = (event: KeyboardEvent) => {
-    if (event.defaultPrevented || event.ctrlKey || event.metaKey || event.altKey) {
-        return false;
-    }
-
-    const target = event.target;
-    if (target instanceof HTMLElement) {
-        if (target.isContentEditable) {
-            return false;
-        }
-
-        const tagName = target.tagName;
-        if (tagName === 'INPUT' || tagName === 'TEXTAREA' || tagName === 'SELECT') {
-            return false;
-        }
-    }
-
-    return MANUAL_SCROLL_KEYS.has(event.key);
-};
-
 export const useScrollEngine = ({
     containerRef,
 }: ScrollEngineOptions): ScrollEngineResult => {
@@ -268,21 +234,12 @@ export const useScrollEngine = ({
         const container = containerRef.current;
         if (!container) return;
 
-        const handleKeydownManualOverride = (event: KeyboardEvent) => {
-            if (!shouldTreatKeydownAsManualScroll(event)) {
-                return;
-            }
-            markManualOverride();
-        };
-
         container.addEventListener('wheel', markManualOverride, { passive: true });
         container.addEventListener('touchstart', markManualOverride, { passive: true });
-        window.addEventListener('keydown', handleKeydownManualOverride);
 
         return () => {
             container.removeEventListener('wheel', markManualOverride);
             container.removeEventListener('touchstart', markManualOverride);
-            window.removeEventListener('keydown', handleKeydownManualOverride);
         };
     }, [containerRef, markManualOverride]);
 

@@ -357,7 +357,7 @@ export const useChatScrollManager = ({
         schedulePinnedStateAndIndicators();
     }, [schedulePinnedStateAndIndicators, scrollEngine, setFollowMode, updatePinnedState]);
 
-    const handleScrollEvent = React.useCallback((event?: Event) => {
+    const handleScrollEvent = React.useCallback(() => {
         const container = scrollRef.current;
         if (!container || !currentSessionId) {
             return;
@@ -371,19 +371,21 @@ export const useChatScrollManager = ({
         scrollEngine.handleScroll();
         schedulePinnedStateAndIndicators();
 
-        // Handle pin/unpin logic
+        // Treat any upward scroll movement that we did not initiate as manual
+        // history browsing, including browser extensions that scroll via JS.
         const currentScrollTop = container.scrollTop;
         const scrollingUp = currentScrollTop < lastScrollTopRef.current;
+        let unpinnedByManualUpwardScroll = false;
 
-        if (event?.isTrusted && !isProgrammatic) {
-            if (scrollingUp && isPinnedRef.current) {
-                setFollowMode('none');
-                updatePinnedState(false);
-            }
+        if (scrollingUp && isPinnedRef.current && !isProgrammatic) {
+            scrollEngine.cancelFollow();
+            setFollowMode('none');
+            updatePinnedState(false);
+            unpinnedByManualUpwardScroll = true;
         }
 
         // Re-pin at bottom should always work (even momentum scroll)
-        if (!isPinnedRef.current) {
+        if (!isPinnedRef.current && !unpinnedByManualUpwardScroll) {
             const distanceFromBottom = getDistanceFromBottom();
             if (distanceFromBottom <= getPinThreshold()) {
                 setFollowMode(sessionIsWorking ? 'smooth' : 'none');
