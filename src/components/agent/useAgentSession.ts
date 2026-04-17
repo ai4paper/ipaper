@@ -42,13 +42,13 @@ export function useAgentSession(options: UseAgentSessionOptions = {}) {
   const [selectedModelId, setSelectedModelId] = createSignal<string | null>(null);
   const [isUpdatingConfig, setIsUpdatingConfig] = createSignal(false);
   let source: EventSource | undefined;
-  let currentAssistantMessageId: string | null = null;
+  let currentStreamingMessageIds: Partial<Record<ChatMessage["role"], string | null>> = {};
   let sessionPromise: Promise<string> | null = null;
 
   function clearSession(clearHistory: boolean, nextError: string | null = null) {
     source?.close();
     source = undefined;
-    currentAssistantMessageId = null;
+    currentStreamingMessageIds = {};
     sessionPromise = null;
     setSessionId(null);
     setModeOptions([]);
@@ -63,6 +63,16 @@ export function useAgentSession(options: UseAgentSessionOptions = {}) {
       setPlan([]);
     }
 
+    setError(nextError);
+  }
+
+  function disconnectSession(nextError: string) {
+    source?.close();
+    source = undefined;
+    currentStreamingMessageIds = {};
+    sessionPromise = null;
+    setSessionId(null);
+    setStatus("closed");
     setError(nextError);
   }
 
@@ -130,15 +140,15 @@ export function useAgentSession(options: UseAgentSessionOptions = {}) {
     }
   }
 
-  function ensureAssistantMessage() {
-    if (currentAssistantMessageId) {
-      return currentAssistantMessageId;
+  function ensureStreamingMessage(role: ChatMessage["role"], timestamp: number) {
+    const existingId = currentStreamingMessageIds[role];
+    if (existingId) {
+      return existingId;
     }
 
     const id = crypto.randomUUID();
-    const now = Date.now();
-    currentAssistantMessageId = id;
-    setMessages(prev => [...prev, { id, role: "assistant", text: "", status: "streaming", createdAt: now, updatedAt: now }]);
+    currentStreamingMessageIds[role] = id;
+    setMessages(prev => [...prev, { id, role, text: "", status: "streaming", createdAt: timestamp, updatedAt: timestamp }]);
     return id;
   }
 
@@ -151,11 +161,7 @@ export function useAgentSession(options: UseAgentSessionOptions = {}) {
         }
         break;
       case "message-delta": {
-        if (event.role !== "assistant") {
-          return;
-        }
-
-        const id = ensureAssistantMessage();
+        const id = ensureStreamingMessage(event.role, event.timestamp);
         setMessages(prev =>
           prev.map(message =>
             message.id === id ? { ...message, text: `${message.text}${event.text}`, status: "streaming", updatedAt: event.timestamp } : message,
@@ -163,16 +169,18 @@ export function useAgentSession(options: UseAgentSessionOptions = {}) {
         );
         break;
       }
-      case "message-complete":
-        if (currentAssistantMessageId) {
+      case "message-complete": {
+        const id = currentStreamingMessageIds[event.role];
+        if (id) {
           setMessages(prev =>
             prev.map(message =>
-              message.id === currentAssistantMessageId ? { ...message, status: "done", updatedAt: event.timestamp } : message,
+              message.id === id ? { ...message, status: "done", updatedAt: event.timestamp } : message,
             ),
           );
         }
-        currentAssistantMessageId = null;
+        currentStreamingMessageIds[event.role] = null;
         break;
+      }
       case "mode-update":
         setSelectedModeId(event.currentModeId);
         break;
@@ -211,9 +219,14 @@ export function useAgentSession(options: UseAgentSessionOptions = {}) {
         );
         break;
       case "error":
+        setMessages(prev =>
+          prev.map(message =>
+            message.status === "streaming" ? { ...message, status: "error", updatedAt: event.timestamp } : message,
+          ),
+        );
         setError(event.message);
         setStatus("ready");
-        currentAssistantMessageId = null;
+        currentStreamingMessageIds = {};
         break;
       case "turn-complete":
         setStatus(event.stopReason === "cancelled" ? "ready" : "ready");
@@ -251,17 +264,22 @@ export function useAgentSession(options: UseAgentSessionOptions = {}) {
       const savedConfig = preferences.getConfig(sessionCwd);
       const restoredConfig = savedConfig ? { ...savedConfig } : undefined;
       updateCwd(sessionCwd);
-      setSessionId(body.sessionId);
-      applyModeState(body.modes);
-      applyModelState(body.models);
-      await restoreStoredConfig(body.sessionId, restoredConfig);
-      source = new EventSource(`/api/agent/events?sessionId=${encodeURIComponent(body.sessionId)}`);
-      source.onmessage = message => {
-        applyEvent(JSON.parse(message.data) as BrowserEvent);
-      };
-      source.onerror = () => {
-        clearSession(false, "Connection to the agent event stream was lost.");
-      };
+      try {
+        setSessionId(body.sessionId);
+        applyModeState(body.modes);
+        applyModelState(body.models);
+        await restoreStoredConfig(body.sessionId, restoredConfig);
+        source = new EventSource(`/api/agent/events?sessionId=${encodeURIComponent(body.sessionId)}`);
+        source.onmessage = message => {
+          applyEvent(JSON.parse(message.data) as BrowserEvent);
+        };
+        source.onerror = () => {
+          disconnectSession("Connection to the agent event stream was lost.");
+        };
+      } catch (error) {
+        clearSession(false);
+        throw error;
+      }
 
       return body.sessionId;
     })();
@@ -312,7 +330,7 @@ export function useAgentSession(options: UseAgentSessionOptions = {}) {
   async function sendPrompt(text: string) {
     const trimmed = text.trim();
     if (!trimmed) {
-      return;
+      return false;
     }
 
     try {
@@ -329,7 +347,7 @@ export function useAgentSession(options: UseAgentSessionOptions = {}) {
           updatedAt: Date.now(),
         },
       ]);
-      currentAssistantMessageId = null;
+      currentStreamingMessageIds = {};
 
       const response = await fetch("/api/agent/prompt", {
         method: "POST",
@@ -342,9 +360,12 @@ export function useAgentSession(options: UseAgentSessionOptions = {}) {
       if (!response.ok) {
         throw new Error(body.error ?? "Prompt failed");
       }
+
+      return true;
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Prompt failed");
-      setStatus("ready");
+      setStatus(sessionId() ? "ready" : "closed");
+      return false;
     }
   }
 
@@ -432,6 +453,11 @@ export function useAgentSession(options: UseAgentSessionOptions = {}) {
     source?.close();
   });
 
+  const hasCwd = () => !!cwd().trim();
+  const hasActiveSession = () => !!sessionId();
+  const isCreatingSession = () => !!sessionPromise;
+  const isPromptBusy = () => status() === "prompting" || status() === "cancelling";
+
   return {
     cwd,
     messages,
@@ -450,10 +476,20 @@ export function useAgentSession(options: UseAgentSessionOptions = {}) {
     cancelPrompt,
     updateMode,
     updateModel,
-    canStartSession: () => !sessionId() && !sessionPromise && !!cwd().trim() && status() !== "connecting",
-    canCloseSession: () => !!sessionId(),
-    canSend: () => !!sessionId() && status() === "ready",
+    canStartSession: () => !hasActiveSession() && !isCreatingSession() && hasCwd() && !isPromptBusy(),
+    canCloseSession: () => hasActiveSession() && !isCreatingSession() && !isPromptBusy(),
+    canSend: () => {
+      if (isCreatingSession() || isUpdatingConfig() || !hasCwd() || isPromptBusy()) {
+        return false;
+      }
+
+      if (!hasActiveSession()) {
+        return true;
+      }
+
+      return status() === "ready";
+    },
     canCancel: () => status() === "prompting" || status() === "cancelling",
-    canConfigure: () => !!sessionId() && !isUpdatingConfig() && status() === "ready",
+    canConfigure: () => hasActiveSession() && !isCreatingSession() && !isUpdatingConfig() && status() === "ready",
   };
 }

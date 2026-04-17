@@ -1,15 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { closeAgentSession, createAgentSession } = vi.hoisted(() => ({
+vi.mock("~/lib/backend/orchestrator", () => ({
   closeAgentSession: vi.fn(),
   createAgentSession: vi.fn(),
 }));
 
-vi.mock("~/lib/backend/orchestrator", () => ({
-  closeAgentSession,
-  createAgentSession,
-}));
-
+import { closeAgentSession, createAgentSession } from "~/lib/backend/orchestrator";
 import { DELETE, POST } from "~/routes/api/agent/session";
 
 describe("POST /api/agent/session", () => {

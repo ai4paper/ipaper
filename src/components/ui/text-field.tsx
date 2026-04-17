@@ -1,20 +1,18 @@
-import type { PolymorphicProps } from "@kobalte/core";
-import * as TextFieldPrimitive from "@kobalte/core/text-field";
-import type { ValidComponent } from "solid-js";
+import type { JSX } from "solid-js";
 import { mergeProps, splitProps } from "solid-js";
 
 import { cn } from "~/lib/utils";
 
-type TextFieldRootProps<T extends ValidComponent = "div"> = TextFieldPrimitive.TextFieldRootProps<T> & {
+type TextFieldRootProps = JSX.HTMLAttributes<HTMLDivElement> & {
   class?: string | undefined;
 };
 
-const TextField = <T extends ValidComponent = "div">(props: PolymorphicProps<T, TextFieldRootProps<T>>) => {
-  const [local, others] = splitProps(props as TextFieldRootProps, ["class"]);
-  return <TextFieldPrimitive.Root class={cn("flex flex-col gap-2", local.class)} {...others} />;
+const TextField = (props: TextFieldRootProps) => {
+  const [local, others] = splitProps(props, ["class"]);
+  return <div class={cn("flex flex-col gap-2", local.class)} {...others} />;
 };
 
-type TextFieldInputProps<T extends ValidComponent = "input"> = TextFieldPrimitive.TextFieldInputProps<T> & {
+type TextFieldInputProps = JSX.InputHTMLAttributes<HTMLInputElement> & {
   class?: string | undefined;
   type?:
     | "button"
@@ -41,34 +39,31 @@ type TextFieldInputProps<T extends ValidComponent = "input"> = TextFieldPrimitiv
     | "week";
 };
 
-const TextFieldInput = <T extends ValidComponent = "input">(
-  rawProps: PolymorphicProps<T, TextFieldInputProps<T>>,
-) => {
-  const props = mergeProps<TextFieldInputProps<T>[]>({ type: "text" }, rawProps);
-  const [local, others] = splitProps(props as TextFieldInputProps, ["type", "class"]);
+const TextFieldInput = (rawProps: TextFieldInputProps) => {
+  const props = mergeProps({ type: "text" as const }, rawProps);
+  const [local, others] = splitProps(props, ["type", "class"]);
 
   return (
-      <TextFieldPrimitive.Input
-        type={local.type}
-        class={cn(
-          "flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs transition-colors outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50",
-          local.class,
-        )}
-        {...others}
-      />
+    <input
+      type={local.type}
+      class={cn(
+        "flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs transition-colors outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50",
+        local.class,
+      )}
+      {...others}
+    />
   );
 };
 
-type TextFieldTextAreaProps<T extends ValidComponent = "textarea"> =
-  TextFieldPrimitive.TextFieldTextAreaProps<T> & { class?: string | undefined };
+type TextFieldTextAreaProps = JSX.TextareaHTMLAttributes<HTMLTextAreaElement> & {
+  class?: string | undefined;
+};
 
-const TextFieldTextArea = <T extends ValidComponent = "textarea">(
-  props: PolymorphicProps<T, TextFieldTextAreaProps<T>>,
-) => {
-  const [local, others] = splitProps(props as TextFieldTextAreaProps, ["class"]);
+const TextFieldTextArea = (props: TextFieldTextAreaProps) => {
+  const [local, others] = splitProps(props, ["class"]);
 
   return (
-    <TextFieldPrimitive.TextArea
+    <textarea
       class={cn(
         "flex min-h-24 w-full resize-y rounded-lg border border-input bg-background px-3 py-2 text-sm text-foreground shadow-xs transition-colors outline-none placeholder:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50",
         local.class,
@@ -78,20 +73,13 @@ const TextFieldTextArea = <T extends ValidComponent = "textarea">(
   );
 };
 
-type TextFieldLabelProps<T extends ValidComponent = "label"> = TextFieldPrimitive.TextFieldLabelProps<T> & {
+type TextFieldLabelProps = JSX.LabelHTMLAttributes<HTMLLabelElement> & {
   class?: string | undefined;
 };
 
-const TextFieldLabel = <T extends ValidComponent = "label">(
-  props: PolymorphicProps<T, TextFieldLabelProps<T>>,
-) => {
-  const [local, others] = splitProps(props as TextFieldLabelProps, ["class"]);
-  return (
-    <TextFieldPrimitive.Label
-      class={cn("text-sm font-medium text-foreground", local.class)}
-      {...others}
-    />
-  );
+const TextFieldLabel = (props: TextFieldLabelProps) => {
+  const [local, others] = splitProps(props, ["class"]);
+  return <label class={cn("text-sm font-medium text-foreground", local.class)} {...others} />;
 };
 
 export { TextField, TextFieldInput, TextFieldLabel, TextFieldTextArea };

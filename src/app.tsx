@@ -10,7 +10,9 @@ export default function App() {
       root={props => (
         <MetaProvider>
           <Title>iPaper Web Agent</Title>
-          <Suspense>{props.children}</Suspense>
+          <div class="flex min-h-svh flex-col bg-background text-foreground">
+            <Suspense>{props.children}</Suspense>
+          </div>
         </MetaProvider>
       )}
     >

@@ -1,12 +1,9 @@
 import { For, Show } from "solid-js";
 
+import { buildTranscriptTimeline, formatStatusBadgeLabel, formatUpdatedAtLabel, hasTranscriptActivity } from "~/components/agent/agent-layout";
 import type { ChatMessage, ToolCallView } from "~/components/agent/types";
 import { Badge } from "~/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-
-type TimelineItem =
-  | { id: string; type: "message"; timestamp: number; message: ChatMessage }
-  | { id: string; type: "tool"; timestamp: number; count: number; call: ToolCallView };
 
 function formatToolKind(kind: string) {
   return kind
@@ -16,91 +13,73 @@ function formatToolKind(kind: string) {
     .join(" ");
 }
 
-function buildTimeline(messages: ChatMessage[], toolCalls: ToolCallView[]): TimelineItem[] {
-  const toolCallCounts = toolCalls.reduce<Record<string, number>>((counts, call) => {
-    counts[call.kind] = (counts[call.kind] ?? 0) + 1;
-    return counts;
-  }, {});
-
-  const items: TimelineItem[] = messages.map(message => ({
-    id: message.id,
-    type: "message",
-    timestamp: message.updatedAt,
-    message,
-  }));
-
-  for (const call of toolCalls) {
-    items.push({
-      id: call.toolCallId,
-      type: "tool",
-      timestamp: call.updatedAt,
-      count: toolCallCounts[call.kind] ?? 1,
-      call,
-    });
-  }
-
-  return items.sort((left, right) => left.timestamp - right.timestamp);
-}
-
 export default function MessageList(props: { messages: ChatMessage[]; toolCalls: ToolCallView[]; error: string | null }) {
-  const timeline = () => buildTimeline(props.messages, props.toolCalls);
+  const timeline = () => buildTranscriptTimeline(props.messages, props.toolCalls);
+  const assistantMessageCount = () => props.messages.filter(message => message.role === "assistant").length;
 
   return (
-    <Card class="min-h-[36rem] overflow-hidden border-border/80 bg-card/92 shadow-[0_24px_80px_-48px_rgba(15,23,42,0.35)]">
-      <CardHeader class="flex flex-col gap-3 border-b border-border/70 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-        <div>
-          <CardTitle class="mt-0.5 text-lg">Transcript</CardTitle>
-          <p class="mt-1 text-sm text-muted-foreground">Messages and tool activity stream together in one ordered feed.</p>
+    <Card class="flex min-h-[36rem] min-w-0 flex-col overflow-hidden rounded-xl border-border/80 bg-card/75 shadow-sm">
+      <CardHeader class="gap-3 border-b border-border/70 px-4 py-3 sm:px-5">
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+          <div class="min-w-0">
+            <p class="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">Session transcript</p>
+            <div class="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+              <CardTitle class="text-base">Transcript</CardTitle>
+              <span class="text-xs text-muted-foreground">{assistantMessageCount()} assistant replies</span>
+            </div>
+            <p class="mt-1 text-sm text-muted-foreground">Conversation and tool activity appear here in a single ordered feed.</p>
+          </div>
+          <Badge variant="secondary" class="w-fit rounded-md border border-border/70 bg-background/80 px-2 py-0.5 text-[11px] text-muted-foreground">
+            {timeline().length} entries
+          </Badge>
         </div>
-        <Badge variant="secondary" class="w-fit rounded-full border border-border/70 bg-background/80 px-3 py-1">
-          {timeline().length} entries
-        </Badge>
       </CardHeader>
 
-      <CardContent class="flex flex-col gap-3 p-4 sm:p-5">
+      <CardContent class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 sm:p-5">
         <For each={timeline()}>
           {item =>
             item.type === "message" ? (
               (() => {
                 const message = item.message;
+                const updatedAt = () => formatUpdatedAtLabel(message.updatedAt);
                 return (
                   <div class={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
                     <article
-                      class={`max-w-[95%] rounded-[1.35rem] border px-4 py-3 shadow-sm sm:max-w-[88%] ${
+                      class={`min-w-0 max-w-[98%] rounded-lg border px-3.5 py-3 sm:max-w-[88%] ${
                         message.role === "user"
-                          ? "border-primary/20 bg-primary/95 text-primary-foreground shadow-[0_16px_40px_-24px_rgba(96,165,250,0.7)]"
+                          ? "border-primary/20 bg-primary/10 text-foreground"
                           : message.role === "system"
-                            ? "border-border/80 bg-secondary/80 text-secondary-foreground"
-                            : "border-border/80 bg-[rgba(17,24,39,0.92)] text-foreground"
+                            ? "border-border/80 bg-secondary/55 text-secondary-foreground"
+                            : "border-border/80 bg-background/80 text-foreground"
                       }`}
                     >
-                      <div class="flex items-center gap-2">
-                        <span class="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-inherit opacity-75">
+                      <div class="flex flex-wrap items-center gap-x-2 gap-y-1">
+                        <span class="rounded-md border border-current/10 bg-background/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-inherit opacity-80">
                           {message.role}
                         </span>
-                        <span class="text-[11px] text-inherit opacity-55">{message.status}</span>
+                        <span class="text-[11px] text-inherit opacity-60">{formatStatusBadgeLabel(message.status, "Pending")}</span>
+                        <Show when={updatedAt()}>{time => <span class="text-[11px] text-inherit opacity-50">{time()}</span>}</Show>
                       </div>
-                      <p class="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-inherit sm:text-[15px]">
+                      <pre class="mt-2 min-w-0 overflow-x-auto whitespace-pre-wrap break-words bg-transparent text-sm leading-6 font-sans text-inherit">
                         {message.text || (message.status === "streaming" ? "Thinking..." : "")}
-                      </p>
+                      </pre>
                     </article>
                   </div>
                 );
               })()
             ) : (
-                <article class="rounded-[1.35rem] border border-border/80 bg-[rgba(17,24,39,0.92)] px-4 py-3 shadow-sm">
-                  <div class="flex items-center gap-2">
-                    <span class="rounded-full bg-white/8 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-foreground opacity-75">
+                <article class="min-w-0 rounded-lg border border-border/80 bg-background/70 px-3.5 py-3">
+                  <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground">
+                    <span class="rounded-md border border-border/70 bg-muted/40 px-2 py-0.5 font-semibold uppercase tracking-[0.16em] text-foreground">
                       {formatToolKind(item.call.kind)}
                     </span>
-                    <span class="text-[11px] text-muted-foreground">
-                      {item.count} call{item.count === 1 ? "" : "s"}
-                    </span>
+                    <span>{formatStatusBadgeLabel(item.call.status)}</span>
+                    <span>{item.count} call{item.count === 1 ? "" : "s"}</span>
+                    <Show when={formatUpdatedAtLabel(item.call.updatedAt)}>{time => <span>{time()}</span>}</Show>
                   </div>
-                  <p class="mt-2 text-sm font-medium leading-6 text-foreground">{item.call.title}</p>
-                  <p class="mt-1 text-[11px] uppercase tracking-[0.16em] text-muted-foreground">{item.call.status}</p>
+                  <p class="mt-2 break-words text-sm font-medium leading-6 text-foreground">{item.call.title}</p>
                   <Show when={item.call.content}>
-                    <pre class="mt-3 overflow-x-auto rounded-xl border border-border/70 bg-muted/40 p-3 text-xs leading-5 whitespace-pre-wrap text-muted-foreground">
+                    <pre class="mt-2 max-h-[22rem] overflow-auto rounded-md border border-border/70 bg-muted/35 p-3 text-xs leading-5 whitespace-pre-wrap break-words text-muted-foreground">
                       {item.call.content}
                     </pre>
                   </Show>
@@ -109,13 +88,12 @@ export default function MessageList(props: { messages: ChatMessage[]; toolCalls:
           }
         </For>
 
-        {!timeline().length && (
-          <div class="rounded-[1.5rem] border border-dashed border-border/80 bg-muted/30 px-5 py-10 text-center">
-            <p class="text-sm font-medium text-foreground">Your agent activity will appear here.</p>
-            <p class="mt-2 text-sm leading-6 text-muted-foreground">Use the dock at the bottom to start a session, configure the model, and send the first prompt.</p>
+        {!hasTranscriptActivity(props.messages, props.toolCalls) && (
+          <div class="rounded-lg border border-dashed border-border/80 bg-muted/25 px-5 py-10 text-center text-sm text-muted-foreground">
+            Send a prompt below to start the single-agent session and stream its work here.
           </div>
         )}
-        {props.error && <p class="rounded-2xl border border-destructive/20 bg-destructive/8 px-4 py-3 text-sm leading-6 text-destructive">{props.error}</p>}
+        {props.error && <p class="rounded-lg border border-destructive/20 bg-destructive/8 px-3.5 py-3 text-sm leading-6 text-destructive">{props.error}</p>}
       </CardContent>
     </Card>
   );

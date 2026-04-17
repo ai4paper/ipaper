@@ -10,9 +10,9 @@ export default function Home() {
       >
         Skip to Main Content
       </a>
-      <main id="main-content" class="min-h-screen px-3 py-3 sm:px-5 sm:py-5 lg:px-6 lg:pb-40">
+      <main id="main-content" class="flex min-h-0 flex-1 px-2 py-2 sm:px-3 sm:py-3 lg:px-4 lg:py-4">
         <Title>iPaper Web Agent</Title>
-        <div class="ipaper-shell mx-auto flex w-full max-w-[88rem] flex-col gap-6">
+        <div class="flex min-h-0 w-full flex-1 flex-col">
           <AgentApp restoreLastCwd={false} />
         </div>
       </main>

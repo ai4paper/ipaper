@@ -1,25 +1,22 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { attachListener, disposeBrowserSession, getBrowserSession } = vi.hoisted(() => ({
-  attachListener: vi.fn(),
-  disposeBrowserSession: vi.fn(async () => {}),
-  getBrowserSession: vi.fn(),
-}));
-
 vi.mock("~/lib/acp/session-manager", () => ({
   sessionManager: {
-    attachListener,
-    disposeBrowserSession,
-    getBrowserSession,
+    attachListener: vi.fn(),
+    disposeBrowserSession: vi.fn(async () => {}),
+    getBrowserSession: vi.fn(),
   },
 }));
 
+import { sessionManager } from "~/lib/acp/session-manager";
 import { GET } from "~/routes/api/agent/events";
+
+const { attachListener, disposeBrowserSession, getBrowserSession } = sessionManager;
 
 describe("GET /api/agent/events", () => {
   beforeEach(() => {
     attachListener.mockReset();
-    disposeBrowserSession.mockReset();
+    disposeBrowserSession.mockReset().mockResolvedValue(undefined);
     getBrowserSession.mockReset();
   });
 
