@@ -1,0 +1,19 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/ui/tsconfig.json" },
+    { "path": "./packages/web/tsconfig.json" }
+  ],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "moduleResolution": "bundler",
+    "moduleDetection": "force",
+    "verbatimModuleSyntax": true,
+    "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
+    "paths": {
+      "@ai4paper/ui/*": ["./packages/ui/src/*"],
+      "@ai4paper/ipaper/*": ["./packages/web/src/*"]
+    }
+  }
+}
