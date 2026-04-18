@@ -365,7 +365,7 @@ function SessionNodeItemComponent(props: Props): React.ReactNode {
       className={cn(
         'absolute left-[-10px] top-1/2 inline-flex h-3.5 w-3.5 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-opacity',
         isMinimalMode && showStatusMarker
-          ? 'opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto'
+          ? 'opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto'
           : '',
       )}
       aria-label={isExpanded ? 'Collapse subsessions' : 'Expand subsessions'}
@@ -546,7 +546,7 @@ function SessionNodeItemComponent(props: Props): React.ReactNode {
                                   'absolute inset-y-0 right-0 inline-flex h-4 w-4 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-opacity',
                                   isMenuOpen
                                     ? 'opacity-100 pointer-events-auto'
-                                    : cn('opacity-0 pointer-events-none', revealOnHoverClass),
+                                    : cn('opacity-0', revealOnHoverClass),
                                 )}
                                 aria-label="Session menu"
                                 onClick={handleMenuTriggerClick}
@@ -643,9 +643,9 @@ function SessionNodeItemComponent(props: Props): React.ReactNode {
                 'transition-opacity',
                 isMenuOpen
                   ? 'opacity-100 pointer-events-auto'
-                  : (mobileVariant && !isVSCode)
-                    ? 'opacity-100 pointer-events-auto'
-                    : cn('opacity-0 pointer-events-none', revealOnHoverClass),
+                    : (mobileVariant && !isVSCode)
+                      ? 'opacity-100 pointer-events-auto'
+                      : cn('opacity-0', revealOnHoverClass),
               ),
             )}>
               <DropdownMenu open={isMenuOpen} onOpenChange={handleMenuOpenChange}>
@@ -657,7 +657,7 @@ function SessionNodeItemComponent(props: Props): React.ReactNode {
                       isMinimalMode && !mobileVariant
                         ? (isMenuOpen
                             ? 'h-4 w-4 opacity-100 pointer-events-auto'
-                            : cn('h-4 w-4 opacity-0 pointer-events-none', revealOnHoverClass))
+                            : cn('h-4 w-4 opacity-0', revealOnHoverClass))
                         : 'h-6 w-6 opacity-100',
                     )}
                     aria-label="Session menu"

@@ -19,8 +19,8 @@
   ],
   "license": "MIT",
   "scripts": {
-    "dev": "concurrently --kill-others-on-fail -n \"server,web,ui\" -c \"cyan,magenta,yellow\" \"bun run --cwd packages/web dev:server:watch\" \"bun run --cwd packages/web build:watch\" \"bun run --cwd packages/ui dev\"",
-    "stop": "kill -9 $(lsof -ti:3001,5173 2>/dev/null) 2>/dev/null; pkill -9 -f 'nodemon.*packages/web' 2>/dev/null; pkill -9 -f 'vite build' 2>/dev/null; true",
+    "dev": "node ./scripts/dev-web-full.mjs",
+    "dev:all": "concurrently --kill-others-on-fail -n \"server,web,ui\" -c \"cyan,magenta,yellow\" \"bun run --cwd packages/web dev:server:watch\" \"bun run --cwd packages/web build:watch\" \"bun run --cwd packages/ui dev\"",
     "build": "bun run --filter '*' build",
     "build:web": "bun run --cwd packages/web build",
     "build:ui": "bun run --cwd packages/ui build",

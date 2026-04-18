@@ -221,7 +221,7 @@ export const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
                         }}
                         className={cn(
                         'inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 hover:text-foreground transition-opacity',
-                          mobileVariant ? 'opacity-100' : 'opacity-0 pointer-events-none group-hover/project:opacity-100 group-hover/project:pointer-events-auto group-focus-within/project:opacity-100 group-focus-within/project:pointer-events-auto',
+                          mobileVariant ? 'opacity-100' : 'opacity-0 group-hover/project:opacity-100 group-hover/project:pointer-events-auto group-focus-within/project:opacity-100 group-focus-within/project:pointer-events-auto',
                         )}
                         aria-label="New worktree"
                       >
@@ -247,7 +247,7 @@ export const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
                             ? 'opacity-100 pointer-events-auto'
                             : mobileVariant
                               ? 'opacity-100'
-                              : 'opacity-0 pointer-events-none group-hover/project:opacity-100 group-hover/project:pointer-events-auto group-focus-within/project:opacity-100 group-focus-within/project:pointer-events-auto',
+                              : 'opacity-0 group-hover/project:opacity-100 group-hover/project:pointer-events-auto group-focus-within/project:opacity-100 group-focus-within/project:pointer-events-auto',
                         )}
                         aria-label="Project menu"
                         onClick={handleMenuTriggerClick}
@@ -289,7 +289,7 @@ export const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
                         }}
                         className={cn(
                           'inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-opacity',
-                          mobileVariant ? 'opacity-100' : 'opacity-0 pointer-events-none group-hover/project:opacity-100 group-hover/project:pointer-events-auto group-focus-within/project:opacity-100 group-focus-within/project:pointer-events-auto',
+                          mobileVariant ? 'opacity-100' : 'opacity-0 group-hover/project:opacity-100 group-hover/project:pointer-events-auto group-focus-within/project:opacity-100 group-focus-within/project:pointer-events-auto',
                         )}
                         aria-label={isRepo ? 'New draft session' : 'New session'}
                       >
