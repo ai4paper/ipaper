@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.2]
+
+- Web: Added npm package repository metadata so provenance-backed publishes validate against the GitHub repo. (@isomoes)
+
 ## [0.1.1]
 
 - Chat: Fixed draft restore stealing editor focus when returning to a conversation. (@isomoes)

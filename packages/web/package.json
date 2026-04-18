@@ -1,8 +1,18 @@
 {
   "name": "@ai4paper/ipaper",
-  "version": "0.1.1",
+  "version": "0.1.2",
+  "description": "IPaper web app and CLI package",
   "private": false,
   "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ai4paper/ipaper",
+    "directory": "packages/web"
+  },
+  "homepage": "https://github.com/ai4paper/ipaper",
+  "bugs": {
+    "url": "https://github.com/ai4paper/ipaper/issues"
+  },
   "main": "./server/index.js",
   "types": "./server/index.d.ts",
   "bin": {
@@ -11,6 +21,7 @@
   "publishConfig": {
     "access": "public"
   },
+  "license": "MIT",
   "scripts": {
     "dev": "bun run build:watch",
     "dev:server": "bun server/index.js --port ${IPAPER_PORT:-3001}",
