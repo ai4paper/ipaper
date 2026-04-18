@@ -70,6 +70,7 @@ const PROGRAMMATIC_SCROLL_SUPPRESS_MS = 200;
 // Threshold for re-pinning: 10% of container height (matches bottom spacer)
 const PIN_THRESHOLD_RATIO = 0.10;
 const VIEWPORT_ANCHOR_MIN_UPDATE_MS = 150;
+const MANUAL_REPIN_EPSILON = 1;
 
 export const useChatScrollManager = ({
     currentSessionId,
@@ -379,6 +380,7 @@ export const useChatScrollManager = ({
 
         if (scrollingUp && isPinnedRef.current && !isProgrammatic) {
             scrollEngine.cancelFollow();
+            scrollEngine.forceManualMode();
             setFollowMode('none');
             updatePinnedState(false);
             unpinnedByManualUpwardScroll = true;
@@ -387,6 +389,20 @@ export const useChatScrollManager = ({
         // Re-pin at bottom should always work (even momentum scroll)
         if (!isPinnedRef.current && !unpinnedByManualUpwardScroll) {
             const distanceFromBottom = getDistanceFromBottom();
+            if (scrollEngine.isManualOverrideActive()) {
+                if (distanceFromBottom <= MANUAL_REPIN_EPSILON) {
+                    scrollEngine.clearManualMode();
+                } else {
+                    lastScrollTopRef.current = currentScrollTop;
+
+                    const { scrollTop, scrollHeight, clientHeight } = container;
+                    const position = (scrollTop + clientHeight / 2) / Math.max(scrollHeight, 1);
+                    const estimatedIndex = Math.floor(position * sessionMessageCount);
+                    queueViewportAnchor(currentSessionId, estimatedIndex);
+                    return;
+                }
+            }
+
             if (distanceFromBottom <= getPinThreshold()) {
                 setFollowMode(sessionIsWorking ? 'smooth' : 'none');
                 updatePinnedState(true);
@@ -431,6 +447,7 @@ export const useChatScrollManager = ({
             delta,
         })) {
             scrollEngine.cancelFollow();
+            scrollEngine.forceManualMode();
             setFollowMode('none');
             updatePinnedState(false);
         }
@@ -474,6 +491,7 @@ export const useChatScrollManager = ({
                 delta: syntheticWheelDelta,
             })) {
                 scrollEngine.cancelFollow();
+                scrollEngine.forceManualMode();
                 setFollowMode('none');
                 updatePinnedState(false);
             }

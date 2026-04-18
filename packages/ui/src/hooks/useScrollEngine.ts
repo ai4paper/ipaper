@@ -16,6 +16,7 @@ type ScrollEngineResult = {
     handleScroll: () => void;
     scrollToPosition: (position: number, options?: ScrollOptions) => void;
     forceManualMode: () => void;
+    clearManualMode: () => void;
     cancelFollow: () => void;
     isAtTop: boolean;
     isFollowingBottom: boolean;
@@ -194,6 +195,10 @@ export const useScrollEngine = ({
         manualOverrideRef.current = true;
     }, []);
 
+    const clearManualMode = React.useCallback(() => {
+        manualOverrideRef.current = false;
+    }, []);
+
     const markManualOverride = React.useCallback(() => {
         manualOverrideRef.current = true;
         cancelFollow();
@@ -254,6 +259,7 @@ export const useScrollEngine = ({
             handleScroll,
             scrollToPosition,
             forceManualMode,
+            clearManualMode,
             cancelFollow,
             isAtTop,
             isFollowingBottom,
@@ -266,6 +272,7 @@ export const useScrollEngine = ({
             handleScroll,
             scrollToPosition,
             forceManualMode,
+            clearManualMode,
             cancelFollow,
             isAtTop,
             isFollowingBottom,
