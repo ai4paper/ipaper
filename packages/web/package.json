@@ -102,9 +102,13 @@
   },
   "files": [
     "dist",
-    "server",
-    "bin",
-    "public",
+    "dist/sw.js",
+    "server/**/*.js",
+    "server/**/*.d.ts",
+    "server/**/*.md",
+    "!server/**/*.test.js",
+    "bin/*.js",
+    "!bin/*.test.js",
     "package.json",
     "README.md"
   ]
