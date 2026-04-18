@@ -1004,7 +1004,7 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({ onOpenSettings, scrollTo
         draftPersistTimerRef.current = null;
     }, []);
 
-    // Handle initial draft restoration and text selection
+    // Handle initial draft restoration without stealing focus
     const hasHandledInitialDraftRef = React.useRef(false);
     React.useEffect(() => {
         if (hasHandledInitialDraftRef.current) return;
@@ -1021,11 +1021,6 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({ onOpenSettings, scrollTo
             } catch {
                 // Ignore
             }
-        } else {
-            // Setting enabled - select all text
-            requestAnimationFrame(() => {
-                textareaRef.current?.select();
-            });
         }
     }, [persistChatDraft]);
 
@@ -1045,34 +1040,12 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({ onOpenSettings, scrollTo
                 // Restore draft for the session we're entering
                 const newDraft = getStoredDraft(currentSessionId);
                 setMessage(newDraft);
-                if (newDraft) {
-                    requestAnimationFrame(() => {
-                        textareaRef.current?.select();
-                    });
-                }
             } else {
                 // Persist disabled: clear input without saving
                 setMessage('');
             }
         }
     }, [clearPendingDraftPersist, currentSessionId, persistChatDraft, persistDraftImmediately]);
-
-    // Focus textarea when new session draft is opened
-    const prevNewSessionDraftOpenRef = React.useRef(newSessionDraftOpen);
-    React.useEffect(() => {
-        if (!prevNewSessionDraftOpenRef.current && newSessionDraftOpen) {
-            // New session draft just opened - focus the textarea
-            requestAnimationFrame(() => {
-                if (isMobile) {
-                    // On mobile, use preventScroll to avoid viewport jumping
-                    textareaRef.current?.focus({ preventScroll: true });
-                } else {
-                    textareaRef.current?.focus();
-                }
-            });
-        }
-        prevNewSessionDraftOpenRef.current = newSessionDraftOpen;
-    }, [newSessionDraftOpen, isMobile]);
 
     // Persist chat input draft to localStorage per session (only if setting enabled)
     React.useEffect(() => {
@@ -2403,13 +2376,6 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({ onOpenSettings, scrollTo
         });
         setTimeout(refocus, 60);
     };
-
-    React.useEffect(() => {
-
-        if (currentSessionId && textareaRef.current && !isMobile) {
-            textareaRef.current.focus();
-        }
-    }, [currentSessionId, isMobile]);
 
     React.useEffect(() => {
         if (!isMobile) {
