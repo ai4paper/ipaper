@@ -1,5 +1,5 @@
 import React from 'react';
-import { RiDiscordFill, RiDownloadLine, RiGithubFill, RiLoaderLine, RiTwitterXFill } from '@remixicon/react';
+import { RiDownloadLine, RiGithubFill, RiLoaderLine } from '@remixicon/react';
 import { useUpdateStore } from '@/stores/useUpdateStore';
 import { UpdateDialog } from '@/components/ui/UpdateDialog';
 import { useDeviceInfo } from '@/lib/device';
@@ -91,26 +91,6 @@ export const AboutSettings: React.FC = () => {
             <RiGithubFill className="h-3.5 w-3.5" />
             <span>GitHub</span>
           </a>
-
-          <a
-            href="https://discord.gg/ZYRSdnwwKA"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 typography-meta text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <RiDiscordFill className="h-3.5 w-3.5" />
-            <span>Discord</span>
-          </a>
-
-          <a
-            href="https://x.com/btriapitsyn"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1 typography-meta text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <RiTwitterXFill className="h-3.5 w-3.5" />
-            <span>@btriapitsyn</span>
-          </a>
         </div>
 
         <UpdateDialog
@@ -195,15 +175,6 @@ export const AboutSettings: React.FC = () => {
             <span>GitHub</span>
           </a>
 
-          <a
-            href="https://x.com/btriapitsyn"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground typography-meta transition-colors"
-          >
-            <RiTwitterXFill className="h-4 w-4" />
-            <span>@btriapitsyn</span>
-          </a>
         </div>
       </div>
 

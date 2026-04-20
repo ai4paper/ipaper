@@ -4,7 +4,7 @@ import {
   DialogContent,
 } from '@/components/ui/dialog';
 import { IPaperLogo } from '@/components/ui/IPaperLogo';
-import { RiDiscordFill, RiGithubFill, RiTwitterXFill } from '@remixicon/react';
+import { RiGithubFill } from '@remixicon/react';
 import { debugUtils } from '@/lib/debug';
 import { cn } from '@/lib/utils';
 import { toast } from '@/components/ui';
@@ -165,24 +165,6 @@ export const AboutDialog: React.FC<AboutDialogProps> = ({
             >
               <RiGithubFill className="h-4 w-4" />
               <span>GitHub</span>
-            </a>
-            <a
-              href="https://discord.gg/ZYRSdnwwKA"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 typography-meta text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <RiDiscordFill className="h-4 w-4" />
-              <span>Discord</span>
-            </a>
-            <a
-              href="https://x.com/btriapitsyn"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 typography-meta text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <RiTwitterXFill className="h-4 w-4" />
-              <span>@btriapitsyn</span>
             </a>
           </div>
 

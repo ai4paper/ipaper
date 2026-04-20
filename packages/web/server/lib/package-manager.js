@@ -100,7 +100,6 @@ async function checkForUpdatesFromApi(currentVersion, options = {}) {
       currentVersion,
       installId: getOrCreateInstallId(appType),
       instanceMode: options.instanceMode || 'unknown',
-      reportUsage: options.reportUsage !== false,
     };
 
     const response = await fetch(UPDATE_CHECK_URL, {
