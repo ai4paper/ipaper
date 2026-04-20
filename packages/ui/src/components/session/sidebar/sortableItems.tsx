@@ -166,32 +166,14 @@ export const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
                       className={cn(
                         'flex-1 min-w-0 flex items-center gap-1.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 rounded-md cursor-grab active:cursor-grabbing transition-[padding]',
                         isRepo && !hideDirectoryControls
-                          ? (mobileVariant ? 'pr-20' : 'pr-7 group-hover/project:pr-20 group-focus-within/project:pr-20')
-                          : (mobileVariant ? 'pr-14' : 'pr-7 group-hover/project:pr-14 group-focus-within/project:pr-14'),
+                          ? 'pr-20'
+                          : 'pr-14',
                       )}
                     >
                     <span className="inline-flex h-3.5 w-3.5 flex-shrink-0 items-center justify-center">
-                      <span className="hidden h-3.5 w-3.5 items-center justify-center text-muted-foreground group-hover/project:inline-flex group-focus-within/project:inline-flex">
+                      <span className="inline-flex h-3.5 w-3.5 items-center justify-center text-muted-foreground">
                         {isCollapsed ? <RiArrowRightSLine className="h-3.5 w-3.5" /> : <RiArrowDownSLine className="h-3.5 w-3.5" />}
                       </span>
-                      {imageUrl ? (
-                        <span
-                          className="inline-flex h-3.5 w-3.5 items-center justify-center overflow-hidden rounded-[3px] group-hover/project:hidden group-focus-within/project:hidden"
-                          style={projectIconBackground ? { backgroundColor: projectIconBackground } : undefined}
-                        >
-                          <img
-                            src={imageUrl}
-                            alt=""
-                            className="h-full w-full object-contain"
-                            draggable={false}
-                            onError={() => setImageFailed(true)}
-                          />
-                        </span>
-                      ) : ProjectIcon ? (
-                        <ProjectIcon className="h-3.5 w-3.5 group-hover/project:hidden group-focus-within/project:hidden" style={iconColor ? { color: iconColor } : undefined} />
-                      ) : (
-                        <RiFolderLine className="h-3.5 w-3.5 text-muted-foreground/80 group-hover/project:hidden group-focus-within/project:hidden" style={iconColor ? { color: iconColor } : undefined} />
-                      )}
                     </span>
                     <span className={cn(
                       'text-[14px] font-normal truncate lowercase',
@@ -221,7 +203,7 @@ export const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
                         }}
                         className={cn(
                         'inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 hover:text-foreground transition-opacity',
-                          mobileVariant ? 'opacity-100' : 'opacity-0 group-hover/project:opacity-100 group-hover/project:pointer-events-auto group-focus-within/project:opacity-100 group-focus-within/project:pointer-events-auto',
+                          'opacity-100 pointer-events-auto',
                         )}
                         aria-label="New worktree"
                       >
@@ -247,7 +229,7 @@ export const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
                             ? 'opacity-100 pointer-events-auto'
                             : mobileVariant
                               ? 'opacity-100'
-                              : 'opacity-0 group-hover/project:opacity-100 group-hover/project:pointer-events-auto group-focus-within/project:opacity-100 group-focus-within/project:pointer-events-auto',
+                              : 'opacity-100 pointer-events-auto',
                         )}
                         aria-label="Project menu"
                         onClick={handleMenuTriggerClick}
@@ -289,7 +271,7 @@ export const SortableProjectItem: React.FC<SortableProjectItemProps> = ({
                         }}
                         className={cn(
                           'inline-flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-opacity',
-                          mobileVariant ? 'opacity-100' : 'opacity-0 group-hover/project:opacity-100 group-hover/project:pointer-events-auto group-focus-within/project:opacity-100 group-focus-within/project:pointer-events-auto',
+                          'opacity-100 pointer-events-auto',
                         )}
                         aria-label={isRepo ? 'New draft session' : 'New session'}
                       >

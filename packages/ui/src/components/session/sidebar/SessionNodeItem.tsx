@@ -223,15 +223,9 @@ function SessionNodeItemComponent(props: Props): React.ReactNode {
   const displayMode = useSessionDisplayStore((state) => state.displayMode);
   const isMinimalMode = displayMode === 'minimal';
   const isVSCode = React.useMemo(() => isVSCodeRuntime(), []);
-  const revealOnHoverClass = isVSCode
-    ? 'group-hover:opacity-100 group-hover:pointer-events-auto'
-    : 'group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto';
-  const hideOnHoverClass = isVSCode
-    ? 'group-hover:opacity-0'
-    : 'group-hover:opacity-0 group-focus-within:opacity-0';
-  const revealPaddingClass = isVSCode
-    ? 'group-hover:pr-5'
-    : 'group-hover:pr-5 group-focus-within:pr-5';
+  const revealOnHoverClass = 'opacity-100 pointer-events-auto';
+  const hideOnHoverClass = 'opacity-0';
+  const revealPaddingClass = 'pr-5';
   const suppressNextSelectRef = React.useRef(false);
 
   const session = node.session;
@@ -341,7 +335,7 @@ function SessionNodeItemComponent(props: Props): React.ReactNode {
     <span
       className={cn(
         'pointer-events-none absolute left-[-10px] top-1/2 inline-flex h-3.5 w-3.5 -translate-y-1/2 items-center justify-center transition-opacity',
-        hasChildren ? 'opacity-100 group-hover:opacity-0 group-focus-within:opacity-0' : '',
+        hasChildren ? 'opacity-100' : '',
       )}
     >
       {statusMarkerContent}
@@ -364,9 +358,7 @@ function SessionNodeItemComponent(props: Props): React.ReactNode {
       }}
       className={cn(
         'absolute left-[-10px] top-1/2 inline-flex h-3.5 w-3.5 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-opacity',
-        isMinimalMode && showStatusMarker
-          ? 'opacity-0 group-hover:opacity-100 group-hover:pointer-events-auto group-focus-within:opacity-100 group-focus-within:pointer-events-auto'
-          : '',
+        isMinimalMode && showStatusMarker ? 'opacity-100 pointer-events-auto' : '',
       )}
       aria-label={isExpanded ? 'Collapse subsessions' : 'Expand subsessions'}
     >
@@ -532,9 +524,7 @@ function SessionNodeItemComponent(props: Props): React.ReactNode {
                         <div className="relative ml-1 flex h-4 min-w-4 flex-shrink-0 items-center justify-end">
                           <span className={cn(
                             'whitespace-nowrap text-right text-[0.72rem] text-muted-foreground/75 transition-opacity duration-150',
-                            isMenuOpen
-                              ? 'opacity-0'
-                              : hideOnHoverClass,
+                            hideOnHoverClass,
                           )}>
                             {sessionCompactUpdatedLabel}
                           </span>
@@ -546,7 +536,7 @@ function SessionNodeItemComponent(props: Props): React.ReactNode {
                                   'absolute inset-y-0 right-0 inline-flex h-4 w-4 items-center justify-center rounded-md text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 transition-opacity',
                                   isMenuOpen
                                     ? 'opacity-100 pointer-events-auto'
-                                    : cn('opacity-0', revealOnHoverClass),
+                                    : revealOnHoverClass,
                                 )}
                                 aria-label="Session menu"
                                 onClick={handleMenuTriggerClick}
@@ -645,7 +635,7 @@ function SessionNodeItemComponent(props: Props): React.ReactNode {
                   ? 'opacity-100 pointer-events-auto'
                     : (mobileVariant && !isVSCode)
                       ? 'opacity-100 pointer-events-auto'
-                      : cn('opacity-0', revealOnHoverClass),
+                      : revealOnHoverClass,
               ),
             )}>
               <DropdownMenu open={isMenuOpen} onOpenChange={handleMenuOpenChange}>
@@ -657,7 +647,7 @@ function SessionNodeItemComponent(props: Props): React.ReactNode {
                       isMinimalMode && !mobileVariant
                         ? (isMenuOpen
                             ? 'h-4 w-4 opacity-100 pointer-events-auto'
-                            : cn('h-4 w-4 opacity-0', revealOnHoverClass))
+                            : 'h-4 w-4 opacity-100 pointer-events-auto')
                         : 'h-6 w-6 opacity-100',
                     )}
                     aria-label="Session menu"

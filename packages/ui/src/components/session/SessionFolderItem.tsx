@@ -169,9 +169,7 @@ const SessionFolderItemBase = <TSessionNode,>({
       >
         <div className={cn(
           'min-w-0 flex items-center gap-1.5 pl-1.5 flex-1 transition-[padding]',
-          archivedBucket
-            ? (mobileVariant ? 'pr-7' : 'group-hover/folder:pr-7 group-focus-within/folder:pr-7')
-            : '',
+          archivedBucket ? 'pr-7' : '',
         )}>
           <FolderIcon className={cn('h-3.5 w-3.5 flex-shrink-0', isDropTarget ? 'text-primary' : 'text-muted-foreground')} />
 
@@ -252,8 +250,7 @@ const SessionFolderItemBase = <TSessionNode,>({
           <div className="flex items-center gap-0.5 px-0.5">
             <div
               className={cn(
-                'flex items-center gap-0.5 transition-opacity',
-                mobileVariant ? 'opacity-100' : 'opacity-0 group-hover/folder:opacity-100 group-focus-within/folder:opacity-100',
+                'flex items-center gap-0.5 opacity-100',
                 archivedBucket && 'absolute right-0.5 top-1/2 z-10 -translate-y-1/2 px-0',
               )}
             >

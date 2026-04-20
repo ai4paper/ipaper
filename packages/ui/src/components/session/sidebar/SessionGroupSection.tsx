@@ -428,13 +428,9 @@ export function SessionGroupSection(props: Props): React.ReactNode {
   const hasWorktreeDeleteAction = Boolean(!group.isMain && group.worktree);
   const groupHeaderRightPadding = mobileVariant
     ? (hasWorktreeDeleteAction ? 'pr-14' : 'pr-7')
-    : isMinimalMode
-      ? (hasWorktreeDeleteAction
-          ? 'pr-2 group-hover/gh:pr-14 group-focus-within/gh:pr-14'
-          : 'pr-2')
-      : (hasWorktreeDeleteAction
-          ? 'pr-5 group-hover/gh:pr-14 group-focus-within/gh:pr-14'
-          : 'pr-5');
+      : isMinimalMode
+      ? (hasWorktreeDeleteAction ? 'pr-14' : 'pr-2')
+      : (hasWorktreeDeleteAction ? 'pr-14' : 'pr-5');
 
   const body = (
     <SessionFolderDndScope
@@ -478,58 +474,104 @@ export function SessionGroupSection(props: Props): React.ReactNode {
     return <div className="oc-group"><div className={cn('oc-group-body', groupBodyPaddingClass)}>{body}</div></div>;
   }
 
-  return (
-    <div className="oc-group">
+  const headerContent = (
+    <>
       <div
-        className={cn('group/gh relative flex items-start justify-between gap-1 py-1 min-w-0 rounded-md', 'cursor-pointer')}
-        onClick={() => onToggleCollapsedGroup(groupKey)}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            onToggleCollapsedGroup(groupKey);
-          }
-        }}
-        aria-label={isCollapsed ? `Expand ${group.label}` : `Collapse ${group.label}`}
-        aria-expanded={!isCollapsed}
+        ref={dragHandleProps?.setActivatorNodeRef}
+        className={cn(
+          'min-w-0 flex flex-1 items-start gap-1 overflow-hidden pl-0.5 transition-[padding] cursor-grab active:cursor-grabbing',
+          groupHeaderRightPadding,
+        )}
+        {...(dragHandleProps?.listeners ?? {})}
       >
-        <div
-          ref={dragHandleProps?.setActivatorNodeRef}
-          className={cn(
-            'min-w-0 flex flex-1 items-start gap-1 overflow-hidden pl-0.5 transition-[padding] cursor-grab active:cursor-grabbing',
-            groupHeaderRightPadding,
-          )}
-          {...(dragHandleProps?.listeners ?? {})}
-        >
-          <div className="min-w-0 flex flex-1 flex-col justify-center gap-0.5 overflow-hidden">
-            <p className="text-[14px] font-normal truncate text-foreground/92">
-              {showInlinePrTitle && prIndicator ? (
-                <span className="inline-flex min-w-0 max-w-full items-center">
+        <div className="min-w-0 flex flex-1 flex-col justify-center gap-0.5 overflow-hidden">
+          <p className="text-[14px] font-normal truncate text-foreground/92">
+            {showInlinePrTitle && prIndicator ? (
+              <span className="inline-flex min-w-0 max-w-full items-center">
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="inline-flex shrink-0 items-center gap-1 leading-none align-middle">
+                      <span className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                        <span className="text-muted-foreground inline-flex h-3.5 w-3.5 items-center justify-center">
+                          {isCollapsed ? <RiArrowRightSLine className="h-3.5 w-3.5" /> : <RiArrowDownSLine className="h-3.5 w-3.5" />}
+                        </span>
+                      </span>
+                      {prIndicator.url ? (
+                        <button
+                          type="button"
+                          className="inline-flex shrink-0 items-center leading-none"
+                          onMouseDown={(event) => event.stopPropagation()}
+                          onClick={handlePrLinkClick}
+                        >
+                          #{prIndicator.number}
+                        </button>
+                      ) : (
+                        <span className="inline-flex shrink-0 items-center leading-none">#{prIndicator.number}</span>
+                      )}
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" sideOffset={6} align="start" className="max-w-sm">
+                    <div className="space-y-1 text-xs">
+                      {(baseBranchLabel || headBranchLabel) ? (
+                        <div className="text-muted-foreground truncate">
+                          {baseBranchLabel && headBranchLabel ? (
+                            <>
+                              <span>{baseBranchLabel}</span>
+                              <RiArrowLeftLongLine className="mx-0.5 inline h-3 w-3 align-[-2px]" />
+                              <span>{headBranchLabel}</span>
+                            </>
+                          ) : (
+                            <span>{baseBranchLabel ?? headBranchLabel ?? ''}</span>
+                          )}
+                        </div>
+                      ) : null}
+                      {mergeStateLabel ? <div className="text-muted-foreground truncate">{mergeStateLabel}</div> : null}
+                      {(mergeabilityLabel || checksSummary) ? (
+                        <div className="text-muted-foreground truncate">
+                          {mergeabilityLabel ?? ''}
+                          {mergeabilityLabel && checksSummary ? ' • ' : ''}
+                          {checksSummary ?? ''}
+                          {checksTail ? ` (${checksTail})` : ''}
+                        </div>
+                      ) : null}
+                    </div>
+                  </TooltipContent>
+                </Tooltip>
+                <span className="ml-1 min-w-0 flex-1 truncate leading-none align-middle">{group.branch}</span>
+              </span>
+            ) : group.isArchivedBucket ? (
+              <span className="inline-flex min-w-0 max-w-full items-center gap-1">
+                <span className="inline-flex min-w-0 flex-1 items-center gap-1 truncate">
+                  <RiArchiveLine className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 truncate">{renderHighlightedText(group.label, normalizedSessionSearchQuery)}</span>
+                </span>
+              </span>
+            ) : (!group.isMain || group.worktree) ? (
+              <span className="inline-flex min-w-0 max-w-full items-center gap-1">
+                <span className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center">
+                    <span className="text-muted-foreground inline-flex h-3.5 w-3.5 items-center justify-center">
+                      {isCollapsed ? <RiArrowRightSLine className="h-3.5 w-3.5" /> : <RiArrowDownSLine className="h-3.5 w-3.5" />}
+                    </span>
+                </span>
+                <span className="min-w-0 flex-1 truncate">{renderHighlightedText(group.label, normalizedSessionSearchQuery)}</span>
+              </span>
+            ) : (
+              renderHighlightedText(group.label, normalizedSessionSearchQuery)
+            )}
+          </p>
+          {showBranchSubtitle && statusLine ? (
+            <span className="inline-flex min-w-0 items-center gap-1.5 leading-tight">
+              {group.isArchivedBucket ? (
+                <RiArchiveLine className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
+              ) : (!group.isMain || isGitProject) ? (
+                showInlinePrTitle && prIndicator ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="inline-flex shrink-0 items-center gap-1 leading-none align-middle">
-                        <span className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center">
-                          <RiGitBranchLine
-                            className="h-3.5 w-3.5 shrink-0 group-hover/gh:hidden"
-                            style={branchIconColor ? { color: branchIconColor } : undefined}
-                          />
-                          <span className="hidden text-muted-foreground group-hover/gh:inline-flex h-3.5 w-3.5 items-center justify-center">
-                            {isCollapsed ? <RiArrowRightSLine className="h-3.5 w-3.5" /> : <RiArrowDownSLine className="h-3.5 w-3.5" />}
-                          </span>
-                        </span>
-                        {prIndicator.url ? (
-                          <button
-                            type="button"
-                            className="inline-flex shrink-0 items-center leading-none"
-                            onMouseDown={(event) => event.stopPropagation()}
-                            onClick={handlePrLinkClick}
-                          >
-                            #{prIndicator.number}
-                          </button>
-                        ) : (
-                          <span className="inline-flex shrink-0 items-center leading-none">#{prIndicator.number}</span>
-                        )}
+                      <span className="inline-flex h-3.5 w-3.5 flex-shrink-0 items-center justify-center">
+                        <RiGitBranchLine
+                          className="h-3.5 w-3.5 text-muted-foreground"
+                          style={branchIconColor ? { color: branchIconColor } : undefined}
+                        />
                       </span>
                     </TooltipTrigger>
                     <TooltipContent side="top" sideOffset={6} align="start" className="max-w-sm">
@@ -559,96 +601,64 @@ export function SessionGroupSection(props: Props): React.ReactNode {
                       </div>
                     </TooltipContent>
                   </Tooltip>
-                  <span className="ml-1 min-w-0 flex-1 truncate leading-none align-middle">{group.branch}</span>
-                </span>
-              ) : group.isArchivedBucket ? (
-                <span className="inline-flex min-w-0 max-w-full items-center gap-1">
-                  <span className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center">
-                    <RiArchiveLine className="h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover/gh:hidden" />
-                    <span className="hidden text-muted-foreground group-hover/gh:inline-flex h-3.5 w-3.5 items-center justify-center">
-                      {isCollapsed ? <RiArrowRightSLine className="h-3.5 w-3.5" /> : <RiArrowDownSLine className="h-3.5 w-3.5" />}
-                    </span>
-                  </span>
-                  <span className="min-w-0 flex-1 truncate">{renderHighlightedText(group.label, normalizedSessionSearchQuery)}</span>
-                </span>
-              ) : (!group.isMain || group.worktree) ? (
-                <span className="inline-flex min-w-0 max-w-full items-center gap-1">
-                  <span className="inline-flex h-3.5 w-3.5 shrink-0 items-center justify-center">
-                    <RiGitBranchLine
-                      className="h-3.5 w-3.5 shrink-0 text-muted-foreground group-hover/gh:hidden"
-                      style={branchIconColor ? { color: branchIconColor } : undefined}
-                    />
-                    <span className="hidden text-muted-foreground group-hover/gh:inline-flex h-3.5 w-3.5 items-center justify-center">
-                      {isCollapsed ? <RiArrowRightSLine className="h-3.5 w-3.5" /> : <RiArrowDownSLine className="h-3.5 w-3.5" />}
-                    </span>
-                  </span>
-                  <span className="min-w-0 flex-1 truncate">{renderHighlightedText(group.label, normalizedSessionSearchQuery)}</span>
-                </span>
-              ) : (
-                renderHighlightedText(group.label, normalizedSessionSearchQuery)
-              )}
-            </p>
-            {showBranchSubtitle && statusLine ? (
-              <span className="inline-flex min-w-0 items-center gap-1.5 leading-tight">
-                {group.isArchivedBucket ? (
-                  <RiArchiveLine className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground" />
-                ) : (!group.isMain || isGitProject) ? (
-                  showInlinePrTitle && prIndicator ? (
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <span className="inline-flex h-3.5 w-3.5 flex-shrink-0 items-center justify-center">
-                          <RiGitBranchLine
-                            className="h-3.5 w-3.5 text-muted-foreground"
-                            style={branchIconColor ? { color: branchIconColor } : undefined}
-                          />
-                        </span>
-                      </TooltipTrigger>
-                      <TooltipContent side="top" sideOffset={6} align="start" className="max-w-sm">
-                        <div className="space-y-1 text-xs">
-                          {(baseBranchLabel || headBranchLabel) ? (
-                            <div className="text-muted-foreground truncate">
-                              {baseBranchLabel && headBranchLabel ? (
-                                <>
-                                  <span>{baseBranchLabel}</span>
-                                  <RiArrowLeftLongLine className="mx-0.5 inline h-3 w-3 align-[-2px]" />
-                                  <span>{headBranchLabel}</span>
-                                </>
-                              ) : (
-                                <span>{baseBranchLabel ?? headBranchLabel ?? ''}</span>
-                              )}
-                            </div>
-                          ) : null}
-                          {mergeStateLabel ? <div className="text-muted-foreground truncate">{mergeStateLabel}</div> : null}
-                          {(mergeabilityLabel || checksSummary) ? (
-                            <div className="text-muted-foreground truncate">
-                              {mergeabilityLabel ?? ''}
-                              {mergeabilityLabel && checksSummary ? ' • ' : ''}
-                              {checksSummary ?? ''}
-                              {checksTail ? ` (${checksTail})` : ''}
-                            </div>
-                          ) : null}
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : (
-                    <RiGitBranchLine
-                      className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground"
-                      style={branchIconColor ? { color: branchIconColor } : undefined}
-                    />
-                  )
-                ) : null}
-                <span
-                  className={cn('min-w-0 truncate text-[11px] font-medium', !statusLine.color && 'text-muted-foreground/80')}
-                  style={statusLine.color ? { color: statusLine.color } : undefined}
-                >
-                  {statusLine.label}
-                </span>
+                ) : (
+                  <RiGitBranchLine
+                    className="h-3.5 w-3.5 flex-shrink-0 text-muted-foreground"
+                    style={branchIconColor ? { color: branchIconColor } : undefined}
+                  />
+                )
+              ) : null}
+              <span
+                className={cn('min-w-0 truncate text-[11px] font-medium', !statusLine.color && 'text-muted-foreground/80')}
+                style={statusLine.color ? { color: statusLine.color } : undefined}
+              >
+                {statusLine.label}
               </span>
-            ) : null}
-          </div>
+            </span>
+          ) : null}
         </div>
-        {group.isArchivedBucket && allGroupSessions.length > 0 ? (
-          <div className={cn('absolute right-0.5 top-1/2 -translate-y-1/2 z-10 transition-opacity', mobileVariant ? 'opacity-100' : 'opacity-0 group-hover/gh:opacity-100 group-focus-within/gh:opacity-100')}>
+      </div>
+    </>
+  );
+
+  return (
+    <div className="oc-group">
+      <div className="group/gh relative min-w-0 rounded-md py-1">
+        {group.isArchivedBucket ? (
+          <div className="flex w-full items-start gap-1">
+            <button
+              type="button"
+              className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-interactive-hover/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              onClick={() => onToggleCollapsedGroup(groupKey)}
+              aria-label={isCollapsed ? `Expand ${group.label}` : `Collapse ${group.label}`}
+              aria-expanded={!isCollapsed}
+            >
+              {isCollapsed ? <RiArrowRightSLine className="h-4 w-4" /> : <RiArrowDownSLine className="h-4 w-4" />}
+            </button>
+            <div className="flex min-w-0 flex-1 items-start justify-between gap-1">
+              {headerContent}
+            </div>
+          </div>
+        ) : (
+          <div
+            className={cn('flex items-start justify-between gap-1 min-w-0', 'cursor-pointer')}
+            onClick={() => onToggleCollapsedGroup(groupKey)}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                onToggleCollapsedGroup(groupKey);
+              }
+            }}
+            aria-label={isCollapsed ? `Expand ${group.label}` : `Collapse ${group.label}`}
+            aria-expanded={!isCollapsed}
+          >
+            {headerContent}
+          </div>
+        )}
+      {group.isArchivedBucket && allGroupSessions.length > 0 ? (
+          <div className="absolute right-0.5 top-1/2 z-10 -translate-y-1/2 opacity-100 pointer-events-auto">
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -669,9 +679,9 @@ export function SessionGroupSection(props: Props): React.ReactNode {
               <TooltipContent side="bottom" sideOffset={4}><p>Delete archived sessions</p></TooltipContent>
             </Tooltip>
           </div>
-        ) : null}
-        {group.directory && !group.isMain && group.worktree ? (
-          <div className={cn('absolute right-7 top-1/2 -translate-y-1/2 z-10 transition-opacity', mobileVariant ? 'opacity-100' : 'opacity-0 group-hover/gh:opacity-100 group-focus-within/gh:opacity-100')}>
+      ) : null}
+      {group.directory && !group.isMain && group.worktree ? (
+          <div className="absolute right-7 top-1/2 z-10 -translate-y-1/2 opacity-100 pointer-events-auto">
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -693,9 +703,9 @@ export function SessionGroupSection(props: Props): React.ReactNode {
               <TooltipContent side="bottom" sideOffset={4}><p>Delete worktree</p></TooltipContent>
             </Tooltip>
           </div>
-        ) : null}
-        {group.directory ? (
-          <div className={cn('absolute right-0.5 top-1/2 -translate-y-1/2 z-10 transition-opacity', mobileVariant ? 'opacity-100' : 'opacity-0 group-hover/gh:opacity-100 group-focus-within/gh:opacity-100')}>
+      ) : null}
+      {group.directory ? (
+          <div className="absolute right-0.5 top-1/2 z-10 -translate-y-1/2 opacity-100 pointer-events-auto">
             <Tooltip>
               <TooltipTrigger asChild>
                 <button
@@ -715,8 +725,8 @@ export function SessionGroupSection(props: Props): React.ReactNode {
                </TooltipTrigger>
                <TooltipContent side="bottom" sideOffset={4}><p>New draft session</p></TooltipContent>
              </Tooltip>
-           </div>
-         ) : null}
+            </div>
+      ) : null}
       </div>
       {!isCollapsed ? <div className={cn('oc-group-body', groupBodyPaddingClass)}>{body}</div> : null}
     </div>
