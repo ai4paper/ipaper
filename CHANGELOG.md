@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.3]
+
+- Chat: Added support for mentioning folders directly in chat prompts. (@isomoes) 45430f06
+- Sidebar: Kept session controls visible without requiring hover. (@isomoes) 1a8be247
+- Security: Stopped sending usage data during update checks. (@isomoes) b9e2f139
+- UI: Restored keyboard navigation looping in dropdown menus. (@isomoes) a105c257
+- Tooling: Added a `bun run stop` command for detached web dev processes. (@isomoes) ef120e16
+
 ## [0.1.2]
 
 - Web: Added npm package repository metadata so provenance-backed publishes validate against the GitHub repo. (@isomoes) 3c4f3a31

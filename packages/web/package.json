@@ -1,6 +1,6 @@
 {
   "name": "@ai4paper/ipaper",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "IPaper web app and CLI package",
   "private": false,
   "type": "module",
