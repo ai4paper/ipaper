@@ -31,6 +31,7 @@ import { appendInlineComments } from '@/lib/messages/inlineComments';
 import { AttachedFilesList } from './FileAttachment';
 import { QueuedMessageChips } from './QueuedMessageChips';
 import { FileMentionAutocomplete, type FileMentionHandle } from './FileMentionAutocomplete';
+import { buildMentionPath, extractInlineMentionAttachments } from './fileMentions';
 import { CommandAutocomplete, type CommandAutocompleteHandle } from './CommandAutocomplete';
 import { SkillAutocomplete, type SkillAutocompleteHandle } from './SkillAutocomplete';
 import { cn, formatDirectoryName, isMacOS } from '@/lib/utils';
@@ -84,26 +85,13 @@ const VS_CODE_DROP_DATA_TYPES = [
 
 const FILE_URI_PREFIX = 'file://';
 
-const encodeFilePath = (filepath: string): string => {
-    let normalized = filepath.replace(/\\/g, '/');
-    if (/^[A-Za-z]:/.test(normalized)) {
-        normalized = `/${normalized}`;
-    }
-    return normalized
-        .split('/')
-        .map((segment, index) => {
-            if (index === 1 && /^[A-Za-z]:$/.test(segment)) return segment;
-            return encodeURIComponent(segment);
-        })
-        .join('/');
-};
-
 const toServerFileUrl = (filepath: string): string => {
     const normalized = filepath.replace(/\\/g, '/').trim();
     if (normalized.toLowerCase().startsWith(FILE_URI_PREFIX)) {
         return normalized;
     }
-    return `file://${encodeFilePath(normalized)}`;
+    const withLeadingSlash = normalized.startsWith('/') ? normalized : `/${normalized}`;
+    return `file://${encodeURI(withLeadingSlash)}`;
 };
 
 const isLikelyAbsolutePath = (value: string): boolean => (
@@ -841,82 +829,11 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({ onOpenSettings, scrollTo
     );
 
     const extractInlineFileMentions = React.useCallback((rawText: string): { sanitizedText: string; attachments: AttachedFile[] } => {
-        if (!rawText || !rawText.includes('@')) {
-            return { sanitizedText: rawText, attachments: [] };
-        }
-
         const clientDirectory = opencodeClient.getDirectory() || '';
-        const root = (chatSearchDirectory || clientDirectory).replace(/\\/g, '/').replace(/\/+$/, '');
-        const knownAgentNames = new Set(agents.map((agent) => agent.name.toLowerCase()));
-        const seenPaths = new Set<string>();
-        const attachments: AttachedFile[] = [];
-
-        const mentionRegex = /@([^\s]+)/g;
-        let match: RegExpExecArray | null;
-        while ((match = mentionRegex.exec(rawText)) !== null) {
-            const rawMentionPath = match[1];
-            const offset = match.index;
-            const original = rawText;
-            const charBefore = offset > 0 ? original[offset - 1] : null;
-            if (charBefore && !/(\s|\(|\)|\[|\]|\{|\}|"|'|`|,|\.|;|:)/.test(charBefore)) {
-                continue;
-            }
-
-            const mentionPath = String(rawMentionPath || '')
-                .trim()
-                .replace(/^[`"'<(]+/, '')
-                .replace(/[),.;:!?`"'>]+$/g, '');
-            if (!mentionPath) {
-                continue;
-            }
-
-            if (knownAgentNames.has(mentionPath.toLowerCase())) {
-                continue;
-            }
-
-            const looksLikeFilePath = mentionPath.includes('/') || mentionPath.includes('\\') || mentionPath.includes('.');
-            if (!looksLikeFilePath) {
-                continue;
-            }
-
-            const normalizedMentionPath = mentionPath.replace(/\\/g, '/').replace(/^\.\//, '').replace(/^\/+/, '');
-            if (!normalizedMentionPath) {
-                continue;
-            }
-
-            const serverPath = mentionPath.startsWith('/')
-                ? mentionPath.replace(/\\/g, '/')
-                : root
-                    ? `${root}/${normalizedMentionPath}`
-                    : null;
-
-            if (!serverPath) {
-                continue;
-            }
-
-            const normalizedServerPath = serverPath.replace(/\/+/g, '/');
-            if (seenPaths.has(normalizedServerPath)) {
-                continue;
-            }
-            seenPaths.add(normalizedServerPath);
-
-            const filename = normalizedMentionPath.split('/').filter(Boolean).pop() || normalizedMentionPath;
-            attachments.push({
-                id: `inline-server-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-                file: new File([], filename, { type: 'text/plain' }),
-                filename,
-                mimeType: 'text/plain',
-                size: 0,
-                dataUrl: toServerFileUrl(normalizedServerPath),
-                source: 'server',
-                serverPath: normalizedServerPath,
-            });
-        }
-
-        return {
-            sanitizedText: rawText,
-            attachments,
-        };
+        return extractInlineMentionAttachments(rawText, {
+            root: chatSearchDirectory || clientDirectory,
+            knownAgentNames: new Set(agents.map((agent) => agent.name.toLowerCase())),
+        });
     }, [agents, chatSearchDirectory]);
     const [autocompleteOverlayPosition, setAutocompleteOverlayPosition] = React.useState<AutocompleteOverlayPosition | null>(null);
     const abortTimeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -2223,15 +2140,18 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({ onOpenSettings, scrollTo
         }
     }, [addAttachedFile, currentSessionId, newSessionDraftOpen, insertTextAtSelection]);
 
-    const handleFileSelect = (file: { name: string; path: string; relativePath?: string }) => {
+    const handleFileSelect = (file: { name: string; path: string; relativePath?: string; type?: 'file' | 'directory' }) => {
 
         const cursorPosition = textareaRef.current?.selectionStart || 0;
         const textBeforeCursor = message.substring(0, cursorPosition);
         const lastAtSymbol = textBeforeCursor.lastIndexOf('@');
 
-        const mentionPath = (file.relativePath && file.relativePath.trim().length > 0)
-            ? file.relativePath.trim()
-            : (toProjectRelativeMentionPath(file.path) || file.name);
+        const mentionPath = buildMentionPath({
+            ...file,
+            relativePath: (file.relativePath && file.relativePath.trim().length > 0)
+                ? file.relativePath.trim()
+                : (toProjectRelativeMentionPath(file.path) || file.name),
+        });
 
         if (lastAtSymbol !== -1) {
             const newMessage =

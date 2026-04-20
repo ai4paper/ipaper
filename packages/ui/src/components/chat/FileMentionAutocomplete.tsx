@@ -1,5 +1,5 @@
 import React from 'react';
-import { RiCodeLine, RiFileImageLine, RiFileLine, RiFilePdfLine, RiRefreshLine } from '@remixicon/react';
+import { RiCodeLine, RiFileImageLine, RiFileLine, RiFilePdfLine, RiFolderLine, RiRefreshLine } from '@remixicon/react';
 import { cn, truncatePathMiddle } from '@/lib/utils';
 import { useFileSearchStore } from '@/stores/useFileSearchStore';
 import { useConfigStore } from '@/stores/useConfigStore';
@@ -162,18 +162,25 @@ export const FileMentionAutocomplete = React.forwardRef<FileMentionHandle, FileM
     let cancelled = false;
     setLoading(true);
 
-    searchFiles(currentDirectory, normalizedQueryLower, 80, {
-      includeHidden: showHidden,
-      respectGitignore: !showGitignored,
-      type: 'file',
-    })
-      .then((hits) => {
+    Promise.all([
+      searchFiles(currentDirectory, normalizedQueryLower, 80, {
+        includeHidden: showHidden,
+        respectGitignore: !showGitignored,
+        type: 'file',
+      }),
+      searchFiles(currentDirectory, normalizedQueryLower, 40, {
+        includeHidden: showHidden,
+        respectGitignore: !showGitignored,
+        type: 'directory',
+      }),
+    ])
+      .then(([fileHits, directoryHits]) => {
         if (cancelled) {
           return;
         }
 
         const recentSet = new Set(recentFiles.map((file) => file.path));
-        setFiles(hits.filter((hit) => !recentSet.has(hit.path)).slice(0, 15));
+        setFiles([...directoryHits, ...fileHits].filter((hit) => !recentSet.has(hit.path)).slice(0, 15));
       })
       .catch(() => {
         if (!cancelled) {
@@ -341,6 +348,10 @@ export const FileMentionAutocomplete = React.forwardRef<FileMentionHandle, FileM
   }), [files, recentFiles, visibleAgents, selectedIndex, onClose, handleFileSelect, handleAgentPick]);
 
   const getFileIcon = (file: FileInfo) => {
+    if (file.type === 'directory') {
+      return <RiFolderLine className="h-3.5 w-3.5 text-[var(--status-warning)]" />;
+    }
+
     const ext = file.extension?.toLowerCase();
     switch (ext) {
       case 'ts':

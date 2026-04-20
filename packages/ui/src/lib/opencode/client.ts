@@ -88,6 +88,7 @@ export type ProjectFileSearchHit = {
   path: string;
   relativePath: string;
   extension?: string;
+  type?: 'file' | 'directory';
 };
 
 type AgentPartInputLite = {
@@ -1502,6 +1503,7 @@ class OpencodeService {
           path: normalizedPath,
           relativePath: normalizedRelativePath,
           extension: name.includes('.') ? name.split('.').pop()?.toLowerCase() : undefined,
+          type: options?.type === 'directory' ? 'directory' : 'file',
         };
       });
     } catch (error) {
