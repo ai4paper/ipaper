@@ -31,6 +31,7 @@ function DropdownMenuTrigger({
 
 function DropdownMenuContent({
   className,
+  loop = true,
   sideOffset = 4,
   style,
   ...props
@@ -39,6 +40,7 @@ function DropdownMenuContent({
     <DropdownMenuPrimitive.Portal>
       <DropdownMenuPrimitive.Content
         data-slot="dropdown-menu-content"
+        loop={loop}
         sideOffset={sideOffset}
         style={{
           backgroundColor: 'var(--surface-elevated)',
@@ -228,11 +230,13 @@ function DropdownMenuSubTrigger({
 
 function DropdownMenuSubContent({
   className,
+  loop = true,
   ...props
 }: React.ComponentProps<typeof DropdownMenuPrimitive.SubContent>) {
   return (
       <DropdownMenuPrimitive.SubContent
         data-slot="dropdown-menu-sub-content"
+        loop={loop}
         style={{
           backgroundColor: 'var(--surface-elevated)',
           color: 'var(--surface-elevated-foreground)',
