@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const repoRoot = path.resolve(__dirname, '..');
-const useDetachedChildren = process.platform === 'darwin';
+const useDetachedChildren = process.platform !== 'win32';
 const webRoot = path.join(repoRoot, 'packages/web');
 
 function run(label, command, args, env = {}, options = {}) {

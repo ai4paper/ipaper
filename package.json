@@ -36,6 +36,7 @@
     "dev:web:server": "bun run --cwd packages/web dev:server:watch",
     "dev:web:full": "node ./scripts/dev-web-full.mjs",
     "dev:web:hmr": "node ./scripts/dev-web-hmr.mjs",
+    "stop": "node ./scripts/stop-dev.mjs",
     "start:web": "bun run --cwd packages/web start",
     "pack:web": "bun pm pack --cwd packages/web",
     "icons:sprite": "node scripts/generate-file-type-sprite.mjs",
