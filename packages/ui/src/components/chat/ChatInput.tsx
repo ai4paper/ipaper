@@ -15,7 +15,6 @@ import {
     RiGithubLine,
     RiSendPlane2Line,
 } from '@remixicon/react';
-import { BrowserVoiceButton } from '@/components/voice';
 // sessionStore removed — currentSessionId comes from useSessionUIStore
 import { useConfigStore } from '@/stores/useConfigStore';
 import { useUIStore } from '@/stores/useUIStore';
@@ -213,7 +212,6 @@ const getProjectIconColor = (projectColor?: string | null): string | undefined =
 
 const MemoModelControls = React.memo(ModelControls);
 const MemoUnifiedControlsDrawer = React.memo(UnifiedControlsDrawer);
-const MemoBrowserVoiceButton = React.memo(BrowserVoiceButton);
 const MemoMobileAgentButton = React.memo(MobileAgentButton);
 const MemoMobileModelButton = React.memo(MobileModelButton);
 const MemoStatusRow = React.memo(StatusRow);
@@ -3474,7 +3472,6 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({ onOpenSettings, scrollTo
                                             />
                                         </div>
                                         <div className="flex items-center gap-x-1 flex-shrink-0">
-                                            <MemoBrowserVoiceButton />
                                             <ComposerActionButtons
                                                 isMobile={isMobile}
                                                 footerIconButtonClass={footerIconButtonClass}
@@ -3539,7 +3536,6 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({ onOpenSettings, scrollTo
                                 </div>
                                 <div className={cn('flex items-center flex-1 justify-end', footerGapClass, 'md:gap-x-3')}>
                                     <MemoModelControls className={cn('flex-1 min-w-0 justify-end')} />
-                                    <MemoBrowserVoiceButton />
                                     <ComposerActionButtons
                                         isMobile={isMobile}
                                         footerIconButtonClass={footerIconButtonClass}

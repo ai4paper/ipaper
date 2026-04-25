@@ -45,7 +45,6 @@ import { ConfigUpdateOverlay } from '@/components/ui/ConfigUpdateOverlay';
 import { AboutDialog } from '@/components/ui/AboutDialog';
 import { RuntimeAPIProvider } from '@/contexts/RuntimeAPIProvider';
 import { registerRuntimeAPIs } from '@/contexts/runtimeAPIRegistry';
-import { VoiceProvider } from '@/components/voice';
 import { useUIStore } from '@/stores/useUIStore';
 import { useGitHubAuthStore } from '@/stores/useGitHubAuthStore';
 import { useFeatureFlagsStore } from '@/stores/useFeatureFlagsStore';
@@ -698,21 +697,19 @@ function App({ apis }: AppProps) {
       <SyncProvider sdk={opencodeClient.getSdkClient()} directory={currentDirectory || ''}>
         <RuntimeAPIProvider apis={apis}>
           <FireworksProvider>
-            <VoiceProvider>
-              <TooltipProvider delayDuration={700} skipDelayDuration={150}>
-                <div className={isDesktopRuntime ? 'h-full text-foreground bg-transparent' : 'h-full text-foreground bg-background'}>
-                  <SyncAppEffects embeddedBackgroundWorkEnabled={embeddedBackgroundWorkEnabled} />
-                  <MainLayout />
-                  <Toaster />
-                  <ConfigUpdateOverlay />
-                  <QuickOpenDialog />
-                  <AboutDialogWrapper />
-                  {showMemoryDebug && (
-                    <MemoryDebugPanel onClose={() => setShowMemoryDebug(false)} />
-                  )}
-                </div>
-              </TooltipProvider>
-            </VoiceProvider>
+            <TooltipProvider delayDuration={700} skipDelayDuration={150}>
+              <div className={isDesktopRuntime ? 'h-full text-foreground bg-transparent' : 'h-full text-foreground bg-background'}>
+                <SyncAppEffects embeddedBackgroundWorkEnabled={embeddedBackgroundWorkEnabled} />
+                <MainLayout />
+                <Toaster />
+                <ConfigUpdateOverlay />
+                <QuickOpenDialog />
+                <AboutDialogWrapper />
+                {showMemoryDebug && (
+                  <MemoryDebugPanel onClose={() => setShowMemoryDebug(false)} />
+                )}
+              </div>
+            </TooltipProvider>
           </FireworksProvider>
         </RuntimeAPIProvider>
       </SyncProvider>
