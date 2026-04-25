@@ -20,8 +20,6 @@ import {
   RiCloudLine,
   RiFoldersLine,
   RiGitBranchLine,
-  RiGlobalLine,
-  RiMicLine,
   RiListUnordered,
   RiNotification3Line,
   RiPaletteLine,
@@ -95,8 +93,6 @@ const pageOrder: SettingsPageSlug[] = [
   'providers',
   'skills.installed',
   'skills.catalog',
-  'voice',
-  'tunnel',
 ];
 
 function buildRuntimeContext(isDesktop: boolean): SettingsRuntimeContext {
@@ -148,10 +144,6 @@ function getSettingsNavIcon(slug: SettingsPageSlug): React.ComponentType<{ class
     case 'git':
       return RiGitBranchLine;
 
-    case 'voice':
-      return RiMicLine;
-    case 'tunnel':
-      return RiGlobalLine;
     case 'home':
       return null;
     default:
@@ -360,8 +352,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose, forceMobile
     shortcuts: 'shortcuts',
     sessions: 'sessions',
     notifications: 'notifications',
-    voice: 'voice',
-    tunnel: 'tunnel',
   }), []);
 
   const renderUnavailable = React.useCallback(() => {
@@ -431,9 +421,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose, forceMobile
       case 'chat':
       case 'shortcuts':
       case 'sessions':
-      case 'notifications':
-      case 'voice':
-      case 'tunnel': {
+      case 'notifications': {
         const section = openChamberSectionBySlug[slug] ?? 'visual';
         return <IPaperPage section={section} />;
       }
@@ -507,11 +495,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({ onClose, forceMobile
                         )}
                       >
                         <span className="typography-ui-label font-normal truncate">{page.title}</span>
-                        {(page.slug === 'voice' || page.slug === 'tunnel') && (
-                          <span className="shrink-0 typography-micro px-1 rounded leading-none pb-px text-[var(--status-warning)] bg-[var(--status-warning)]/10">
-                            beta
-                          </span>
-                        )}
                       </span>
                     </button>
                   </TooltipTrigger>

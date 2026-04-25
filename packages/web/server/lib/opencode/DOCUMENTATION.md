@@ -14,18 +14,17 @@ This module provides OpenCode server integration utilities for the web server ru
 - `packages/web/server/lib/opencode/env-runtime.js`: OpenCode CLI/binary resolution and shell environment runtime.
 - `packages/web/server/lib/opencode/env-config.js`: OpenCode-related environment variable parsing and validation (host/port/hostname).
 - `packages/web/server/lib/opencode/hmr-state-runtime.js`: HMR-persistent runtime state initialization, auth-state bootstrap, and HMR sync helpers.
-- `packages/web/server/lib/opencode/bootstrap-runtime.js`: base app bootstrap runtime for status/auth/tts/notification/IPaper route wiring.
+- `packages/web/server/lib/opencode/bootstrap-runtime.js`: base app bootstrap runtime for status/auth/notification/IPaper route wiring.
 - `packages/web/server/lib/opencode/network-runtime.js`: OpenCode URL construction, health-probe readiness checks, and API prefix runtime.
 - `packages/web/server/lib/opencode/project-directory-runtime.js`: request-scoped and settings-backed project directory resolution/validation runtime.
 - `packages/web/server/lib/opencode/config-entity-routes.js`: route registration for agent/command/MCP config orchestration and reload semantics.
 - `packages/web/server/lib/opencode/cli-options.js`: CLI/environment option parsing for server startup arguments.
 - `packages/web/server/lib/opencode/core-routes.js`: server status/system routes, auth/access guard routes, and settings utility route registration.
 - `packages/web/server/lib/opencode/shutdown-runtime.js`: graceful shutdown orchestration runtime for watcher/session/terminal/process/server teardown.
-- `packages/web/server/lib/opencode/server-startup-runtime.js`: server listen/startup tunnel flow and process/signal handler orchestration runtime.
+- `packages/web/server/lib/opencode/server-startup-runtime.js`: server listen and process/signal handler orchestration runtime.
 - `packages/web/server/lib/opencode/static-routes-runtime.js`: static asset/SPA fallback route registration and manifest route wiring.
 - `packages/web/server/lib/opencode/feature-routes-runtime.js`: feature route composition runtime for dynamic import-backed config/skill/provider route registration.
 - `packages/web/server/lib/opencode/opencode-resolution-runtime.js`: OpenCode binary resolution snapshot runtime for settings routes and diagnostics.
-- `packages/web/server/lib/opencode/tunnel-wiring-runtime.js`: tunnel service/routes composition runtime and active-port wiring for main server startup.
 - `packages/web/server/lib/opencode/startup-pipeline-runtime.js`: server startup tail orchestration runtime for terminal/proxy/static/start-listen flow.
 - `packages/web/server/lib/opencode/server-utils-runtime.js`: shared server runtime utilities for OpenCode proxy wiring, OpenCode port/readiness helpers, and snapshot fetchers.
 - `packages/web/server/lib/opencode/ipaper-routes.js`: IPaper update and models metadata route registration.
@@ -34,7 +33,7 @@ This module provides OpenCode server integration utilities for the web server ru
 - `packages/web/server/lib/opencode/skill-routes.js`: route registration for skill config CRUD, supporting files, and skills catalog scan/install flows.
 - `packages/web/server/lib/opencode/settings-runtime.js`: Settings persistence runtime (disk IO, migrations, normalization, project validation, and persisted update serialization).
 - `packages/web/server/lib/opencode/settings-helpers.js`: Settings payload sanitization/format helpers runtime for response shaping and persisted merge prep.
-- `packages/web/server/lib/opencode/settings-normalization-runtime.js`: path/settings/tunnel normalization and sanitization helpers runtime used by settings/routes/config wiring.
+- `packages/web/server/lib/opencode/settings-normalization-runtime.js`: path/settings normalization and sanitization helpers runtime used by settings/routes/config wiring.
 - `packages/web/server/lib/opencode/theme-runtime.js`: custom theme JSON validation and theme directory loading runtime for settings utility routes.
 - `packages/web/server/lib/opencode/proxy.js`: OpenCode API/SSE forwarding and readiness-gate route registration.
 - `packages/web/server/lib/opencode/session-runtime.js`: session status/attention/activity runtime for OpenCode SSE events.
@@ -173,16 +172,11 @@ This module provides OpenCode server integration utilities for the web server ru
   - `formatSettingsResponse(settings)`
 
 ## Public exports (settings-normalization-runtime.js)
-- `createSettingsNormalizationRuntime(dependencies)`: creates normalization/sanitization runtime for shared settings and tunnel helper logic.
+- `createSettingsNormalizationRuntime(dependencies)`: creates normalization/sanitization runtime for shared settings helper logic.
 - Returned API:
   - `normalizeDirectoryPath(value)`
   - `normalizePathForPersistence(value)`
   - `normalizeSettingsPaths(input)`
-  - `normalizeTunnelBootstrapTtlMs(value)`
-  - `normalizeTunnelSessionTtlMs(value)`
-  - `normalizeManagedRemoteTunnelHostname(value)`
-  - `normalizeManagedRemoteTunnelPresets(value)`
-  - `normalizeManagedRemoteTunnelPresetTokens(value)`
   - `isUnsafeSkillRelativePath(value)`
   - `sanitizeTypographySizesPartial(input)`
   - `normalizeStringArray(input)`
@@ -233,8 +227,7 @@ This module provides OpenCode server integration utilities for the web server ru
    - `GET /api/passkeys`
    - `DELETE /api/passkeys/:id`
    - `POST /api/auth/reset`
-   - `GET /connect`
-   - `app.use('/api', ...)` auth/tunnel guard
+   - `app.use('/api', ...)` auth guard
 - `registerSettingsUtilityRoutes(app, dependencies)`: registers small settings utility endpoints:
   - `GET /api/config/themes`
   - `POST /api/config/reload`
@@ -246,8 +239,6 @@ This module provides OpenCode server integration utilities for the web server ru
 ## Public exports (cli-options.js)
 - `parseServeCliOptions(options)`: parses serve CLI flags and environment-derived defaults:
   - Port/host/ui-password
-  - Tunnel provider/mode/config/token/hostname
-  - Legacy `--tunnel` shorthand normalization
 
 ## Public exports (cli-entry-runtime.js)
 - `runCliEntryIfMain(dependencies)`: detects direct CLI execution and runs server startup with parsed CLI options.
@@ -270,10 +261,10 @@ This module provides OpenCode server integration utilities for the web server ru
   - `gracefulShutdown(options?)`
 
 ## Public exports (server-startup-runtime.js)
-- `createServerStartupRuntime(dependencies)`: creates runtime for server bind/startup tunnel and process handler wiring.
+- `createServerStartupRuntime(dependencies)`: creates runtime for server bind/startup and process handler wiring.
 - Returned API:
   - `resolveBindHost(host)`
-  - `startListeningAndMaybeTunnel(options)`
+  - `startListening(options)`
   - `attachProcessHandlers(options)`
 
 ## Public exports (static-routes-runtime.js)
@@ -290,11 +281,6 @@ This module provides OpenCode server integration utilities for the web server ru
 - `createOpenCodeResolutionRuntime(dependencies)`: creates runtime for OpenCode binary/source snapshot resolution.
 - Returned API:
   - `getOpenCodeResolutionSnapshot(settings)`: returns configured/resolved OpenCode binary details plus effective managed-launch fields (`launchBinary`, `launchArgs`, `launchWrapperType`) when applicable.
-
-## Public exports (tunnel-wiring-runtime.js)
-- `createTunnelWiringRuntime(dependencies)`: creates runtime for tunnel service construction and tunnel route registration.
-- Returned API:
-  - `initialize(app, initialPort)`
 
 ## Public exports (startup-pipeline-runtime.js)
 - `createStartupPipelineRuntime(dependencies)`: creates runtime for terminal wiring, proxy/bootstrap scheduling, static route registration, and server startup/listen flow.
@@ -353,4 +339,3 @@ This module provides OpenCode server integration utilities for the web server ru
 - All file writes include automatic backup before modification.
 - Config merging follows priority: custom > project > user.
 - UI auth uses scrypt for password hashing with constant-time comparison.
-- Tunnel auth treats `host.docker.internal` as local-only when the socket remote IP is private/loopback.

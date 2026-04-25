@@ -134,7 +134,6 @@ export const SessionAuthGate: React.FC<SessionAuthGateProps> = ({ children }) =>
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState('');
   const [retryAfter, setRetryAfter] = React.useState<number | undefined>(undefined);
-  const [isTunnelLocked, setIsTunnelLocked] = React.useState(false);
   const [passkeyStatus, setPasskeyStatus] = React.useState<PasskeyStatus>(defaultPasskeyStatus);
   const [supportsPasskeys, setSupportsPasskeys] = React.useState(false);
   const [isPasskeyBusy, setIsPasskeyBusy] = React.useState(false);
@@ -214,13 +213,12 @@ export const SessionAuthGate: React.FC<SessionAuthGateProps> = ({ children }) =>
         if (response.ok) {
           console.log('[Frontend Auth] Session is authenticated');
           setState('authenticated');
-          setIsTunnelLocked(false);
           setErrorMessage('');
           setRetryAfter(undefined);
           return;
         }
         if (response.status === 401) {
-          let data: { tunnelLocked?: boolean; debug?: { hasRefreshToken: boolean; message: string } } = {};
+          let data: { debug?: { hasRefreshToken: boolean; message: string } } = {};
           try {
             data = JSON.parse(responseText);
           } catch {
@@ -230,7 +228,6 @@ export const SessionAuthGate: React.FC<SessionAuthGateProps> = ({ children }) =>
           if (data.debug) {
             console.warn('[Frontend Auth] Debug info:', data.debug);
           }
-          setIsTunnelLocked(data.tunnelLocked === true);
           setPasskeyStatus(latestPasskeyStatus);
           setState('locked');
           setRetryAfter(undefined);
@@ -244,17 +241,14 @@ export const SessionAuthGate: React.FC<SessionAuthGateProps> = ({ children }) =>
           data = {};
         }
         setRetryAfter(data.retryAfter);
-        setIsTunnelLocked(false);
         setState('rate-limited');
         return;
       }
       console.error('[Frontend Auth] Unexpected response status:', response.status);
       setState('error');
-      setIsTunnelLocked(false);
     } catch (error) {
       console.warn('Failed to check session status:', error);
       setState('error');
-      setIsTunnelLocked(false);
     }
   }, [refreshPasskeyStatus, skipAuth]);
 
@@ -316,9 +310,6 @@ export const SessionAuthGate: React.FC<SessionAuthGateProps> = ({ children }) =>
   }, []);
 
   const handlePasswordUnlock = React.useCallback(async (enrollPasskey: boolean) => {
-    if (isTunnelLocked) {
-      return;
-    }
     if (!password || isSubmitting) {
       return;
     }
@@ -335,7 +326,6 @@ export const SessionAuthGate: React.FC<SessionAuthGateProps> = ({ children }) =>
       if (response.ok) {
         console.log('[Frontend Auth] Login successful');
         setPassword('');
-        setIsTunnelLocked(false);
         if (enrollPasskey && supportsPasskeys) {
           try {
             await registerPasskeyForCurrentSession();
@@ -360,7 +350,6 @@ export const SessionAuthGate: React.FC<SessionAuthGateProps> = ({ children }) =>
       if (response.status === 401) {
         console.warn('[Frontend Auth] Login failed: Invalid password');
         setErrorMessage('Incorrect password. Try again.');
-        setIsTunnelLocked(false);
         setState('locked');
         return;
       }
@@ -369,24 +358,21 @@ export const SessionAuthGate: React.FC<SessionAuthGateProps> = ({ children }) =>
         console.warn('[Frontend Auth] Login failed: Rate limited');
         const data = await response.json().catch(() => ({}));
         setRetryAfter(data.retryAfter);
-        setIsTunnelLocked(false);
         setState('rate-limited');
         return;
       }
 
       console.error('[Frontend Auth] Login failed: Unexpected response', response.status);
       setErrorMessage('Unexpected response from server.');
-      setIsTunnelLocked(false);
       setState('error');
     } catch (error) {
       console.warn('Failed to submit UI password:', error);
       setErrorMessage('Network error. Check connection and retry.');
-      setIsTunnelLocked(false);
       setState('error');
     } finally {
       setIsSubmitting(false);
     }
-  }, [cancelActivePasskey, isPasskeyBusy, isSubmitting, isTunnelLocked, password, registerPasskeyForCurrentSession, supportsPasskeys, trustDevice]);
+  }, [cancelActivePasskey, isPasskeyBusy, isSubmitting, password, registerPasskeyForCurrentSession, supportsPasskeys, trustDevice]);
 
   const handlePasskeyUnlock = React.useCallback(async () => {
     if (isSubmitting || !supportsPasskeys) {
@@ -421,7 +407,7 @@ export const SessionAuthGate: React.FC<SessionAuthGateProps> = ({ children }) =>
   }, [cancelActivePasskey, isPasskeyBusy, isSubmitting, supportsPasskeys, trustDevice]);
 
   const handlePasskeySetupOnly = React.useCallback(async () => {
-    if (isSubmitting || isTunnelLocked || !supportsPasskeys) {
+    if (isSubmitting || !supportsPasskeys) {
       return;
     }
 
@@ -451,7 +437,7 @@ export const SessionAuthGate: React.FC<SessionAuthGateProps> = ({ children }) =>
       const message = error instanceof Error ? error.message : 'Passkey setup failed.';
       toast.error(message);
     }
-  }, [cancelActivePasskey, handlePasswordUnlock, isPasskeyBusy, isSubmitting, isTunnelLocked, password, registerPasskeyForCurrentSession, state, supportsPasskeys]);
+  }, [cancelActivePasskey, handlePasswordUnlock, isPasskeyBusy, isSubmitting, password, registerPasskeyForCurrentSession, state, supportsPasskeys]);
 
   const canOfferPasskeySetup = supportsPasskeys && passkeyStatus.enabled;
   const canUsePasskey = canOfferPasskeySetup && passkeyStatus.hasPasskeys;
@@ -474,17 +460,14 @@ export const SessionAuthGate: React.FC<SessionAuthGateProps> = ({ children }) =>
         <div className="flex flex-col items-center gap-6 w-full max-w-xs">
           <div className="flex flex-col items-center gap-1 text-center">
             <h1 className="text-xl font-semibold text-foreground">
-              {isTunnelLocked ? 'Tunnel access required' : 'Unlock IPaper'}
+              Unlock IPaper
             </h1>
             <p className="typography-meta text-muted-foreground">
-              {isTunnelLocked
-                ? 'Open this tunnel using the one-time connect link from the desktop app.'
-                : 'This session is password-protected.'}
+              This session is password-protected.
             </p>
           </div>
 
-          {!isTunnelLocked && (
-            <form onSubmit={handleSubmit} className="w-full space-y-2" data-keyboard-avoid="true">
+          <form onSubmit={handleSubmit} className="w-full space-y-2" data-keyboard-avoid="true">
               {canUsePasskey && (
                 <Button
                   type="button"
@@ -578,8 +561,7 @@ export const SessionAuthGate: React.FC<SessionAuthGateProps> = ({ children }) =>
                   {errorMessage}
                 </p>
               )}
-            </form>
-          )}
+          </form>
 
           {showHostSwitcher && (
             <div className="w-full">

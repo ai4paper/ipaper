@@ -2,34 +2,16 @@ export const parseServeCliOptions = ({
   argv = [],
   env = {},
   defaultPort,
-  cloudflareProvider,
-  managedLocalMode,
 }) => {
   const args = Array.isArray(argv) ? [...argv] : [];
   const envPassword =
     env.IPAPER_UI_PASSWORD ||
     env.OPENCODE_UI_PASSWORD ||
     null;
-  const envCfTunnel = env.IPAPER_TRY_CF_TUNNEL === 'true';
-  const envTunnelProvider = env.IPAPER_TUNNEL_PROVIDER || undefined;
-  const envTunnelMode = env.IPAPER_TUNNEL_MODE || undefined;
-  const envTunnelConfigRaw = env.IPAPER_TUNNEL_CONFIG;
-  const envTunnelConfig = typeof envTunnelConfigRaw === 'string'
-    ? (envTunnelConfigRaw.trim().length > 0 ? envTunnelConfigRaw.trim() : null)
-    : undefined;
-  const envTunnelToken = env.IPAPER_TUNNEL_TOKEN || undefined;
-  const envTunnelHostname = env.IPAPER_TUNNEL_HOSTNAME || undefined;
-
   const options = {
     port: defaultPort,
     host: undefined,
     uiPassword: envPassword,
-    tryCfTunnel: envCfTunnel,
-    tunnelProvider: envTunnelProvider,
-    tunnelMode: envTunnelMode,
-    tunnelConfigPath: envTunnelConfig,
-    tunnelToken: envTunnelToken,
-    tunnelHostname: envTunnelHostname,
   };
 
   const consumeValue = (currentIndex, inlineValue) => {
@@ -75,53 +57,6 @@ export const parseServeCliOptions = ({
       continue;
     }
 
-    if (optionName === 'try-cf-tunnel') {
-      options.tryCfTunnel = true;
-      continue;
-    }
-
-    if (optionName === 'tunnel-provider') {
-      const { value, nextIndex } = consumeValue(i, inlineValue);
-      i = nextIndex;
-      options.tunnelProvider = typeof value === 'string' ? value : options.tunnelProvider;
-      continue;
-    }
-
-    if (optionName === 'tunnel-mode') {
-      const { value, nextIndex } = consumeValue(i, inlineValue);
-      i = nextIndex;
-      options.tunnelMode = typeof value === 'string' ? value : options.tunnelMode;
-      continue;
-    }
-
-    if (optionName === 'tunnel-config') {
-      const { value, nextIndex } = consumeValue(i, inlineValue);
-      i = nextIndex;
-      options.tunnelConfigPath = typeof value === 'string' ? value : null;
-      continue;
-    }
-
-    if (optionName === 'tunnel-token') {
-      const { value, nextIndex } = consumeValue(i, inlineValue);
-      i = nextIndex;
-      options.tunnelToken = typeof value === 'string' ? value : options.tunnelToken;
-      continue;
-    }
-
-    if (optionName === 'tunnel-hostname') {
-      const { value, nextIndex } = consumeValue(i, inlineValue);
-      i = nextIndex;
-      options.tunnelHostname = typeof value === 'string' ? value : options.tunnelHostname;
-      continue;
-    }
-
-    if (optionName === 'tunnel') {
-      const { value, nextIndex } = consumeValue(i, inlineValue);
-      i = nextIndex;
-      options.tunnelProvider = cloudflareProvider;
-      options.tunnelMode = managedLocalMode;
-      options.tunnelConfigPath = typeof value === 'string' ? value : null;
-    }
   }
 
   return options;

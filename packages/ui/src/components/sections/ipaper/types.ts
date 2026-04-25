@@ -5,6 +5,4 @@ export type IPaperSection =
   | 'sessions'
   | 'git'
   | 'github'
-  | 'notifications'
-  | 'voice'
-  | 'tunnel';
+  | 'notifications';

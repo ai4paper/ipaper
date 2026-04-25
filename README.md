@@ -22,27 +22,12 @@ Or install manually: `bun add -g @ai4paper/ipaper` (or npm, pnpm, yarn).
 ipaper                          # Start on port 3000
 ipaper --port 8080              # Custom port
 ipaper --ui-password secret     # Password-protect UI
-ipaper tunnel help              # Tunnel lifecycle commands
-ipaper tunnel providers         # Show provider capabilities
-ipaper tunnel profile add --provider cloudflare --mode managed-remote --name prod-main --hostname app.example.com --token <token>
-ipaper tunnel start --profile prod-main
-ipaper tunnel start --provider cloudflare --mode quick --qr
-ipaper tunnel start --provider cloudflare --mode managed-local --config ~/.cloudflared/config.yml
-ipaper tunnel status --all      # Show tunnel state across instances
-ipaper tunnel stop --port 3000  # Stop tunnel only (server stays running)
 ipaper logs                     # Follow latest instance logs
 OPENCODE_PORT=4096 OPENCODE_SKIP_START=true ipaper                    # Connect to external OpenCode server
 OPENCODE_HOST=https://myhost:4096 OPENCODE_SKIP_START=true ipaper     # Connect via custom host/HTTPS
 ipaper stop                     # Stop server
 ipaper update                   # Update to latest version
 ```
-
-### Tunnel behavior notes
-
-- One active tunnel per running IPaper instance (port).
-- Starting a different tunnel mode/provider on the same instance replaces the active tunnel.
-- Replacing or stopping a tunnel revokes existing connect links and invalidates remote tunnel sessions.
-- Connect links are one-time tokens; generating a new link revokes the previous unused link.
 
 <details>
 <summary>Connect to external OpenCode server</summary>
@@ -162,7 +147,6 @@ Workspace layout:
 
 ## What makes the web version special
 
-- **Remote access**: Cloudflare tunnel with QR onboarding. Scan from your phone, start coding.
 - **Mobile-first PWA**: optimized chat controls, keyboard-safe layouts, drag-to-reorder projects.
 - **Background notifications**: know when your agent finishes, even from another tab.
 - **Self-update**: update and restart from the UI while keeping server settings intact.
