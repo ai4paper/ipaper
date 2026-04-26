@@ -3,6 +3,25 @@ import { applyDirectoryEvent } from '../event-reducer'
 import { INITIAL_STATE } from '../types'
 
 describe('applyDirectoryEvent', () => {
+  it('uses the resolved store directory for created sessions', () => {
+    const state = structuredClone(INITIAL_STATE)
+
+    applyDirectoryEvent(state, {
+      type: 'session.created',
+      properties: {
+        info: {
+          id: 'ses-1',
+          title: 'New session',
+          directory: '/home/isomoes',
+          time: { created: 1, updated: 1 },
+        },
+      },
+    }, { directory: '/home/isomoes/code/js/ipaper' })
+
+    expect(state.session).toHaveLength(1)
+    expect(state.session[0].directory).toBe('/home/isomoes/code/js/ipaper')
+  })
+
   it('does not duplicate overlapping delta text after a newer part.updated replaces an older one', () => {
     const state = structuredClone(INITIAL_STATE)
     const messageID = 'msg-1'

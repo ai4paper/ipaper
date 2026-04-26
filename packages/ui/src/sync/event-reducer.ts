@@ -70,6 +70,15 @@ function getToolStatus(part: Part): string | undefined {
   return typeof status === "string" ? status : undefined
 }
 
+export function normalizeSessionDirectory(session: Session, directory?: string | null): Session {
+  const normalizedDirectory = typeof directory === "string" && directory.trim().length > 0 ? directory : null
+  if (!normalizedDirectory || (session as { directory?: unknown }).directory === normalizedDirectory) {
+    return session
+  }
+
+  return { ...session, directory: normalizedDirectory } as Session
+}
+
 function shouldPreserveExistingPart(previous: Part, next: Part): boolean {
   if (previous.type !== "tool" || next.type !== "tool") {
     return false
@@ -131,6 +140,7 @@ export function applyDirectoryEvent(
   draft: State,
   event: Event,
   callbacks?: {
+    directory?: string
     onRefresh?: (directory: string) => void
     onLoadLsp?: () => void
     onSetSessionTodo?: (sessionID: string, todos: Todo[] | undefined) => void
@@ -143,7 +153,7 @@ export function applyDirectoryEvent(
     }
 
     case "session.created": {
-      const info = stripSessionDiffSnapshots((event.properties as { info: Session }).info)
+      const info = normalizeSessionDirectory(stripSessionDiffSnapshots((event.properties as { info: Session }).info), callbacks?.directory)
       const sessions = draft.session
       const result = Binary.search(sessions, info.id, (s) => s.id)
       if (result.found) {
@@ -157,7 +167,7 @@ export function applyDirectoryEvent(
     }
 
     case "session.updated": {
-      const info = stripSessionDiffSnapshots((event.properties as { info: Session }).info)
+      const info = normalizeSessionDirectory(stripSessionDiffSnapshots((event.properties as { info: Session }).info), callbacks?.directory)
       const sessions = draft.session
       const result = Binary.search(sessions, info.id, (s) => s.id)
 

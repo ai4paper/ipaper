@@ -597,6 +597,7 @@ class OpencodeService {
 
   async sendMessage(params: {
     id: string;
+    directory?: string | null;
     providerID: string;
     modelID: string;
     text: string;
@@ -687,8 +688,10 @@ class OpencodeService {
       throw new Error('Message must have at least one part (text or file)');
     }
 
-    if (this.currentDirectory) {
-      await waitForWorktreeBootstrap(this.currentDirectory);
+    const requestDirectory = this.normalizeCandidatePath(params.directory) ?? this.currentDirectory;
+
+    if (requestDirectory) {
+      await waitForWorktreeBootstrap(requestDirectory);
     }
 
     // Use async prompt endpoint so the client doesn't block waiting
@@ -698,15 +701,15 @@ class OpencodeService {
     let url: URL;
     try {
       url = new URL(`${base}/session/${encodeURIComponent(params.id)}/prompt_async`);
-      if (this.currentDirectory) {
-        url.searchParams.set('directory', this.currentDirectory);
+      if (requestDirectory) {
+        url.searchParams.set('directory', requestDirectory);
       }
     } catch (error) {
       console.error('[git-generation][browser] failed to build prompt_async URL', {
         baseUrl: this.baseUrl,
         normalizedBase: base,
         sessionId: params.id,
-        directory: this.currentDirectory,
+        directory: requestDirectory,
         message: error instanceof Error ? error.message : String(error),
         error,
       });
@@ -720,7 +723,7 @@ class OpencodeService {
         modelID: params.modelID,
         agent: params.agent,
         variant: params.variant,
-        directory: this.currentDirectory,
+        directory: requestDirectory,
         baseUrl: this.baseUrl,
         formatType: params.format.type,
       });
@@ -750,7 +753,7 @@ class OpencodeService {
       console.error('[git-generation][browser] prompt_async request failed before response', {
         sessionId: params.id,
         url: url.toString(),
-        directory: this.currentDirectory,
+        directory: requestDirectory,
         hasFormat: Boolean(params.format),
         message: error instanceof Error ? error.message : String(error),
         error,

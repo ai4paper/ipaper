@@ -6,7 +6,7 @@ import type { StoreApi } from "zustand"
 import { useStore } from "zustand"
 import type { OpencodeClient } from "@opencode-ai/sdk/v2/client"
 import { createEventPipeline } from "./event-pipeline"
-import { reduceGlobalEvent, applyGlobalProject, applyDirectoryEvent } from "./event-reducer"
+import { reduceGlobalEvent, applyGlobalProject, applyDirectoryEvent, normalizeSessionDirectory } from "./event-reducer"
 import { useGlobalSyncStore, type GlobalSyncStore } from "./global-sync-store"
 import { ChildStoreManager, type DirectoryStore } from "./child-store"
 import {
@@ -1141,7 +1141,7 @@ function handleEvent(
       break
   }
 
-  if (applyDirectoryEvent(draft, payload)) {
+  if (applyDirectoryEvent(draft, payload, { directory: resolvedDirectory })) {
     store.setState(draft)
     const sessionID = getSessionIdFromPayload(payload) ?? undefined
     const messageID = getMessageIdFromPayload(payload) ?? undefined
@@ -1242,6 +1242,7 @@ export function SyncProvider(props: {
               }
               const sessions = (result.data ?? [])
                 .filter((s) => !!s?.id)
+                .map((session) => normalizeSessionDirectory(session, dir))
                 .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
               store.setState({ session: sessions, sessionTotal: sessions.length, limit: Math.max(sessions.length, 50) })
               ingestDirectoryStateIntoRoutingIndex(routingIndex, directory, store.getState())

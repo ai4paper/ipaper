@@ -61,6 +61,7 @@ export type { AttachedFile }
 
 function routeMessage(params: {
   sessionId: string
+  directory?: string | null
   content: string
   providerID: string
   modelID: string
@@ -73,7 +74,7 @@ function routeMessage(params: {
   const sdk = opencodeClient.getSdkClient()
 
   if (params.inputMode === "shell") {
-    const dir = opencodeClient.getDirectory() || undefined
+    const dir = normalizePath(params.directory) ?? opencodeClient.getDirectory() ?? undefined
     return sdk.session.shell({
       sessionID: params.sessionId,
       directory: dir,
@@ -96,7 +97,7 @@ function routeMessage(params: {
       || storeCommands.find((c) => c.name === cmdName)
 
     if (isCommand) {
-      const dir = opencodeClient.getDirectory() || undefined
+      const dir = normalizePath(params.directory) ?? opencodeClient.getDirectory() ?? undefined
       return sdk.session.command({
         sessionID: params.sessionId,
         directory: dir,
@@ -120,6 +121,7 @@ function routeMessage(params: {
     files: params.files,
     send: (messageID) => opencodeClient.sendMessage({
       id: params.sessionId,
+      directory: params.directory,
       providerID: params.providerID,
       modelID: params.modelID,
       text: params.content,
@@ -478,14 +480,14 @@ export const useSessionUIStore = create<SessionUIState>()((set, get) => ({
       if (explicitProject || explicitDirectory !== null) {
         return explicitProject ?? inferredProjectFromDir ?? fallbackProject
       }
-      if (currentDirectory) return currentDirProject ?? fallbackProject
+      if (currentDirProject) return currentDirProject
       return persistedProjectByDir ?? persistedProjectById ?? fallbackProject
     })()
 
     const directory = (() => {
       if (explicitDirectory !== null) return explicitDirectory
       if (explicitProject) return normalizePath(explicitProject.path ?? null)
-      if (currentDirectory) return currentDirectory
+      if (currentDirectory && currentDirProject) return currentDirectory
       if (persistedTarget?.directory) return persistedTarget.directory
       return normalizePath(selectedProject?.path ?? null)
     })()
@@ -789,6 +791,7 @@ export const useSessionUIStore = create<SessionUIState>()((set, get) => ({
 
       await routeMessage({
         sessionId: created.id,
+        directory: createdDirectory,
         content,
         providerID,
         modelID,
@@ -864,6 +867,7 @@ export const useSessionUIStore = create<SessionUIState>()((set, get) => ({
 
     await routeMessage({
       sessionId: currentSessionId || "",
+      directory: currentSessionDirectory,
       content,
       providerID,
       modelID,
@@ -1097,6 +1101,7 @@ export const useSessionUIStore = create<SessionUIState>()((set, get) => ({
 
     await opencodeClient.sendMessage({
       id: session.id,
+      directory,
       providerID: pID,
       modelID: mID,
       text: assistantPlanText,

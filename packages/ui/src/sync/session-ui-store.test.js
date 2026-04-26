@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, test } from 'bun:test';
 import { useSessionWorktreeStore } from './session-worktree-store';
 import { useSessionUIStore } from './session-ui-store';
+import { useDirectoryStore } from '@/stores/useDirectoryStore';
+import { useProjectsStore } from '@/stores/useProjectsStore';
 
 /**
  * Unit tests for session worktree routing through the authoritative store.
@@ -23,6 +25,22 @@ describe('session-worktree-store worktree routing', () => {
       store.clearAttachment(sessionId);
     }
     useSessionUIStore.setState({ currentSessionId: null, worktreeMetadata: new Map() });
+    useProjectsStore.setState({
+      projects: [],
+      activeProjectId: null,
+    });
+  });
+
+  test('new session draft ignores startup home directory when active project is elsewhere', () => {
+    useDirectoryStore.setState({ currentDirectory: '/home/isomoes' });
+    useProjectsStore.setState({
+      projects: [{ id: 'project-1', path: '/home/isomoes/code/js/ipaper', label: 'ipaper' }],
+      activeProjectId: 'project-1',
+    });
+
+    useSessionUIStore.getState().openNewSessionDraft();
+
+    expect(useSessionUIStore.getState().newSessionDraft.directoryOverride).toBe('/home/isomoes/code/js/ipaper');
   });
 
   test('getDirectoryForSession prefers authoritative attachment cwd over sync fallback', () => {
