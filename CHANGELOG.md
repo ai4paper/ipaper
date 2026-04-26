@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.4]
+
+- UI: Removed voice features. (@isomoes) b37822b1
+- Web: Removed the remote tunnel feature. (@isomoes) 5fa4b99c
+- Docs: Added the MIT license. (@isomoes) 44d3e5dc
+- Docs: Added a monorepo root README. (@isomoes) 616ee456
+
 ## [0.1.3]
 
 - Chat: Added support for mentioning folders directly in chat prompts. (@isomoes) 45430f06
