@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.5]
+
+- Session: Fixed session directory handling after restart. (@isomoes) 47915d99
+
 ## [0.1.4]
 
 - UI: Removed voice features. (@isomoes) b37822b1
