@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.1.6]
+
+- Session: Assigned sessions to a single project in the sidebar. (@isomoes) 26b5e0a3
+- Settings: Preserved persisted defaults on startup. (@isomoes) 6bcdd6d8
+- Theme: Restored persisted desktop theme mode. (@isomoes) 26d70d29
+
 ## [0.1.5]
 
 - Session: Fixed session directory handling after restart. (@isomoes) 47915d99
