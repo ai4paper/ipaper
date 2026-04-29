@@ -17,6 +17,12 @@ const persistToLocalStorage = (settings: DesktopSettings) => {
   if (settings.themeVariant) {
     localStorage.setItem('selectedThemeVariant', settings.themeVariant);
   }
+  if (typeof settings.useSystemTheme === 'boolean') {
+    const themeMode = settings.useSystemTheme ? 'system' : settings.themeVariant;
+    if (themeMode === 'system' || themeMode === 'light' || themeMode === 'dark') {
+      localStorage.setItem('themeMode', themeMode);
+    }
+  }
   if (settings.lightThemeId) {
     localStorage.setItem('lightThemeId', settings.lightThemeId);
   }
