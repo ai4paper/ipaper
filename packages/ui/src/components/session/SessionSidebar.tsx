@@ -844,6 +844,7 @@ export const SessionSidebar: React.FC<SessionSidebarProps> = ({
     sessions,
     archivedSessions,
     availableWorktreesByProject,
+    projects: normalizedProjects,
   });
 
   useArchivedAutoFolders({

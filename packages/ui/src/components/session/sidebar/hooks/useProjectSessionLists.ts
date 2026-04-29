@@ -3,12 +3,52 @@ import type { Session } from '@opencode-ai/sdk/v2';
 import { dedupeSessionsById, isSessionRelatedToProject, normalizePath } from '../utils';
 
 type WorktreeMeta = { path: string };
+type ProjectScope = { normalizedPath: string };
 
 type Args = {
   isVSCode: boolean;
   sessions: Session[];
   archivedSessions: Session[];
   availableWorktreesByProject: Map<string, WorktreeMeta[]>;
+  projects: ProjectScope[];
+};
+
+const getProjectDirectories = (
+  project: ProjectScope,
+  availableWorktreesByProject: Map<string, WorktreeMeta[]>,
+  isVSCode: boolean,
+): Set<string> => {
+  const worktreesForProject = isVSCode ? [] : (availableWorktreesByProject.get(project.normalizedPath) ?? []);
+  return new Set([
+    project.normalizedPath,
+    ...worktreesForProject
+      .map((meta) => normalizePath(meta.path) ?? meta.path)
+      .filter((value): value is string => Boolean(value)),
+  ]);
+};
+
+export const getOwningProjectPath = (
+  session: Session,
+  projects: ProjectScope[],
+  availableWorktreesByProject: Map<string, WorktreeMeta[]>,
+  isVSCode: boolean,
+): string | null => {
+  let owner: string | null = null;
+  let ownerLength = -1;
+
+  projects.forEach((project) => {
+    const projectDirectories = getProjectDirectories(project, availableWorktreesByProject, isVSCode);
+    if (!isSessionRelatedToProject(session, project.normalizedPath, projectDirectories)) {
+      return;
+    }
+
+    if (project.normalizedPath.length > ownerLength) {
+      owner = project.normalizedPath;
+      ownerLength = project.normalizedPath.length;
+    }
+  });
+
+  return owner;
 };
 
 export const useProjectSessionLists = (args: Args) => {
@@ -17,7 +57,13 @@ export const useProjectSessionLists = (args: Args) => {
     sessions,
     archivedSessions,
     availableWorktreesByProject,
+    projects,
   } = args;
+
+  const getSessionOwner = React.useCallback(
+    (session: Session) => getOwningProjectPath(session, projects, availableWorktreesByProject, isVSCode),
+    [availableWorktreesByProject, isVSCode, projects],
+  );
 
   const sessionsByDirectory = React.useMemo(() => {
     const next = new Map<string, Session[]>();
@@ -37,13 +83,7 @@ export const useProjectSessionLists = (args: Args) => {
 
   const getSessionsForProject = React.useCallback(
     (project: { normalizedPath: string }) => {
-      const worktreesForProject = isVSCode ? [] : (availableWorktreesByProject.get(project.normalizedPath) ?? []);
-      const directories = [
-        project.normalizedPath,
-        ...worktreesForProject
-          .map((meta) => normalizePath(meta.path) ?? meta.path)
-          .filter((value): value is string => Boolean(value)),
-      ];
+      const directories = [...getProjectDirectories(project, availableWorktreesByProject, isVSCode)];
 
       const seen = new Set<string>();
       const collected: Session[] = [];
@@ -51,7 +91,7 @@ export const useProjectSessionLists = (args: Args) => {
       directories.forEach((directory) => {
         const sessionsForDirectory = sessionsByDirectory.get(directory) ?? [];
         sessionsForDirectory.forEach((session) => {
-          if (seen.has(session.id)) {
+          if (seen.has(session.id) || getSessionOwner(session) !== project.normalizedPath) {
             return;
           }
           seen.add(session.id);
@@ -61,7 +101,7 @@ export const useProjectSessionLists = (args: Args) => {
 
       return collected;
     },
-    [availableWorktreesByProject, isVSCode, sessionsByDirectory],
+    [availableWorktreesByProject, getSessionOwner, isVSCode, sessionsByDirectory],
   );
 
   const getArchivedSessionsForProject = React.useCallback(
@@ -102,7 +142,8 @@ export const useProjectSessionLists = (args: Args) => {
       ]);
 
       const collect = (input: Session[]): Session[] => input.filter((session) =>
-        isSessionRelatedToProject(session, project.normalizedPath, validDirectories),
+        getSessionOwner(session) === project.normalizedPath
+        && isSessionRelatedToProject(session, project.normalizedPath, validDirectories),
       );
 
       const archived = collect(archivedSessions);
@@ -118,12 +159,13 @@ export const useProjectSessionLists = (args: Args) => {
         if (!projectWorktree) {
           return false;
         }
-        return projectWorktree === project.normalizedPath || projectWorktree.startsWith(`${project.normalizedPath}/`);
+        return getSessionOwner(session) === project.normalizedPath
+          && (projectWorktree === project.normalizedPath || projectWorktree.startsWith(`${project.normalizedPath}/`));
       });
 
       return dedupeSessionsById([...archived, ...unassignedLive]);
     },
-    [archivedSessions, availableWorktreesByProject, isVSCode, sessions],
+    [archivedSessions, availableWorktreesByProject, getSessionOwner, isVSCode, sessions],
   );
 
   return {
