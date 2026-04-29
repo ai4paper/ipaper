@@ -209,6 +209,7 @@ export function ThemeSystemProvider({ children, defaultThemeId }: ThemeSystemPro
   const [systemPrefersDark, setSystemPrefersDark] = useState<boolean>(() => getSystemPreference());
   const [customThemes, setCustomThemes] = useState<Theme[]>([]);
   const [customThemesLoading, setCustomThemesLoading] = useState(false);
+  const hasSkippedInitialSettingsPersistRef = React.useRef(false);
   const [vscodeTheme, setVSCodeTheme] = useState<Theme | null>(() => {
     if (typeof window === 'undefined' || !isVSCodeRuntime()) {
       return null;
@@ -560,6 +561,11 @@ export function ThemeSystemProvider({ children, defaultThemeId }: ThemeSystemPro
   useEffect(() => {
     const lightTheme = ensureThemeById(preferences.lightThemeId, 'light');
     const darkTheme = ensureThemeById(preferences.darkThemeId, 'dark');
+
+    if (!hasSkippedInitialSettingsPersistRef.current) {
+      hasSkippedInitialSettingsPersistRef.current = true;
+      return;
+    }
 
     void updateDesktopSettings({
       themeId: currentTheme.metadata.id,

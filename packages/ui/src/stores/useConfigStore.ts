@@ -1199,17 +1199,11 @@ export const useConfigStore = create<ConfigStore>()(
                                 return nextState;
                             });
 
-                            // Clear invalid settings from storage (best-effort cleanup)
+                            // Do not persistently clear invalid defaults here. During updates or
+                            // startup, provider/model availability can be temporarily incomplete;
+                            // falling back for this session is safer than erasing user settings.
                             if (Object.keys(invalidSettings).length > 0) {
-                                // Also clear from store state
-                                 set({
-                                     settingsDefaultModel: invalidSettings.defaultModel !== undefined ? undefined : get().settingsDefaultModel,
-                                     settingsDefaultVariant: invalidSettings.defaultVariant !== undefined ? undefined : get().settingsDefaultVariant,
-                                     settingsDefaultAgent: invalidSettings.defaultAgent !== undefined ? undefined : get().settingsDefaultAgent,
-                                 });
-                                updateDesktopSettings(invalidSettings).catch(() => {
-                                    // Ignore errors - best effort cleanup
-                                });
+                                console.warn("[ConfigStore] Ignoring temporarily invalid default settings:", invalidSettings);
                             }
 
                             return true;
