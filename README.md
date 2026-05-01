@@ -16,6 +16,8 @@ Or install manually: `bun add -g @ai4paper/ipaper` (or npm, pnpm, yarn).
 
 > **Prerequisites:** [OpenCode CLI](https://opencode.ai) installed, Node.js 20+.
 
+> **OpenCode dependency:** IPaper uses `@opencode-ai/sdk` and talks to an OpenCode server. By default `ipaper` starts a managed `opencode serve` process, so the OpenCode CLI must be available on your `PATH`. To use an existing OpenCode server instead, set `OPENCODE_SKIP_START=true` with `OPENCODE_HOST` or `OPENCODE_PORT`.
+
 ## Usage
 
 ```bash
