@@ -91,6 +91,23 @@ const PLAN_MODE_EXPERIMENT_ENABLED =
 
 const fsPromises = fs.promises;
 
+const resolveDefaultIPaperDataDir = () => {
+  const monorepoRoot = path.resolve(__dirname, '..', '..', '..');
+  try {
+    const packagePath = path.join(monorepoRoot, 'package.json');
+    const pkg = JSON.parse(fs.readFileSync(packagePath, 'utf8'));
+    if (pkg?.name === '@ai4paper/ipaper-monorepo' && pkg?.private === true) {
+      return path.join(monorepoRoot, '.ipaper-dev');
+    }
+  } catch {
+  }
+  return path.join(os.homedir(), '.config', 'ipaper');
+};
+
+const IPAPER_DATA_DIR = process.env.IPAPER_DATA_DIR
+  ? path.resolve(process.env.IPAPER_DATA_DIR)
+  : resolveDefaultIPaperDataDir();
+
 const settingsNormalizationRuntime = createSettingsNormalizationRuntime({
   os,
   path,
@@ -108,7 +125,7 @@ const sanitizeModelRefs = (...args) => settingsNormalizationRuntime.sanitizeMode
 const sanitizeSkillCatalogs = (...args) => settingsNormalizationRuntime.sanitizeSkillCatalogs(...args);
 const sanitizeProjects = (...args) => settingsNormalizationRuntime.sanitizeProjects(...args);
 
-const IPAPER_USER_CONFIG_ROOT = path.join(os.homedir(), '.config', 'ipaper');
+const IPAPER_USER_CONFIG_ROOT = IPAPER_DATA_DIR;
 const IPAPER_USER_THEMES_DIR = path.join(IPAPER_USER_CONFIG_ROOT, 'themes');
 const IPAPER_PROJECTS_CONFIG_DIR = path.join(IPAPER_USER_CONFIG_ROOT, 'projects');
 
@@ -142,9 +159,6 @@ const maybeCacheSessionInfoFromEvent = (...args) => notificationTemplateRuntime.
 const buildTemplateVariables = (...args) => notificationTemplateRuntime.buildTemplateVariables(...args);
 const getCachedZenModels = (...args) => notificationTemplateRuntime.getCachedZenModels(...args);
 
-const IPAPER_DATA_DIR = process.env.IPAPER_DATA_DIR
-  ? path.resolve(process.env.IPAPER_DATA_DIR)
-  : path.join(os.homedir(), '.config', 'ipaper');
 const SETTINGS_FILE_PATH = path.join(IPAPER_DATA_DIR, 'settings.json');
 const PUSH_SUBSCRIPTIONS_FILE_PATH = path.join(IPAPER_DATA_DIR, 'push-subscriptions.json');
 

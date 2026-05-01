@@ -16,6 +16,7 @@ release
 /tsc
 /ipaper@*
 local-dev*
+.ipaper-dev/
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

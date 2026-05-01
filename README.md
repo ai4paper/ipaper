@@ -142,6 +142,8 @@ bun run type-check    # Type-check all workspaces
 bun run lint          # Lint all workspaces
 ```
 
+Local dev servers store IPaper runtime state in `.ipaper-dev/` by default, so an installed `ipaper serve` instance can keep using `~/.config/ipaper` while you develop this source tree. Set `IPAPER_DATA_DIR` to override this.
+
 Workspace layout:
 
 - `packages/web`: published `@ai4paper/ipaper` CLI and web runtime
