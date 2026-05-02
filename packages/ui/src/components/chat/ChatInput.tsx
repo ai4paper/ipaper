@@ -746,9 +746,10 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({ onOpenSettings, scrollTo
     const chatInputRadius = 'var(--radius-lg)';
 
     const sendableAttachedFiles = attachedFiles;
+    const nativeSpellcheckEnabled = isMobile || inputSpellcheckEnabled;
 
     const hasInlineMentionForHighlight = React.useMemo(() => {
-        if (!message || !message.includes('@') || inputMode === 'shell') {
+        if (nativeSpellcheckEnabled || !message || !message.includes('@') || inputMode === 'shell') {
             return false;
         }
         const knownAgentNames = new Set(agents.map((agent) => agent.name.toLowerCase()));
@@ -772,7 +773,7 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({ onOpenSettings, scrollTo
             }
         }
         return false;
-    }, [agents, inputMode, message]);
+    }, [agents, inputMode, message, nativeSpellcheckEnabled]);
 
     const highlightedComposerContent = React.useMemo(() => {
         if (!hasInlineMentionForHighlight) {
@@ -3400,9 +3401,9 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({ onOpenSettings, scrollTo
                                     : "@ for files/agents; / for commands; ! for shell"
                                 : "Select or create a session to start chatting"}
                             disabled={!currentSessionId && !newSessionDraftOpen}
-                            autoCorrect={isMobile ? "on" : "off"}
+                            autoCorrect={nativeSpellcheckEnabled ? "on" : "off"}
                             autoCapitalize={isMobile ? "sentences" : "off"}
-                            spellCheck={isMobile || inputSpellcheckEnabled}
+                            spellCheck={nativeSpellcheckEnabled}
                             fillContainer={isDesktopExpanded}
                             outerClassName={cn('focus-within:ring-0', isDesktopExpanded && 'flex-1 min-h-0')}
                             className={cn(
