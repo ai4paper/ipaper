@@ -43,6 +43,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { CodeMirrorEditor } from '@/components/ui/CodeMirrorEditor';
 import { PreviewToggleButton } from './PreviewToggleButton';
+import { PdfPreview } from './PdfPreview';
 import { JsonTreeView } from '@/components/ui/JsonTreeView';
 import { SimpleMarkdownRenderer } from '@/components/chat/MarkdownRenderer';
 import { languageByExtension, loadLanguageByExtension } from '@/lib/codemirror/languageByExtension';
@@ -60,11 +61,11 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 import { useFileSearchStore } from '@/stores/useFileSearchStore';
 import { useDeviceInfo } from '@/lib/device';
 import { cn, getModifierLabel, getRevealLabel, hasModifier } from '@/lib/utils';
-import { getLanguageFromExtension, getImageMimeType, isImageFile } from '@/lib/toolHelpers';
+import { getLanguageFromExtension, getImageMimeType, isImageFile, isPdfFile } from '@/lib/toolHelpers';
 import { useRuntimeAPIs } from '@/hooks/useRuntimeAPIs';
 import { EditorView } from '@codemirror/view';
 import type { Extension } from '@codemirror/state';
-const convertFileSrc = (path: string, _protocol?: string): string => path;
+const convertFileSrc = (path: string): string => path;
 import { useThemeSystem } from '@/contexts/useThemeSystem';
 import { useUIStore } from '@/stores/useUIStore';
 import { useFilesViewTabsStore } from '@/stores/useFilesViewTabsStore';
@@ -572,6 +573,7 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full' }) => {
   const [fileLoading, setFileLoading] = React.useState(false);
   const [fileError, setFileError] = React.useState<string | null>(null);
   const [desktopImageSrc, setDesktopImageSrc] = React.useState<string>('');
+  const [desktopPdfSrc, setDesktopPdfSrc] = React.useState<string>('');
 
   const [loadedFilePath, setLoadedFilePath] = React.useState<string | null>(null);
 
@@ -1295,9 +1297,11 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full' }) => {
   const loadSelectedFile = React.useCallback(async (node: FileNode) => {
     setFileError(null);
     setDesktopImageSrc('');
+    setDesktopPdfSrc('');
     setLoadedFilePath(null);
 
     const selectedIsImage = isImageFile(node.path);
+    const selectedIsPdf = isPdfFile(node.path);
     const isSvg = node.path.toLowerCase().endsWith('.svg');
 
     if (isMobile) {
@@ -1312,8 +1316,15 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full' }) => {
       return;
     }
 
-    // Web: binary images should not be read as utf8.
-    if (!runtime.isDesktop && selectedIsImage && !isSvg) {
+    if (runtime.isDesktop && selectedIsPdf) {
+      setFileContent('');
+      setDraftContent('');
+      setFileLoading(true);
+      return;
+    }
+
+    // Web: binary files should not be read as utf8.
+    if (!runtime.isDesktop && ((selectedIsImage && !isSvg) || selectedIsPdf)) {
       setFileContent('');
       setDraftContent('');
       setLoadedFilePath(node.path);
@@ -1669,6 +1680,7 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full' }) => {
 
   const isSelectedImage = Boolean(selectedFile?.path && isImageFile(selectedFile.path));
   const isSelectedSvg = Boolean(selectedFile?.path && selectedFile.path.toLowerCase().endsWith('.svg'));
+  const isSelectedPdf = Boolean(selectedFile?.path && isPdfFile(selectedFile.path));
   const selectedFilePath = selectedFile?.path ?? '';
   const pendingNavigationTargetPath = React.useMemo(
     () => normalizePath(pendingFileNavigation?.path ?? ''),
@@ -1681,20 +1693,21 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full' }) => {
       && selectedFilePath === pendingNavigationTargetPath
       && !fileLoading
       && !fileError
-      && !isSelectedImage,
+      && !isSelectedImage
+      && !isSelectedPdf,
   );
 
   const displaySelectedPath = React.useMemo(() => {
     return getDisplayPath(root, selectedFilePath);
   }, [selectedFilePath, root]);
 
-  const canCopy = Boolean(selectedFile && (!isSelectedImage || isSelectedSvg) && fileContent.length > 0);
+  const canCopy = Boolean(selectedFile && (!isSelectedImage || isSelectedSvg) && !isSelectedPdf && fileContent.length > 0);
   const canCopyPath = Boolean(selectedFile && displaySelectedPath.length > 0);
-  const canEdit = Boolean(selectedFile && !isSelectedImage && files.writeFile && fileContent.length <= MAX_VIEW_CHARS);
+  const canEdit = Boolean(selectedFile && !isSelectedImage && !isSelectedPdf && files.writeFile && fileContent.length <= MAX_VIEW_CHARS);
   const isMarkdown = Boolean(selectedFile?.path && isMarkdownFile(selectedFile.path));
   const isJson = Boolean(selectedFile?.path && isJsonFile(selectedFile.path));
   const isHtml = Boolean(selectedFile?.path && isHtmlFile(selectedFile.path));
-  const isTextFile = Boolean(selectedFile && !isSelectedImage);
+  const isTextFile = Boolean(selectedFile && !isSelectedImage && !isSelectedPdf);
   const canUseShikiFileView = isTextFile && !isMarkdown && !(isHtml && htmlViewMode === 'preview');
   const staticLanguageExtension = React.useMemo(
     () => (selectedFilePath ? languageByExtension(selectedFilePath) : null),
@@ -1875,7 +1888,7 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full' }) => {
       return;
     }
 
-    if (fileError || isSelectedImage) {
+    if (fileError || isSelectedImage || isSelectedPdf) {
       setPendingFileNavigation(null);
       pendingNavigationCycleRef.current = { key: '', attempts: 0 };
       return;
@@ -1945,6 +1958,7 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full' }) => {
     fileError,
     fileLoading,
     isSelectedImage,
+    isSelectedPdf,
     loadedFilePath,
     pendingFileNavigation,
     root,
@@ -1973,7 +1987,7 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full' }) => {
       return;
     }
 
-    if (fileLoading || loadedFilePath !== targetPath || fileError || isSelectedImage) {
+    if (fileLoading || loadedFilePath !== targetPath || fileError || isSelectedImage || isSelectedPdf) {
       return;
     }
 
@@ -1996,6 +2010,7 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full' }) => {
     fileError,
     fileLoading,
     isSelectedImage,
+    isSelectedPdf,
     loadedFilePath,
     pendingFileFocusPath,
     root,
@@ -2108,6 +2123,10 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full' }) => {
         : `/api/fs/raw?path=${encodeURIComponent(selectedFile.path)}`))
     : '';
 
+  const pdfSrc = selectedFile?.path && isSelectedPdf
+    ? (runtime.isDesktop ? desktopPdfSrc : `/api/fs/raw?path=${encodeURIComponent(selectedFile.path)}`)
+    : '';
+
 
 
 
@@ -2124,7 +2143,7 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full' }) => {
 
       const srcPromise = files.readFileBinary
         ? files.readFileBinary(selectedFile.path).then((result) => result.dataUrl)
-        : Promise.resolve(convertFileSrc(selectedFile.path, 'asset'));
+        : Promise.resolve(convertFileSrc(selectedFile.path));
 
       await srcPromise
         .then((src) => {
@@ -2153,6 +2172,49 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full' }) => {
       cancelled = true;
     };
   }, [files, isSelectedImage, isSelectedSvg, runtime.isDesktop, selectedFile?.path]);
+
+  React.useEffect(() => {
+    let cancelled = false;
+
+    const resolveDesktopPdf = async () => {
+      if (!runtime.isDesktop || !selectedFile?.path || !isSelectedPdf) {
+        setDesktopPdfSrc('');
+        return;
+      }
+
+      setFileError(null);
+
+      const srcPromise = files.readFileBinary
+        ? files.readFileBinary(selectedFile.path).then((result) => result.dataUrl)
+        : Promise.resolve(convertFileSrc(selectedFile.path));
+
+      await srcPromise
+        .then((src) => {
+          if (!cancelled) {
+            setDesktopPdfSrc(src);
+            setLoadedFilePath(selectedFile.path);
+          }
+        })
+        .catch((error) => {
+          if (!cancelled) {
+            setDesktopPdfSrc('');
+            setFileError(error instanceof Error ? error.message : 'Failed to read file');
+            setLoadedFilePath(null);
+          }
+        })
+        .finally(() => {
+          if (!cancelled) {
+            setFileLoading(false);
+          }
+        });
+    };
+
+    void resolveDesktopPdf();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [files, isSelectedPdf, runtime.isDesktop, selectedFile?.path]);
 
   const renderDialogs = () => (
     <Dialog open={!!activeDialog} onOpenChange={(open) => !open && setActiveDialog(null)}>
@@ -2318,7 +2380,7 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full' }) => {
           </DropdownMenuContent>
         </DropdownMenu>
 
-        {!isSelectedImage && (
+        {!isSelectedImage && !isSelectedPdf && (
           <>
             <Button
               variant="ghost"
@@ -2689,6 +2751,8 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full' }) => {
                 className="max-w-full max-h-[70vh] object-contain rounded-md border border-border/30 bg-primary/10"
               />
             </div>
+          ) : isSelectedPdf ? (
+            <PdfPreview src={pdfSrc} title={selectedFile?.name ?? 'PDF Preview'} />
           ) : selectedFile && isJson && jsonViewMode === 'tree' ? (
             <ErrorBoundary
               fallback={
@@ -2992,6 +3056,8 @@ export const FilesView: React.FC<FilesViewProps> = ({ mode = 'full' }) => {
                 className="max-w-full max-h-full object-contain rounded-md border border-border/30 bg-primary/10"
               />
             </div>
+          ) : isSelectedPdf ? (
+            <PdfPreview src={pdfSrc} title={selectedFile.name} />
           ) : isMarkdown && getMdViewMode() === 'preview' ? (
             <div className="h-full overflow-auto p-4">
               {fileContent.length > 500 * 1024 && (

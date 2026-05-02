@@ -1,5 +1,6 @@
 import type { FilesAPI } from '@/lib/api/types';
 import { MAX_OPEN_FILE_LINES, countLinesWithLimit } from '@/lib/fileOpenLimits';
+import { isPdfFile } from '@/lib/toolHelpers';
 
 export type ContextFileOpenFailureReason = 'too-large' | 'missing' | 'unreadable';
 
@@ -40,6 +41,10 @@ const readFileContent = async (files: FilesAPI, path: string): Promise<string> =
 };
 
 export const validateContextFileOpen = async (files: FilesAPI, path: string): Promise<ContextFileOpenValidationResult> => {
+  if (isPdfFile(path)) {
+    return { ok: true };
+  }
+
   try {
     const content = await readFileContent(files, path);
     const lineCount = countLinesWithLimit(content, MAX_OPEN_FILE_LINES);

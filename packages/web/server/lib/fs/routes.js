@@ -15,6 +15,23 @@ const isPathWithinRoot = (resolvedPath, rootPath, path, os) => {
   return true;
 };
 
+export const getRawFileMimeType = (filePath) => {
+  const ext = filePath.split('.').pop()?.toLowerCase();
+  const mimeMap = {
+    png: 'image/png',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    gif: 'image/gif',
+    svg: 'image/svg+xml',
+    webp: 'image/webp',
+    ico: 'image/x-icon',
+    bmp: 'image/bmp',
+    avif: 'image/avif',
+    pdf: 'application/pdf',
+  };
+  return mimeMap[ext || ''] || 'application/octet-stream';
+};
+
 const resolveWorkspacePath = ({ targetPath, baseDirectory, path, os, normalizeDirectoryPath, ipaperUserConfigRoot }) => {
   const normalized = normalizeDirectoryPath(targetPath);
   if (!normalized || typeof normalized !== 'string') {
@@ -414,19 +431,7 @@ export const registerFsRoutes = (app, dependencies) => {
         return res.status(400).json({ error: 'Specified path is not a file' });
       }
 
-      const ext = path.extname(canonicalPath).toLowerCase();
-      const mimeMap = {
-        '.png': 'image/png',
-        '.jpg': 'image/jpeg',
-        '.jpeg': 'image/jpeg',
-        '.gif': 'image/gif',
-        '.svg': 'image/svg+xml',
-        '.webp': 'image/webp',
-        '.ico': 'image/x-icon',
-        '.bmp': 'image/bmp',
-        '.avif': 'image/avif',
-      };
-      const mimeType = mimeMap[ext] || 'application/octet-stream';
+      const mimeType = getRawFileMimeType(canonicalPath);
 
       const download = req.query.download === 'true';
       if (download) {
