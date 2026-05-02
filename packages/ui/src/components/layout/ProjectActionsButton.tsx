@@ -62,6 +62,7 @@ interface ProjectActionsButtonProps {
   className?: string;
   compact?: boolean;
   allowMobile?: boolean;
+  iconOnlyAddAction?: boolean;
 }
 
 const ANSI_ESCAPE_PREFIX = String.fromCharCode(27);
@@ -180,6 +181,7 @@ export const ProjectActionsButton = ({
   className,
   compact = false,
   allowMobile = false,
+  iconOnlyAddAction = false,
 }: ProjectActionsButtonProps) => {
   const { terminal, runtime } = useRuntimeAPIs();
   const { isMobile } = useDeviceInfo();
@@ -657,15 +659,17 @@ export const ProjectActionsButton = ({
       <button
         type="button"
         className={cn(
-          'app-region-no-drag inline-flex h-7 shrink-0 items-center gap-2 self-center rounded-md border border-[var(--interactive-border)]',
-          'bg-[var(--surface-elevated)] px-3 typography-ui-label font-medium text-foreground hover:bg-interactive-hover transition-colors',
+          'app-region-no-drag inline-flex h-7 shrink-0 items-center self-center rounded-md border border-[var(--interactive-border)]',
+          'bg-[var(--surface-elevated)] typography-ui-label font-medium text-foreground hover:bg-interactive-hover transition-colors',
+          iconOnlyAddAction ? 'w-7 justify-center px-0' : 'gap-2 px-3',
           'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary',
           className
         )}
+        aria-label="Add action"
         onClick={openProjectActionsSettings}
       >
         <RiAddLine className="h-4 w-4 text-muted-foreground" />
-        <span className="header-open-label whitespace-nowrap">Add action</span>
+        {!iconOnlyAddAction ? <span className="header-open-label whitespace-nowrap">Add action</span> : null}
       </button>
     );
   }

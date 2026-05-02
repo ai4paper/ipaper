@@ -1351,6 +1351,7 @@ export const Header: React.FC<HeaderProps> = ({
             projectRef={projectActionsContext.projectRef}
             directory={projectActionsContext.directory}
             className="mr-2"
+            iconOnlyAddAction
           />
         )}
         {!isNewSessionDraftOpen ? (
