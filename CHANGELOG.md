@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [0.2.0]
+
+- Chat: Added spelling suggestions for input text. (@isomoes) 398ee549
+- Chat: Restored input spellcheck. (@isomoes) 1bd4ed1b
+- Install: Added the install script. (@isomoes) b9ca7ce8
+- PDF: Added file preview support. (@isomoes) 74af36fa
+- Session: Added the session action icon. (@isomoes) 78870e4e
+- Dev: Isolated source-tree runtime config. (@isomoes) a7b6857b
+
 ## [0.1.6]
 
 - Session: Assigned sessions to a single project in the sidebar. (@isomoes) 26b5e0a3

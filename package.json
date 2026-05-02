@@ -1,6 +1,6 @@
 {
   "name": "@ai4paper/ipaper-monorepo",
-  "version": "0.1.6",
+  "version": "0.2.0",
   "description": "IPaper monorepo workspace for web and ui runtimes",
   "private": true,
   "type": "module",
