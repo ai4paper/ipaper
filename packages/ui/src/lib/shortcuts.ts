@@ -239,7 +239,7 @@ const SHORTCUT_ACTIONS: ReadonlyArray<ShortcutAction> = [
   },
   {
     id: 'open_help',
-    defaultCombo: 'mod+.',
+    defaultCombo: 'mod+shift+k',
     label: 'Open keyboard shortcuts',
     description: 'Show the keyboard shortcuts help',
     customizable: true,

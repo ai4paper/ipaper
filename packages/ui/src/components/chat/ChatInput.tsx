@@ -33,6 +33,8 @@ import { FileMentionAutocomplete, type FileMentionHandle } from './FileMentionAu
 import { buildMentionPath, extractInlineMentionAttachments } from './fileMentions';
 import { CommandAutocomplete, type CommandAutocompleteHandle } from './CommandAutocomplete';
 import { SkillAutocomplete, type SkillAutocompleteHandle } from './SkillAutocomplete';
+import { SpellcheckSuggestionPopover, type SpellcheckSuggestionHandle } from './SpellcheckSuggestionPopover';
+import { applySpellingSuggestion, getSpellcheckWordAtPosition, getSpellingSuggestions, type SpellcheckWordRange } from './spellcheckSuggestions';
 import { cn, formatDirectoryName, isMacOS } from '@/lib/utils';
 import { ModelControls } from './ModelControls';
 import { UnifiedControlsDrawer } from './UnifiedControlsDrawer';
@@ -665,6 +667,13 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({ onOpenSettings, scrollTo
     const [autocompleteTab, setAutocompleteTab] = React.useState<'commands' | 'agents' | 'files'>('commands');
     const [showSkillAutocomplete, setShowSkillAutocomplete] = React.useState(false);
     const [skillQuery, setSkillQuery] = React.useState('');
+    const [spellcheckState, setSpellcheckState] = React.useState<{
+        open: boolean;
+        loading: boolean;
+        word: string;
+        range: SpellcheckWordRange | null;
+        suggestions: string[];
+    }>({ open: false, loading: false, word: '', range: null, suggestions: [] });
     const [textareaSize, setTextareaSize] = React.useState<{ height: number; maxHeight: number } | null>(null);
     const [mobileControlsOpen, setMobileControlsOpen] = React.useState(false);
     const [mobileControlsPanel, setMobileControlsPanel] = React.useState<MobileControlsPanel>(null);
@@ -682,12 +691,14 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({ onOpenSettings, scrollTo
     const mentionRef = React.useRef<FileMentionHandle>(null);
     const commandRef = React.useRef<CommandAutocompleteHandle>(null);
     const skillRef = React.useRef<SkillAutocompleteHandle>(null);
+    const spellcheckRef = React.useRef<SpellcheckSuggestionHandle>(null);
     // Ref to track current message value without triggering re-renders in effects
     const messageRef = React.useRef(message);
     const draftPersistTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
     const skipNextDraftPersistRef = React.useRef(false);
     const lastPersistedDraftRef = React.useRef<Map<string, string>>(new Map());
     const currentSessionIdForDraftRef = React.useRef<string | null>(null);
+    const spellcheckRequestIdRef = React.useRef(0);
 
     // TODO: port sendMessage to session-actions (complex — creates sessions, handles attachments, etc.)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -1460,6 +1471,58 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({ onOpenSettings, scrollTo
         }
     }, [inputMode, hasContent, currentSessionId, sessionPhase, queueModeEnabled, handleQueueMessage]);
 
+    const openSpellcheckSuggestions = React.useCallback(() => {
+        const textarea = textareaRef.current;
+        if (!textarea || inputMode === 'shell') {
+            return;
+        }
+
+        const cursor = textarea.selectionStart ?? message.length;
+        const range = getSpellcheckWordAtPosition(message, cursor);
+        if (!range) {
+            setSpellcheckState({ open: true, loading: false, word: '', range: null, suggestions: [] });
+            return;
+        }
+
+        const requestId = spellcheckRequestIdRef.current + 1;
+        spellcheckRequestIdRef.current = requestId;
+        setShowCommandAutocomplete(false);
+        setShowSkillAutocomplete(false);
+        setShowFileMention(false);
+        setSpellcheckState({ open: true, loading: true, word: range.word, range, suggestions: [] });
+
+        void getSpellingSuggestions(range.word).then((suggestions) => {
+            if (spellcheckRequestIdRef.current !== requestId) {
+                return;
+            }
+            setSpellcheckState({ open: true, loading: false, word: range.word, range, suggestions });
+        }).catch(() => {
+            if (spellcheckRequestIdRef.current !== requestId) {
+                return;
+            }
+            setSpellcheckState({ open: true, loading: false, word: range.word, range, suggestions: [] });
+        });
+    }, [inputMode, message]);
+
+    const handleSpellcheckSuggestionSelect = React.useCallback((suggestion: string) => {
+        const range = spellcheckState.range;
+        if (!range) {
+            setSpellcheckState((state) => ({ ...state, open: false }));
+            return;
+        }
+
+        const next = applySpellingSuggestion(message, range, suggestion);
+        setMessage(next.text);
+        setSpellcheckState((state) => ({ ...state, open: false }));
+        requestAnimationFrame(() => {
+            if (textareaRef.current) {
+                textareaRef.current.selectionStart = next.cursor;
+                textareaRef.current.selectionEnd = next.cursor;
+                textareaRef.current.focus();
+            }
+        });
+    }, [message, spellcheckState.range]);
+
     const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
         // Early return during IME composition to prevent interference with autocomplete.
         // Uses keyCode === 229 fallback for WebKit where compositionend fires before keydown.
@@ -1474,6 +1537,20 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({ onOpenSettings, scrollTo
         if (inputMode === 'shell' && e.key === 'Backspace' && message.length === 0) {
             e.preventDefault();
             setInputMode('normal');
+            return;
+        }
+
+        if (spellcheckState.open && spellcheckRef.current) {
+            if (e.key === 'Enter' || e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'Escape' || e.key === 'Tab') {
+                e.preventDefault();
+                spellcheckRef.current.handleKeyDown(e.key);
+                return;
+            }
+        }
+
+        if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && e.key === '.') {
+            e.preventDefault();
+            openSpellcheckSuggestions();
             return;
         }
 
@@ -1549,7 +1626,7 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({ onOpenSettings, scrollTo
             return;
         }
 
-        if (e.key === 'Tab' && !showCommandAutocomplete && !showFileMention) {
+        if (e.key === 'Tab' && !showCommandAutocomplete && !showFileMention && !spellcheckState.open) {
             e.preventDefault();
             handleCycleAgent();
             return;
@@ -1558,7 +1635,7 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({ onOpenSettings, scrollTo
         // Handle ArrowUp/ArrowDown for message history navigation
         // ArrowUp: only when cursor at start (position 0) or input is empty
         // ArrowDown: also works when cursor at end (to cycle forward through history)
-        const isAnyAutocompleteOpen = showCommandAutocomplete || showSkillAutocomplete || showFileMention;
+        const isAnyAutocompleteOpen = showCommandAutocomplete || showSkillAutocomplete || showFileMention || spellcheckState.open;
         const cursorAtStart = textareaRef.current?.selectionStart === 0 && textareaRef.current?.selectionEnd === 0;
         const cursorAtEnd = textareaRef.current?.selectionStart === message.length && textareaRef.current?.selectionEnd === message.length;
         const canNavigateHistoryUp = !isAnyAutocompleteOpen && (message.length === 0 || cursorAtStart);
@@ -1686,7 +1763,7 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({ onOpenSettings, scrollTo
             return;
         }
 
-        if (!showCommandAutocomplete && !showSkillAutocomplete && !showFileMention) {
+        if (!showCommandAutocomplete && !showSkillAutocomplete && !showFileMention && !spellcheckState.open) {
             setAutocompleteOverlayPosition(null);
             return;
         }
@@ -1732,6 +1809,7 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({ onOpenSettings, scrollTo
         showCommandAutocomplete,
         showFileMention,
         showSkillAutocomplete,
+        spellcheckState.open,
     ]);
 
     React.useLayoutEffect(() => {
@@ -1742,6 +1820,7 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({ onOpenSettings, scrollTo
         showCommandAutocomplete,
         showSkillAutocomplete,
         showFileMention,
+        spellcheckState.open,
         isDesktopExpanded,
     ]);
 
@@ -1851,8 +1930,11 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({ onOpenSettings, scrollTo
             setShowCommandAutocomplete(false);
             setShowFileMention(false);
             setShowSkillAutocomplete(false);
+            setSpellcheckState((state) => ({ ...state, open: false }));
             return;
         }
+
+        setSpellcheckState((state) => state.open ? { ...state, open: false } : state);
 
         if (value.startsWith('/')) {
             const firstSpace = value.indexOf(' ');
@@ -3275,6 +3357,27 @@ const ChatInputComponent: React.FC<ChatInputProps> = ({ onOpenSettings, scrollTo
                                 <p className="mt-2 typography-ui-label text-muted-foreground">Drop files here to attach</p>
                             </div>
                         </div>
+                    )}
+
+                    {spellcheckState.open && (
+                        <SpellcheckSuggestionPopover
+                            ref={spellcheckRef}
+                            word={spellcheckState.word || 'No word selected'}
+                            suggestions={spellcheckState.suggestions}
+                            loading={spellcheckState.loading}
+                            onSelect={handleSpellcheckSuggestionSelect}
+                            onClose={() => setSpellcheckState((state) => ({ ...state, open: false }))}
+                            style={isDesktopExpanded && autocompleteOverlayPosition
+                                ? {
+                                    left: `${autocompleteOverlayPosition.left}px`,
+                                    top: `${autocompleteOverlayPosition.top}px`,
+                                    bottom: 'auto',
+                                    width: `min(360px, calc(100% - ${autocompleteOverlayPosition.left + 8}px))`,
+                                    maxHeight: `${autocompleteOverlayPosition.maxHeight}px`,
+                                    transform: autocompleteOverlayPosition.place === 'above' ? 'translateY(-100%)' : undefined,
+                                }
+                                : undefined}
+                        />
                     )}
 
                     {showCommandAutocomplete && (
