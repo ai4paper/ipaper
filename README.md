@@ -41,13 +41,6 @@ ipaper/
 | Streaming | Server-Sent Events (`streamSSE` from Hono) |
 | Validation | [Zod](https://zod.dev) |
 
-### Shared — `packages/ui`
-
-| Concern | Technology |
-|---------|-----------|
-| Component library | [shadcn/ui](https://ui.shadcn.com) (copy-owned) |
-| Styling | Tailwind CSS v4 |
-
 ## Agent Streaming Architecture
 
 The frontend opens an `EventSource` connection to the Bun server, which runs the Claude agent loop and streams tokens back in real time via SSE:

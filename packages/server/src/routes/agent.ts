@@ -14,31 +14,48 @@ const claudePath = (() => {
 
 export const agentRouter = new Hono();
 
-const promptSchema = z.object({
-  prompt: z
-    .string()
-    .min(1, "prompt must be at least 1 character")
-    .max(4000, "prompt must be at most 4000 characters"),
+const messageSchema = z.object({
+  role: z.enum(["user", "assistant"]),
+  content: z.string().min(1).max(8000),
 });
 
-agentRouter.get("/stream", (c) => {
-  const parsed = promptSchema.safeParse(c.req.query());
+const bodySchema = z.object({
+  messages: z.array(messageSchema).min(1).max(100),
+});
 
-  if (!parsed.success) {
-    return c.json(
-      { error: parsed.error.flatten().fieldErrors },
-      400
-    );
+function buildPrompt(messages: z.infer<typeof bodySchema>["messages"]) {
+  if (messages.length === 1 && messages[0].role === "user") {
+    return messages[0].content;
+  }
+  const transcript = messages
+    .map((m) => {
+      const label = m.role === "user" ? "User" : "Assistant";
+      return `${label}: ${m.content}`;
+    })
+    .join("\n\n");
+  return `The following is an ongoing conversation. Reply directly to the latest user message, taking the prior turns into account. Do not prefix your reply with "Assistant:".\n\n${transcript}`;
+}
+
+agentRouter.post("/stream", async (c) => {
+  let body: unknown;
+  try {
+    body = await c.req.json();
+  } catch {
+    return c.json({ error: "invalid JSON body" }, 400);
   }
 
-  const { prompt: userPrompt } = parsed.data;
+  const parsed = bodySchema.safeParse(body);
+  if (!parsed.success) {
+    return c.json({ error: parsed.error.flatten() }, 400);
+  }
+
+  const userPrompt = buildPrompt(parsed.data.messages);
 
   return streamSSE(c, async (stream) => {
     try {
       for await (const msg of query({
         prompt: userPrompt,
         options: {
-          maxTurns: 1,
           model: "sonnet",
           allowedTools: [],
           ...(claudePath && { pathToClaudeCodeExecutable: claudePath }),
