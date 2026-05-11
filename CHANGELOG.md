@@ -4,6 +4,7 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+- Web: Removed suggested prompt buttons from empty chat. (@isomoes) a99f0b69
 - Web: Rendered assistant messages as markdown with GFM tables and code blocks. (@isomoes) b8fd9a1d
 - Server: Persisted chats to SQLite and lazily managed agent sessions. (@isomoes) 0cac6137
 - Docs: Added agent streaming architecture doc with mermaid diagrams. (@isomoes) 78983d72
