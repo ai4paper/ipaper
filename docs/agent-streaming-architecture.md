@@ -13,6 +13,10 @@ Agent SDK to the browser. The design is built around three ideas:
 3. **REST as the source of truth for history.** The chat list and message
    history are fetched via REST (and cached by TanStack Query). The
    WebSocket only carries *live* activity — it never replays the past.
+4. **SQLite for durable state.** Chats, messages, and the per-chat agent
+   `session_id` are persisted in a local SQLite file so a process
+   restart does not lose history, and the agent can resume its prior
+   conversation context via the SDK's `resume` option.
 
 ## High-level topology
 
@@ -56,7 +60,16 @@ The frontend talks to two endpoints that share the same Bun process:
 
 `SessionManager` lazily allocates a `Session` per `chatId`. Each `Session`
 wraps an `AgentSession`, which owns the single `query()` call that drives
-that chat's agent for its entire lifetime.
+that chat's agent while it is running.
+
+The `AgentSession` itself is lazy: it is *not* constructed when a chat is
+subscribed — only when the first `sendMessage` arrives. After a turn
+ends, an idle timer (default 5 min, override via `IPAPER_AGENT_IDLE_MS`)
+closes the `AgentSession` if no further message arrives. On the next
+message, a fresh `AgentSession` is built with `resume: <stored session_id>`
+so prior context is restored from the SDK's session JSONL. This keeps
+the number of live `claude` subprocesses bounded by *active* chats
+rather than *open* chats.
 
 ## Lifecycle of a turn
 
@@ -110,10 +123,12 @@ sequenceDiagram
 
 Key things to notice:
 
-- **The agent is never restarted.** Steps 1–7 happen once per chat. From
-  then on, every new prompt is just a `queue.push` into the running
-  agent. This is what makes prompt-cache hits and multi-turn tool state
-  possible.
+- **The agent is reused while warm.** Within an active session, every
+  new prompt is just a `queue.push` into the running agent — preserving
+  prompt-cache hits and multi-turn tool state. If the agent has been
+  closed by the idle timer, the next message transparently rebuilds it
+  via `resume: <stored session_id>`; context is restored from the SDK
+  transcript, but the in-process prompt cache is cold.
 - **The Session is the fan-out point.** All subscribers (typically one
   browser tab, but the design allows N) receive the same broadcast.
 - **Persistence and broadcast happen together.** `chatStore.addMessage`
@@ -194,14 +209,14 @@ the authoritative messages query after the next `result`.
 | Agent throws inside `query()`        | `Session` broadcasts `{ type:"error", error }`; UI surfaces it; agent stays closed |
 | Client socket drops mid-turn         | Server keeps running the turn; events accumulate in subscribers (none); on reconnect the client invalidates messages query and the persisted assistant turns reappear |
 | `chat` message references unknown id | Server replies `{ type:"error", error:"chat not found" }` and ignores the request  |
-| Process restart                      | In-memory store is cleared (intentional for now — no DB layer)                     |
+| Process restart                      | Chats and messages survive in `./data/ipaper.db`. On the next prompt for a chat, a fresh `query()` is started with `resume: <stored session_id>` so the agent regains prior context (with the trade-off that the in-memory prompt cache is cold). |
 
 ## Where to look in the code
 
 - Server agent loop — [`packages/server/src/lib/agent-session.ts`](../packages/server/src/lib/agent-session.ts)
 - Per-chat broadcast — [`packages/server/src/lib/session.ts`](../packages/server/src/lib/session.ts)
 - Session pool — [`packages/server/src/lib/session-manager.ts`](../packages/server/src/lib/session-manager.ts)
-- Chat & message store — [`packages/server/src/lib/chat-store.ts`](../packages/server/src/lib/chat-store.ts)
+- Chat & message store (SQLite via `bun:sqlite`) — [`packages/server/src/lib/chat-store.ts`](../packages/server/src/lib/chat-store.ts)
 - WebSocket router — [`packages/server/src/routes/agent-ws.ts`](../packages/server/src/routes/agent-ws.ts)
 - HTTP + upgrade entry — [`packages/server/src/index.ts`](../packages/server/src/index.ts)
 - Browser WS singleton — [`packages/web/src/lib/ws.ts`](../packages/web/src/lib/ws.ts)

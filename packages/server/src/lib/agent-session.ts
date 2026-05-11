@@ -48,6 +48,7 @@ class MessageQueue {
 
 export interface AgentSessionOptions {
   claudePath?: string;
+  resumeSessionId?: string;
 }
 
 export class AgentSession {
@@ -65,6 +66,7 @@ export class AgentSession {
         ...(opts.claudePath
           ? { pathToClaudeCodeExecutable: opts.claudePath }
           : {}),
+        ...(opts.resumeSessionId ? { resume: opts.resumeSessionId } : {}),
       },
     })[Symbol.asyncIterator]();
   }

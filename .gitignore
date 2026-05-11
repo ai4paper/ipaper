@@ -21,6 +21,12 @@ build/
 # Vite
 vite.config.ts.timestamp-*
 
+# Local data (SQLite)
+data/
+*.db
+*.db-wal
+*.db-shm
+
 # OS
 .DS_Store
 Thumbs.db
