@@ -114,7 +114,7 @@ export function ChatWindow({ chatId }: ChatWindowProps) {
               Loading…
             </div>
           ) : messages.length === 0 ? (
-            <EmptyChat onPick={(p) => setPrompt(p)} />
+            <EmptyChat />
           ) : (
             <div className="flex flex-col gap-6">
               {messages.map((m) =>
@@ -215,13 +215,7 @@ function MessageBubble({
   );
 }
 
-function EmptyChat({ onPick }: { onPick: (prompt: string) => void }) {
-  const suggestions = [
-    "Summarize the latest research on retrieval-augmented generation.",
-    "Explain how attention works in transformer models.",
-    "Compare diffusion and autoregressive image generators.",
-    "Outline a literature review on graph neural networks.",
-  ];
+function EmptyChat() {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 text-center">
       <div className="space-y-2">
@@ -231,18 +225,6 @@ function EmptyChat({ onPick }: { onPick: (prompt: string) => void }) {
         <p className="text-sm text-muted-foreground">
           The agent will stream tool use and replies in real time.
         </p>
-      </div>
-      <div className="grid w-full max-w-xl grid-cols-1 gap-2 sm:grid-cols-2">
-        {suggestions.map((s) => (
-          <button
-            key={s}
-            type="button"
-            onClick={() => onPick(s)}
-            className="rounded-lg border border-border/60 bg-card/40 px-3 py-2.5 text-left text-xs text-muted-foreground transition-colors hover:border-border hover:bg-card hover:text-foreground"
-          >
-            {s}
-          </button>
-        ))}
       </div>
     </div>
   );
