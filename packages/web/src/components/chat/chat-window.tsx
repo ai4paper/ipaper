@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ChevronRight, Square } from "lucide-react";
 import { ToolUseBlock } from "./tool-use-block";
+import { Markdown } from "./markdown";
 import { useChatMessagesQuery, chatKeys } from "@/lib/api";
 import { useChatWebSocket } from "@/lib/use-chat-ws";
 import type {
@@ -208,9 +209,7 @@ function MessageBubble({
         AI
       </div>
       <div className="min-w-0 flex-1">
-        <article className="whitespace-pre-wrap font-sans text-[15px] leading-7 text-foreground/90">
-          {message.content}
-        </article>
+        <Markdown content={message.content} />
       </div>
     </div>
   );
