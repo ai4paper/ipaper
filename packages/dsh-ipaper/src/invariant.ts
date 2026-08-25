@@ -1,7 +1,7 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { InvariantInstaller } from '@deepseek-ai/dsh-invariants'
 
-const PACKAGE_NAME = '@isomoes/dsh-ipaper'
+const PACKAGE_NAME = '@ai4paper/dsh-ipaper'
 export const name = 'ipaper-invariant'
 export const inject = ['invariants']
 const install: InvariantInstaller = () => {}

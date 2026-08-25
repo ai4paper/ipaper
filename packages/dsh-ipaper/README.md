@@ -1,4 +1,4 @@
-# @isomoes/dsh-ipaper
+# @ai4paper/dsh-ipaper
 
 IPaper is the DeepSeek Harness (DSH) product bundle for planning, researching, drafting, and revising academic papers. It owns the academic-writing preset and IPaper branding while reusing the exact external shared browser dependency `@isomoes/dsh-web-ui@0.5.1`; no shared Web UI source is copied into this package.
 
@@ -7,19 +7,19 @@ IPaper is the DeepSeek Harness (DSH) product bundle for planning, researching, d
 Both packages must be direct dependencies of the same DSH profile because browser modules resolve from that profile root:
 
 ```sh
-DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper add @isomoes/dsh-ipaper @isomoes/dsh-web-ui@0.5.1 --registry=https://registry.npmjs.org
+DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper add @ai4paper/dsh-ipaper @isomoes/dsh-web-ui@0.5.1 --registry=https://registry.npmjs.org
 DSH_HOME="$HOME/.ipaper" dsh --profile ipaper
 ```
 
-Only `@isomoes/dsh-ipaper` belongs in `dsh.profile.bundles`. `@isomoes/dsh-web-ui` is a direct plain dependency, not a second bundle. Use `--host`, `--port`, or repeated `--trusted-host` options when the browser must be reachable beyond the default `127.0.0.1:3090`.
+Only `@ai4paper/dsh-ipaper` belongs in `dsh.profile.bundles`. `@isomoes/dsh-web-ui` is a direct plain dependency, not a second bundle. Use `--host`, `--port`, or repeated `--trusted-host` options when the browser must be reachable beyond the default `127.0.0.1:3090`.
 
 ## Update or remove
 
 Keep the Web UI version exact when updating the product:
 
 ```sh
-DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper add @isomoes/dsh-ipaper@latest @isomoes/dsh-web-ui@0.5.1 --registry=https://registry.npmjs.org
-DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper remove @isomoes/dsh-ipaper @isomoes/dsh-web-ui
+DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper add @ai4paper/dsh-ipaper@latest @isomoes/dsh-web-ui@0.5.1 --registry=https://registry.npmjs.org
+DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper remove @ai4paper/dsh-ipaper @isomoes/dsh-web-ui
 ```
 
 After an update, restart DSH and refresh the existing browser page.

@@ -5,7 +5,7 @@ import { test } from 'node:test'
 
 const root = new URL('../', import.meta.url)
 const output = new URL('lib/clients/ui-brand-ipaper/', root)
-const id = '@isomoes/dsh-ipaper/client/ui-brand-ipaper'
+const id = '@ai4paper/dsh-ipaper/client/ui-brand-ipaper'
 
 test('emits an isolated IPaper branding package with shared slot injections', async () => {
   const [bundle, manifest, index] = await Promise.all([

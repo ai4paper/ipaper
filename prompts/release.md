@@ -6,7 +6,7 @@ Use this flow for a normal release:
 2. Set the target version in the root `package.json` and every
    `packages/**/package.json` workspace manifest.
 3. Verify the release:
-   `pnpm typecheck && pnpm test && pnpm --filter @isomoes/dsh-ipaper pack`
+   `pnpm typecheck && pnpm test && pnpm --filter @ai4paper/dsh-ipaper pack`
 4. Stage the release files.
 5. Commit with:
    `git commit -m "release v<version>"`

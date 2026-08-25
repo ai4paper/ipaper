@@ -88,10 +88,10 @@
 
     # Canonical @session and @file reference resolution for the composer.
     - id: session-reference
-      name: '@isomoes/dsh-ipaper/session-reference'
+      name: '@ai4paper/dsh-ipaper/session-reference'
 
     - id: file-reference-local
-      name: '@isomoes/dsh-ipaper/file-reference-local'
+      name: '@ai4paper/dsh-ipaper/file-reference-local'
 
     # Whole-log turn/step counts for the chat stats strip (the sessionStats
     # projection key); the projection registry itself is a base-layer row.
@@ -101,7 +101,7 @@
     # Use the browser directory picker on every host; the published bundle has
     # no native addon installation path.
     - id: directory-picker
-      name: '@isomoes/dsh-ipaper/directory-picker-auto'
+      name: '@ai4paper/dsh-ipaper/directory-picker-auto'
 
     # Read-only projection of current Loader entries for trusted client RPCs.
     - id: plugin-inventory
@@ -118,7 +118,7 @@
     # Ordinary provider for the parsed Web flags. Its plugin-level injection
     # waits for cmdlineArgs; no launcher metadata or special row kind is needed.
     - id: web-startup
-      name: '@isomoes/dsh-ipaper/startup'
+      name: '@ai4paper/dsh-ipaper/startup'
 
     # ── layer 2: transport/service ──────────────────────────────────────────────
 
@@ -141,7 +141,7 @@
     # complete agent-preset persona suppresses the prompt section for that
     # agent while retaining the host-owned shell variable.
     - id: web-runtime
-      name: '@isomoes/dsh-ipaper'
+      name: '@ai4paper/dsh-ipaper'
       inject: [webStartup]
       config:
         printUrl: true
@@ -222,7 +222,7 @@
 
     # IPaper-owned occupants for the shared sidebar and conversation brand slots.
     - id: ui-brand-ipaper
-      name: '@isomoes/dsh-ipaper/client/ui-brand-ipaper'
+      name: '@ai4paper/dsh-ipaper/client/ui-brand-ipaper'
 
     # Composer attachment rail and historical message images remain dynamic in rc.1.
     - id: ui-attachment
@@ -458,4 +458,4 @@
     # Register the package-owned read-only root before the writable user root.
     # Its `system` trust keeps the supported IPaper preset immutable.
     - id: academic-writing-preset
-      name: '@isomoes/dsh-ipaper/academic-writing-preset'
+      name: '@ai4paper/dsh-ipaper/academic-writing-preset'

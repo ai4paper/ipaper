@@ -1,21 +1,21 @@
 # IPaper
 
-IPaper is an academic paper-writing product bundle for [DeepSeek Harness (DSH)](https://www.npmjs.com/package/@deepseek-ai/dsh). The publishable package is `@isomoes/dsh-ipaper`; it owns the product preset and branding while reusing exactly `@isomoes/dsh-web-ui@0.5.1` as an external shared browser dependency.
+IPaper is an academic paper-writing product bundle for [DeepSeek Harness (DSH)](https://www.npmjs.com/package/@deepseek-ai/dsh). The publishable package is `@ai4paper/dsh-ipaper`; it owns the product preset and branding while reusing exactly `@isomoes/dsh-web-ui@0.5.1` as an external shared browser dependency.
 
 ## Install, run, and update
 
 Both packages must be direct dependencies of the same DSH profile because browser client modules resolve from the profile root:
 
 ```sh
-DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper add @isomoes/dsh-ipaper @isomoes/dsh-web-ui@0.5.1 --registry=https://registry.npmjs.org
+DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper add @ai4paper/dsh-ipaper @isomoes/dsh-web-ui@0.5.1 --registry=https://registry.npmjs.org
 DSH_HOME="$HOME/.ipaper" dsh --profile ipaper
 ```
 
-Only `@isomoes/dsh-ipaper` belongs in `dsh.profile.bundles`; Web UI remains a direct plain dependency. To update or remove:
+Only `@ai4paper/dsh-ipaper` belongs in `dsh.profile.bundles`; Web UI remains a direct plain dependency. To update or remove:
 
 ```sh
-DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper add @isomoes/dsh-ipaper@latest @isomoes/dsh-web-ui@0.5.1 --registry=https://registry.npmjs.org
-DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper remove @isomoes/dsh-ipaper @isomoes/dsh-web-ui
+DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper add @ai4paper/dsh-ipaper@latest @isomoes/dsh-web-ui@0.5.1 --registry=https://registry.npmjs.org
+DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper remove @ai4paper/dsh-ipaper @isomoes/dsh-web-ui
 ```
 
 Restart DSH and refresh the existing browser page after updates.

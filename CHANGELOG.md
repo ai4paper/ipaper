@@ -2,7 +2,7 @@
 
 ## [0.1.0] - Unreleased
 
-- Replaced the standalone Bun/Claude prototype with `@isomoes/dsh-ipaper`.
+- Replaced the standalone Bun/Claude prototype with `@ai4paper/dsh-ipaper`.
 - Added the DSH Web runtime, IPaper branding client, and built-in academic-writing preset.
 - Pinned the product-neutral browser dependency to `@isomoes/dsh-web-ui@0.5.1`.
 

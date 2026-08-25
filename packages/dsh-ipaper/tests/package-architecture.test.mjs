@@ -12,7 +12,7 @@ const readme = await readFile(new URL('README.md', root), 'utf8')
 const brand = await readFile(new URL('client/ui-brand-ipaper/client/Brand.tsx', root), 'utf8')
 
 test('publishes one product bundle with an exact shared runtime dependency', () => {
-  assert.equal(manifest.name, '@isomoes/dsh-ipaper')
+  assert.equal(manifest.name, '@ai4paper/dsh-ipaper')
   assert.equal(manifest.version, '0.1.0')
   assert.equal(manifest.dependencies['@isomoes/dsh-web-ui'], '0.5.1')
   assert.equal(manifest.devDependencies['@isomoes/dsh-web-ui'], undefined)
@@ -42,7 +42,7 @@ test('composition keeps shared clients neutral and branding product-owned', () =
   assert.equal(new Set(shared).size, shared.length)
   assert.match(composition, /name: '@isomoes\/dsh-web-ui\/client\/ui-conversation'/)
   assert.match(composition, /name: '@isomoes\/dsh-web-ui\/client\/ui-timeline'/)
-  assert.match(composition, /name: '@isomoes\/dsh-ipaper\/client\/ui-brand-ipaper'/)
+  assert.match(composition, /name: '@ai4paper\/dsh-ipaper\/client\/ui-brand-ipaper'/)
   assert.equal((composition.match(/ui-brand-ipaper/g) ?? []).length, 2)
   assert.doesNotMatch(composition, /dsh-ikanban|ui-brand-ikanban|project-mcp|coding agent/i)
   assert.match(composition, /default: ipaper/)

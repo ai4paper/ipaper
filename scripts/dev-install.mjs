@@ -34,7 +34,7 @@ await rm(tarballPath, { force: true })
 // through this checkout and can load a second instance of DSH's private service
 // symbols; a packed install shares the profile's dependency graph.
 run('pnpm', [
-  '--filter', '@isomoes/dsh-ipaper',
+  '--filter', '@ai4paper/dsh-ipaper',
   'pack', '--pack-destination', packDir,
 ])
 

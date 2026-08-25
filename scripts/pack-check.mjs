@@ -12,7 +12,7 @@ const run = (command, args) => {
 }
 
 try {
-  run('pnpm', ['--filter', '@isomoes/dsh-ipaper', 'pack', '--pack-destination', temp])
+  run('pnpm', ['--filter', '@ai4paper/dsh-ipaper', 'pack', '--pack-destination', temp])
   const tarballs = (await readdir(temp)).filter(file => file.endsWith('.tgz'))
   if (tarballs.length !== 1) throw new Error(`Expected one tarball, found ${tarballs.length}`)
   await mkdir(extracted)

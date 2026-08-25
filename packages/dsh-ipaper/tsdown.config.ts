@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { defineConfig } from 'tsdown'
 
-const id = '@isomoes/dsh-ipaper/client/ui-brand-ipaper'
+const id = '@ai4paper/dsh-ipaper/client/ui-brand-ipaper'
 const outDir = resolve(import.meta.dirname, 'lib/clients/ui-brand-ipaper')
 mkdirSync(outDir, { recursive: true })
 writeFileSync(resolve(outDir, 'index.js'), 'export function apply() {}\n')

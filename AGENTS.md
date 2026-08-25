@@ -4,7 +4,7 @@
 
 These instructions apply to the entire repository.
 
-IPaper is an academic paper-writing product bundle for DeepSeek Harness (DSH). The publishable package is `packages/dsh-ipaper` (`@isomoes/dsh-ipaper`). It owns the product preset, DSH composition, host adapters, and IPaper branding while consuming the exact external browser dependency `@isomoes/dsh-web-ui`.
+IPaper is an academic paper-writing product bundle for DeepSeek Harness (DSH). The publishable package is `packages/dsh-ipaper` (`@ai4paper/dsh-ipaper`). It owns the product preset, DSH composition, host adapters, and IPaper branding while consuming the exact external browser dependency `@isomoes/dsh-web-ui`.
 
 ## Repository map
 

@@ -1,5 +1,5 @@
 {
-  "name": "@isomoes/dsh-ipaper",
+  "name": "@ai4paper/dsh-ipaper",
   "version": "0.1.0",
   "description": "Academic paper-writing Web product bundle for DeepSeek Harness",
   "keywords": ["ipaper", "academic-writing", "deepseek-harness", "dsh", "dsh-plugin", "research", "scholarly-writing"],
@@ -34,7 +34,7 @@
     "README.md"
   ],
   "engines": { "node": "^22.19.0 || >=24.0.0" },
-  "repository": { "type": "git", "url": "git+https://github.com/isomoes/ipaper.git", "directory": "packages/dsh-ipaper" },
+  "repository": { "type": "git", "url": "git+https://github.com/ai4paper/ipaper.git", "directory": "packages/dsh-ipaper" },
   "dsh": { "bundle": { "patch": "./cordis.patch.yml" } },
   "scripts": {
     "build": "pnpm build:package",

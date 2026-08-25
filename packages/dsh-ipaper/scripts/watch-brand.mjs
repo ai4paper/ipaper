@@ -11,7 +11,7 @@ const source = join(outputDirectory, 'client.js')
 const dshHome = process.env.DSH_HOME ?? join(homedir(), '.ipaper')
 const installed = join(
   dshHome,
-  'profiles/ipaper-dev/node_modules/@isomoes/dsh-ipaper/lib/clients/ui-brand-ipaper/client.js',
+  'profiles/ipaper-dev/node_modules/@ai4paper/dsh-ipaper/lib/clients/ui-brand-ipaper/client.js',
 )
 const staged = `${installed}.ipaper-dev-tmp`
 
