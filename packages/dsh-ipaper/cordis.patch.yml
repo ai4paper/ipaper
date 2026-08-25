@@ -445,17 +445,17 @@
 - id: tool-web
   disabled: true
 
-# IPaper deliberately exposes one product-owned preset only. Do not append the
-# harness-home preset root: those general/code-agent presets do not belong in
-# the academic-writing product picker.
+# IPaper ships one product-owned preset and appends the harness-home user root
+# so authors can duplicate that supported composition and customize their copy.
+# General/code-agent roots are still excluded from the academic-writing picker.
 - insert:
     - id: agent-presets
       name: '@deepseek-ai/dsh-agent-presets'
       config:
         default: ipaper
-        includeUserRoot: false
+        includeUserRoot: true
 
-    # Register the package-owned read-only root after the roster is constructed.
-    # Its `system` trust keeps the sole IPaper preset immutable.
+    # Register the package-owned read-only root before the writable user root.
+    # Its `system` trust keeps the supported IPaper preset immutable.
     - id: academic-writing-preset
       name: '@isomoes/dsh-ipaper/academic-writing-preset'

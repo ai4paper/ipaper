@@ -38,7 +38,7 @@ pnpm dev:config
 
 ## Built-in preset
 
-`ipaper` is the only agent preset shown by the product. It is a read-only system-trust preset and the default for new sessions, supporting scholarly planning, research, drafting, and revision while preserving author intent and forbidding fabricated citations, quotations, bibliographic metadata, data, and results. General and code-agent presets are intentionally excluded.
+`ipaper` is the product's supported built-in agent preset. It is read-only, system-trust, and the default for new sessions, supporting scholarly planning, research, drafting, and revision while preserving author intent and forbidding fabricated citations, quotations, bibliographic metadata, data, and results. In **Agent presets**, users can duplicate `ipaper` into their writable profile preset directory, customize the copied composition and metadata, and select it for later sessions. General and code-agent preset roots remain excluded.
 
 ## Architecture and extensions
 

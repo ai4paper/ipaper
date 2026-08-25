@@ -4,13 +4,17 @@ import { test } from 'node:test'
 
 const root = new URL('../', import.meta.url)
 
-test('registers only the built-in ipaper preset, as system trust, idempotently', async () => {
+test('registers built-in ipaper before the writable customization root, idempotently', async () => {
   const preset = await import('../lib/academic-writing-preset.js')
-  const registry = { roots: [{ path: '/user/presets', trust: 'user' }] }
+  const userRoot = { path: '/user/presets', trust: 'user' }
+  const registry = { roots: [userRoot] }
   assert.equal(preset.registerAcademicWritingPresetRoot(registry), 'registered')
-  assert.deepEqual(registry.roots, [{ path: preset.ACADEMIC_WRITING_PRESET_ROOT, trust: 'system' }])
+  assert.deepEqual(registry.roots, [
+    { path: preset.ACADEMIC_WRITING_PRESET_ROOT, trust: 'system' },
+    userRoot,
+  ])
   assert.equal(preset.registerAcademicWritingPresetRoot(registry), 'existing')
-  assert.equal(registry.roots.length, 1)
+  assert.equal(registry.roots.length, 2)
   assert.equal(preset.ACADEMIC_WRITING_PRESET_ID, 'ipaper')
   assert.equal(preset.ACADEMIC_WRITING_PRESET_NAME, 'ipaper')
   await access(new URL('../preset/ipaper/preset.yml', import.meta.url))

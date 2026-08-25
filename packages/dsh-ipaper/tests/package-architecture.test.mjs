@@ -46,7 +46,7 @@ test('composition keeps shared clients neutral and branding product-owned', () =
   assert.equal((composition.match(/ui-brand-ipaper/g) ?? []).length, 2)
   assert.doesNotMatch(composition, /dsh-ikanban|ui-brand-ikanban|project-mcp|coding agent/i)
   assert.match(composition, /default: ipaper/)
-  assert.match(composition, /includeUserRoot: false/)
+  assert.match(composition, /includeUserRoot: true/)
 })
 
 test('host registry identities remain product-neutral', () => {

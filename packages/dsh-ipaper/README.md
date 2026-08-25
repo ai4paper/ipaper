@@ -26,7 +26,7 @@ After an update, restart DSH and refresh the existing browser page.
 
 ## Built-in preset
 
-`ipaper` is the product's only visible agent preset. It is installed as a read-only system-trust preset and is the default for new sessions; general and code-agent presets are intentionally excluded. Its persona preserves author intent, separates sourced claims from inference, identifies uncertainty and verification gaps, and prohibits fabricated citations, quotations, bibliographic metadata, data, and results.
+`ipaper` is the product's supported built-in agent preset. It is installed as read-only system-trust and is the default for new sessions. In **Agent presets**, users can duplicate `ipaper` into `<dshHome>/.agent-presets`, customize the copied composition and metadata in its own files, and select that custom preset for later sessions. General and code-agent preset roots remain excluded. The supported persona preserves author intent, separates sourced claims from inference, identifies uncertainty and verification gaps, and prohibits fabricated citations, quotations, bibliographic metadata, data, and results.
 
 ## Architecture
 

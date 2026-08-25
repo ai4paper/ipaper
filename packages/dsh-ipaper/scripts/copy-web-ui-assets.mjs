@@ -12,11 +12,11 @@ await cp(sharedWebRoot, destination, { recursive: true, force: true })
 
 const indexUrl = new URL('index.html', destination)
 const sharedIndex = await readFile(indexUrl, 'utf8')
-const title = '<title>DeepSeek Harness</title>'
-if (!sharedIndex.includes(title)) {
-  throw new Error(`Shared Web UI index no longer contains the expected neutral title marker: ${title}`)
+const titlePattern = /<title>[^<]+<\/title>/
+if (!titlePattern.test(sharedIndex)) {
+  throw new Error('Shared Web UI index no longer contains a title marker')
 }
-await writeFile(indexUrl, sharedIndex.replace(title, '<title>IPaper</title>'))
+await writeFile(indexUrl, sharedIndex.replace(titlePattern, '<title>IPaper</title>'))
 await cp(new URL('manifest.webmanifest', productBrand), new URL('manifest.webmanifest', destination), { force: true })
 await cp(new URL('favicon.svg', productBrand), new URL('favicon.svg', destination), { force: true })
 

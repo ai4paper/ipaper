@@ -12,8 +12,10 @@ type PresetRegistry = Pick<AgentPresets, 'roots'>
 
 export function registerAcademicWritingPresetRoot(agentPresets: PresetRegistry): 'existing' | 'registered' {
   const roots = agentPresets.roots as PresetRoot[]
-  if (roots.length === 1 && roots[0]?.path === ACADEMIC_WRITING_PRESET_ROOT && roots[0].trust === 'system') return 'existing'
-  roots.splice(0, roots.length, { path: ACADEMIC_WRITING_PRESET_ROOT, trust: 'system' })
+  const systemRoot: PresetRoot = { path: ACADEMIC_WRITING_PRESET_ROOT, trust: 'system' }
+  const remainingRoots = roots.filter(root => root.path !== ACADEMIC_WRITING_PRESET_ROOT)
+  if (remainingRoots.length === roots.length - 1 && roots[0]?.path === systemRoot.path && roots[0].trust === systemRoot.trust) return 'existing'
+  roots.splice(0, roots.length, systemRoot, ...remainingRoots)
   return 'registered'
 }
 
