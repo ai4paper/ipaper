@@ -445,23 +445,17 @@
 - id: tool-web
   disabled: true
 
-# The preset roster. `config/agent-presets/` ships with the deployment and is
-# read-only (its entries carry `system` trust); `$DSH_HOME/.agent-presets` is
-# where a person — or an agent — authors their own, and carries the same trust
-# as shell access because a preset IS a composition.
-#
-# Only the SHIPPED root is an assembly fact: it sits beside the installed app's
-# own config, so `apps/cli`'s `composeProfile` resolves and patches it in — the
-# same treatment `distIndex` gets on the webserver row. The writable root is
-# `dsh-agent-presets`' own default (`includeUserRoot`), so a composition that
-# never reaches that patch still finds a person's presets.
+# IPaper deliberately exposes one product-owned preset only. Do not append the
+# harness-home preset root: those general/code-agent presets do not belong in
+# the academic-writing product picker.
 - insert:
     - id: agent-presets
       name: '@deepseek-ai/dsh-agent-presets'
       config:
-        default: academic-writing
+        default: ipaper
+        includeUserRoot: false
 
     # Register the package-owned read-only root after the roster is constructed.
-    # Its `system` trust places Academic Writing in the Built-in group and prevents edits.
+    # Its `system` trust keeps the sole IPaper preset immutable.
     - id: academic-writing-preset
       name: '@isomoes/dsh-ipaper/academic-writing-preset'

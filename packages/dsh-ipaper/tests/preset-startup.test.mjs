@@ -4,18 +4,20 @@ import { test } from 'node:test'
 
 const root = new URL('../', import.meta.url)
 
-test('registers the built-in preset first, as system trust, idempotently', async () => {
+test('registers only the built-in ipaper preset, as system trust, idempotently', async () => {
   const preset = await import('../lib/academic-writing-preset.js')
   const registry = { roots: [{ path: '/user/presets', trust: 'user' }] }
   assert.equal(preset.registerAcademicWritingPresetRoot(registry), 'registered')
-  assert.deepEqual(registry.roots[0], { path: preset.ACADEMIC_WRITING_PRESET_ROOT, trust: 'system' })
+  assert.deepEqual(registry.roots, [{ path: preset.ACADEMIC_WRITING_PRESET_ROOT, trust: 'system' }])
   assert.equal(preset.registerAcademicWritingPresetRoot(registry), 'existing')
-  assert.equal(registry.roots.length, 2)
-  await access(new URL('../preset/academic-writing/preset.yml', import.meta.url))
+  assert.equal(registry.roots.length, 1)
+  assert.equal(preset.ACADEMIC_WRITING_PRESET_ID, 'ipaper')
+  assert.equal(preset.ACADEMIC_WRITING_PRESET_NAME, 'ipaper')
+  await access(new URL('../preset/ipaper/preset.yml', import.meta.url))
 })
 
 test('ships an academic integrity persona and complete useful tools', async () => {
-  const source = await readFile(new URL('../preset/academic-writing/agent.cordis.yml', import.meta.url), 'utf8')
+  const source = await readFile(new URL('../preset/ipaper/agent.cordis.yml', import.meta.url), 'utf8')
   for (const phrase of ['Never fabricate citations', 'bibliographic metadata', 'State uncertainty', 'author intent']) assert.match(source, new RegExp(phrase, 'i'))
   for (const row of ['tool-fs', 'tool-web', 'tool-todo', 'tool-subagent', 'plan-mode']) assert.match(source, new RegExp(`- id: ${row}`))
   assert.doesNotMatch(source, /project-mcp|coding agent|iKanban|actual repository|tracked files|formatters|code generation|public APIs?|another engineer|commit/i)

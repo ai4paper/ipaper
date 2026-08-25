@@ -17,7 +17,7 @@ test('publishes one product bundle with an exact shared runtime dependency', () 
   assert.equal(manifest.dsh.bundle.patch, './cordis.patch.yml')
   assert.equal(manifest.exports['./src/*'], undefined)
   assert.ok(manifest.files.includes('lib/web/**'))
-  assert.ok(manifest.files.includes('preset/academic-writing/**'))
+  assert.ok(manifest.files.includes('preset/ipaper/**'))
 })
 
 test('copies the built shell through the dependency public export only', () => {
@@ -34,7 +34,8 @@ test('composition keeps shared clients neutral and branding product-owned', () =
   assert.match(composition, /name: '@isomoes\/dsh-ipaper\/client\/ui-brand-ipaper'/)
   assert.equal((composition.match(/ui-brand-ipaper/g) ?? []).length, 2)
   assert.doesNotMatch(composition, /dsh-ikanban|ui-brand-ikanban|project-mcp|coding agent/i)
-  assert.match(composition, /default: academic-writing/)
+  assert.match(composition, /default: ipaper/)
+  assert.match(composition, /includeUserRoot: false/)
 })
 
 test('host registry identities remain product-neutral', () => {

@@ -4,16 +4,16 @@ import type { AgentPresets, PresetRoot } from '@deepseek-ai/dsh-agent-presets'
 
 export const name = 'academic-writing-preset'
 export const inject = ['agentPresets']
-export const ACADEMIC_WRITING_PRESET_ID = 'academic-writing'
-export const ACADEMIC_WRITING_PRESET_NAME = 'Academic Writing'
+export const ACADEMIC_WRITING_PRESET_ID = 'ipaper'
+export const ACADEMIC_WRITING_PRESET_NAME = 'ipaper'
 export const ACADEMIC_WRITING_PRESET_ROOT = fileURLToPath(new URL('../preset/', import.meta.url))
 
 type PresetRegistry = Pick<AgentPresets, 'roots'>
 
 export function registerAcademicWritingPresetRoot(agentPresets: PresetRegistry): 'existing' | 'registered' {
-  if (agentPresets.roots.some(root => root.path === ACADEMIC_WRITING_PRESET_ROOT)) return 'existing'
   const roots = agentPresets.roots as PresetRoot[]
-  roots.unshift({ path: ACADEMIC_WRITING_PRESET_ROOT, trust: 'system' })
+  if (roots.length === 1 && roots[0]?.path === ACADEMIC_WRITING_PRESET_ROOT && roots[0].trust === 'system') return 'existing'
+  roots.splice(0, roots.length, { path: ACADEMIC_WRITING_PRESET_ROOT, trust: 'system' })
   return 'registered'
 }
 

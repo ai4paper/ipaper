@@ -30,7 +30,7 @@
     "lib/web/**",
     "!lib/**/*.js.map",
     "cordis.patch.yml",
-    "preset/academic-writing/**",
+    "preset/ipaper/**",
     "README.md"
   ],
   "engines": { "node": "^22.19.0 || >=24.0.0" },

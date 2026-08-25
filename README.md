@@ -38,7 +38,7 @@ pnpm dev:config
 
 ## Built-in preset
 
-`academic-writing` is a read-only system-trust preset and the default for new sessions. It supports scholarly planning, research, drafting, and revision while preserving author intent and forbidding fabricated citations, quotations, bibliographic metadata, data, and results.
+`ipaper` is the only agent preset shown by the product. It is a read-only system-trust preset and the default for new sessions, supporting scholarly planning, research, drafting, and revision while preserving author intent and forbidding fabricated citations, quotations, bibliographic metadata, data, and results. General and code-agent presets are intentionally excluded.
 
 ## Architecture and extensions
 

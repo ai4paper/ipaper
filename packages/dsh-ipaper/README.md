@@ -26,7 +26,7 @@ After an update, restart DSH and refresh the existing browser page.
 
 ## Built-in preset
 
-`academic-writing` is installed as a read-only system-trust preset and is the default for new sessions. Its persona preserves author intent, separates sourced claims from inference, identifies uncertainty and verification gaps, and prohibits fabricated citations, quotations, bibliographic metadata, data, and results.
+`ipaper` is the product's only visible agent preset. It is installed as a read-only system-trust preset and is the default for new sessions; general and code-agent presets are intentionally excluded. Its persona preserves author intent, separates sourced claims from inference, identifies uncertainty and verification gaps, and prohibits fabricated citations, quotations, bibliographic metadata, data, and results.
 
 ## Architecture
 

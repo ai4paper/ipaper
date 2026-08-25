@@ -1,4 +1,4 @@
-# The built-in IPaper academic-writing agent preset.
+# The built-in ipaper agent preset for academic writing.
 #
 # This complete per-agent composition is registered as a read-only `system`
 # root, so it appears in the Built-in group and cannot be shadowed by user data.

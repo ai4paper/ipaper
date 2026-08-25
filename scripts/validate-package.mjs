@@ -25,7 +25,7 @@ for (const required of [
   'lib/web/index.html',
   'lib/web/manifest.webmanifest',
   'lib/web/favicon.svg',
-  'preset/academic-writing/agent.cordis.yml',
+  'preset/ipaper/agent.cordis.yml',
 ]) await access(new URL(required, root))
 
 const files = await filesBelow(root)
