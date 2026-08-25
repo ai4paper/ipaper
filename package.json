@@ -15,7 +15,7 @@
     "pack:check": "node scripts/pack-check.mjs",
     "dev": "pnpm dev:install && node scripts/dev.mjs",
     "dev:config": "DSH_HOME=\"$HOME/.ipaper\" dsh --profile ipaper-dev --dump-config",
-    "dev:install": "pnpm build && DSH_HOME=\"$HOME/.ipaper\" dsh plugin --profile ipaper-dev add @isomoes/dsh-web-ui@0.5.1 ./packages/dsh-ipaper",
+    "dev:install": "node scripts/dev-install.mjs",
     "dev:remove": "DSH_HOME=\"$HOME/.ipaper\" dsh plugin --profile ipaper-dev remove @isomoes/dsh-ipaper @isomoes/dsh-web-ui"
   },
   "devDependencies": {

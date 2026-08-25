@@ -34,7 +34,7 @@ pnpm dev
 pnpm dev:config
 ```
 
-`pnpm dev` builds and installs both direct dependencies into `ipaper-dev`, then runs the IPaper brand watcher beside DSH. `pnpm dev:remove` removes them. The build copies the prebuilt shell through the dependency's public `./web/*` export, applies locally owned IPaper metadata, and does not contain or rebuild shared Web UI source.
+`pnpm dev` packs and installs IPaper with both direct dependencies into `ipaper-dev`, then runs the IPaper brand watcher beside DSH. The archive install deliberately avoids duplicate DSH service modules from a workspace link; the watcher mirrors its rebuilt browser artifact into that installed package for client HMR. `pnpm dev:remove` removes both packages. The build copies the prebuilt shell through the dependency's public `./web/*` export, applies locally owned IPaper metadata, and does not contain or rebuild shared Web UI source.
 
 ## Built-in preset
 

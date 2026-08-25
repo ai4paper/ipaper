@@ -7,7 +7,7 @@ if (args[0] === '--') args.shift()
 
 const dshEnv = { ...process.env, DSH_HOME: join(homedir(), '.ipaper') }
 const children = [
-  spawn(process.execPath, ['packages/dsh-ipaper/scripts/watch-brand.mjs'], { stdio: 'inherit' }),
+  spawn(process.execPath, ['packages/dsh-ipaper/scripts/watch-brand.mjs'], { stdio: 'inherit', env: dshEnv }),
   spawn('dsh', ['--profile', 'ipaper-dev', ...args], { stdio: 'inherit', env: dshEnv }),
 ]
 const exits = children.map(child => new Promise((resolve, reject) => {
