@@ -1,40 +1,22 @@
-# Dependencies
 node_modules/
-.pnp
-.pnp.js
-
-# Bun
-bun.lockb
-*.bun
-
-# Build outputs
+.pnpm-store/
+.pnpm-cache/
+.xdg-cache/
+.xdg-data/
+.xdg-config/
+.dsh-home/
+.dsh-xdg-cache/
+.dsh-xdg-data/
+.dsh-xdg-config/
 dist/
-build/
-.vite/
+packages/*/lib/
 *.tsbuildinfo
-
-# Environment
 .env
-.env.local
-.env.*.local
-
-# Vite
-vite.config.ts.timestamp-*
-
-# Local data (SQLite)
+.env.*
+!.env.example
 data/
 *.db
 *.db-wal
 *.db-shm
-
-# OS
 .DS_Store
-Thumbs.db
-
-# Editor
 .idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?

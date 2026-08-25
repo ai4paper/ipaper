@@ -1,72 +1,56 @@
 # IPaper
 
-A full-stack AI agent application for intelligent paper writing and editing, powered by the [Claude Agent SDK](https://docs.anthropic.com/en/docs/agents). Run multi-step AI agents in your browser — desktop, tablet, and mobile PWA ready.
+IPaper is an academic paper-writing product bundle for [DeepSeek Harness (DSH)](https://www.npmjs.com/package/@deepseek-ai/dsh). The publishable package is `@isomoes/dsh-ipaper`; it owns the product preset and branding while reusing exactly `@isomoes/dsh-web-ui@0.5.1` as an external shared browser dependency.
 
-This repository is the IPaper monorepo. The published web package lives in `packages/web` as [`@ai4paper/ipaper`](https://www.npmjs.com/package/@ai4paper/ipaper).
+## Install, run, and update
 
-## Monorepo Structure
+Both packages must be direct dependencies of the same DSH profile because browser client modules resolve from the profile root:
 
-```
-ipaper/
-├── packages/
-│   ├── web/        # React + Vite frontend (published as @ai4paper/ipaper)
-│   └── server/     # Bun HTTP + WebSocket server + Claude agent runtime
-├── package.json    # Bun workspace root
-└── bun.lock
+```sh
+dsh plugin --profile ipaper add @isomoes/dsh-ipaper @isomoes/dsh-web-ui@0.5.1 --registry=https://registry.npmjs.org
+dsh --profile ipaper
 ```
 
-## Tech Stack
+Only `@isomoes/dsh-ipaper` belongs in `dsh.profile.bundles`; Web UI remains a direct plain dependency. To update or remove:
 
-### Frontend — `packages/web`
-
-| Concern | Technology |
-|---------|-----------|
-| Runtime & tooling | [Bun](https://bun.sh) |
-| Language | TypeScript (strict) |
-| Framework | React 19 + Vite |
-| UI components | [shadcn/ui](https://ui.shadcn.com) + Tailwind CSS v4 |
-| Routing | [TanStack Router](https://tanstack.com/router) |
-| Server state | [TanStack Query](https://tanstack.com/query) |
-| Agent streaming | Native `WebSocket` (auto-reconnecting singleton) |
-
-### Backend — `packages/server`
-
-| Concern | Technology |
-|---------|-----------|
-| Runtime | [Bun](https://bun.sh) (`Bun.serve` upgrades to WebSocket) |
-| HTTP framework | [Hono](https://hono.dev) for REST routes |
-| Language | TypeScript (strict) |
-| Agent runtime | `@anthropic-ai/claude-agent-sdk` |
-| Streaming | WebSocket frames (one connection per browser session) |
-| Validation | [Zod](https://zod.dev) |
-
-## Agent Streaming Architecture
-
-Each chat has a long-lived `Session` on the server that owns one Claude `query()` call. Subsequent user prompts are pushed onto the agent's input queue, so context, prompt cache, and tool state survive across turns. Events fan out to one or more browser WebSocket subscribers.
-
-```
-Browser WebSocket  ⇄  /ws  ⇄  Bun.serve
-                              │
-   {type:"subscribe",chatId}  ▶ SessionManager.getOrCreate(chatId)
-                              │      └── AgentSession (long-lived query())
-   {type:"chat",chatId,...}   ▶ session.sendMessage(content)
-                              ◀ {type:"user_message", ...}
-                              ◀ {type:"tool_use", toolName, toolInput}
-                              ◀ {type:"assistant_message", ...}
-                              ◀ {type:"result", success, cost, duration}
+```sh
+dsh plugin --profile ipaper add @isomoes/dsh-ipaper@latest @isomoes/dsh-web-ui@0.5.1 --registry=https://registry.npmjs.org
+dsh plugin --profile ipaper remove @isomoes/dsh-ipaper @isomoes/dsh-web-ui
 ```
 
-Persistent state — chats and message history — is served via REST:
+Restart DSH and refresh the existing browser page after updates.
 
-- `GET    /api/chats`              — list chats
-- `POST   /api/chats`              — create a chat
-- `GET    /api/chats/:id`          — chat metadata
-- `DELETE /api/chats/:id`          — delete chat & close its agent session
-- `GET    /api/chats/:id/messages` — message history
+## Development and validation
 
-No authentication is required — the Anthropic API key lives in `packages/server/.env`.
+Requires Node `^22.19.0 || >=24.0.0`, pnpm 11.7.0, and a configured DSH model provider.
 
-In development, Vite proxies `/api/*` and `/ws` to the Bun server.
+```sh
+pnpm install --frozen-lockfile
+pnpm typecheck
+pnpm build
+pnpm test
+pnpm pack:check
+pnpm dev
+pnpm dev:config
+```
+
+`pnpm dev` builds and installs both direct dependencies into `ipaper-dev`, then runs the IPaper brand watcher beside DSH. `pnpm dev:remove` removes them. The build copies the prebuilt shell through the dependency's public `./web/*` export, applies locally owned IPaper metadata, and does not contain or rebuild shared Web UI source.
+
+## Built-in preset
+
+`academic-writing` is a read-only system-trust preset and the default for new sessions. It supports scholarly planning, research, drafting, and revision while preserving author intent and forbidding fabricated citations, quotations, bibliographic metadata, data, and results.
+
+## Architecture and extensions
+
+The Cordis patch composes product-neutral DSH host/session/transport services, the complete shared browser roster, IPaper's branding client, and the academic preset. The shared shell uses DSH-injected `window.__DSH_BOOT__` and is not a standalone Vite app.
+
+Extensions remain separate profile-root packages rather than forks of IPaper. Define host services and Remote/Typert contracts in the extension, register required contract packages in `typert-loader.config.packages`, and publish `dsh.client` entries that inject documented shared Web UI clients and occupy shared conversation, composer, reference, or settings slots. Add host rows before dependent browser rows in a later profile patch, with unique IDs and explicit ordering. Reference providers should use DSH reference contracts; citation providers should keep retrieval/validation in typed host services; editor integrations should preserve author files through explicit save services. Validate resolution, Typert registration, service availability, and slot ordering in an isolated profile with the unmodified IPaper bundle.
+
+The publishable package README contains the complete extension recipe and package-specific runtime details.
+
+## Historical note
+
+Before this migration, IPaper was a standalone Bun/Hono/React 19/Claude Agent SDK chat prototype. That runtime has been removed; repository history retains it for archaeology.
 
 ## License
 

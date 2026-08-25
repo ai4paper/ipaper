@@ -1,11 +1,32 @@
 {
-  "name": "ipaper",
+  "name": "@isomoes/dsh-ipaper-root",
+  "version": "0.1.0",
   "private": true,
+  "description": "IPaper DSH product workspace",
+  "license": "MIT",
+  "type": "module",
+  "packageManager": "pnpm@11.7.0",
   "workspaces": ["packages/*"],
+  "engines": { "node": "^22.19.0 || >=24.0.0" },
   "scripts": {
-    "dev": "bun run --filter '*' dev",
-    "build": "bun run --filter '*' build",
-    "lint": "bun run --filter '*' lint",
-    "test": "bun test"
+    "build": "pnpm -r --if-present run build:package",
+    "typecheck": "pnpm -r --if-present run typecheck",
+    "test": "pnpm -r --if-present run test",
+    "pack:check": "node scripts/pack-check.mjs",
+    "dev": "pnpm dev:install && node scripts/dev.mjs",
+    "dev:config": "dsh --profile ipaper-dev --dump-config",
+    "dev:install": "pnpm build && dsh plugin --profile ipaper-dev add @isomoes/dsh-web-ui@0.5.1 ./packages/dsh-ipaper",
+    "dev:remove": "dsh plugin --profile ipaper-dev remove @isomoes/dsh-ipaper @isomoes/dsh-web-ui"
+  },
+  "devDependencies": {
+    "@deepseek-ai/dsh": "^0.1.1-rc.1",
+    "@deepseek-ai/dsh-anonymous-user-id": "^0.1.1-rc.1",
+    "@deepseek-ai/dsh-bash-local": "^0.1.1-rc.1",
+    "@deepseek-ai/dsh-fs": "^0.1.1-rc.1",
+    "@deepseek-ai/dsh-output-retention": "^0.1.1-rc.1",
+    "@deepseek-ai/dsh-session-telemetry": "^0.1.1-rc.1",
+    "@deepseek-ai/dsh-session-title-llm": "^0.1.1-rc.1",
+    "@deepseek-ai/dsh-spill": "^0.1.1-rc.1",
+    "@deepseek-ai/dsh-subagent-in-process-driver": "^0.1.1-rc.1"
   }
 }

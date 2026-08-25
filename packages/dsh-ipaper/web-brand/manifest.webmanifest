@@ -1,0 +1,17 @@
+{
+  "id": "/",
+  "name": "IPaper",
+  "short_name": "IPaper",
+  "description": "Academic writing workspace",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

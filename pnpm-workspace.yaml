@@ -1,0 +1,14 @@
+packages:
+  - packages/*
+
+allowBuilds:
+  '@deepseek-ai/dsh-subprocess-local': true
+  node-pty: true
+  '@google/genai': false
+  esbuild: true
+  koffi: true
+  protobufjs: false
+
+minimumReleaseAgeExclude:
+  - '@deepseek-ai/*'
+  - '@isomoes/dsh-web-ui@0.5.1'

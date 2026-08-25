@@ -1,14 +1,11 @@
 # Changelog
 
-All notable changes to this project will be documented in this file.
+## [0.1.0] - Unreleased
 
-## [Unreleased]
+- Replaced the standalone Bun/Claude prototype with `@isomoes/dsh-ipaper`.
+- Added the DSH Web runtime, IPaper branding client, and built-in academic-writing preset.
+- Pinned the product-neutral browser dependency to `@isomoes/dsh-web-ui@0.5.1`.
 
-- Web: Removed suggested prompt buttons from empty chat. (@isomoes) a99f0b69
-- Web: Rendered assistant messages as markdown with GFM tables and code blocks. (@isomoes) b8fd9a1d
-- Server: Persisted chats to SQLite and lazily managed agent sessions. (@isomoes) 0cac6137
-- Docs: Added agent streaming architecture doc with mermaid diagrams. (@isomoes) 78983d72
-- Chat: Added multi-chat architecture with long-lived agent sessions over WebSocket. (@isomoes) cd4d39df
-- Web: Merged packages/ui into packages/web. (@isomoes) f666642e
-- Monorepo: Scaffolded full monorepo with Claude agent SDK streaming. (@isomoes) 2ce44bdf
-- Docs: Defined full-stack tech stack and monorepo architecture. (@isomoes) 20ee392b
+## Historical prototype
+
+Earlier entries described the removed Bun/Hono/React/Claude Agent SDK prototype and remain available in git history.
