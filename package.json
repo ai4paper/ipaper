@@ -14,9 +14,9 @@
     "test": "pnpm -r --if-present run test",
     "pack:check": "node scripts/pack-check.mjs",
     "dev": "pnpm dev:install && node scripts/dev.mjs",
-    "dev:config": "dsh --profile ipaper-dev --dump-config",
-    "dev:install": "pnpm build && dsh plugin --profile ipaper-dev add @isomoes/dsh-web-ui@0.5.1 ./packages/dsh-ipaper",
-    "dev:remove": "dsh plugin --profile ipaper-dev remove @isomoes/dsh-ipaper @isomoes/dsh-web-ui"
+    "dev:config": "DSH_HOME=\"$HOME/.ipaper\" dsh --profile ipaper-dev --dump-config",
+    "dev:install": "pnpm build && DSH_HOME=\"$HOME/.ipaper\" dsh plugin --profile ipaper-dev add @isomoes/dsh-web-ui@0.5.1 ./packages/dsh-ipaper",
+    "dev:remove": "DSH_HOME=\"$HOME/.ipaper\" dsh plugin --profile ipaper-dev remove @isomoes/dsh-ipaper @isomoes/dsh-web-ui"
   },
   "devDependencies": {
     "@deepseek-ai/dsh": "^0.1.1-rc.1",

@@ -7,8 +7,8 @@ IPaper is the DeepSeek Harness (DSH) product bundle for planning, researching, d
 Both packages must be direct dependencies of the same DSH profile because browser modules resolve from that profile root:
 
 ```sh
-dsh plugin --profile ipaper add @isomoes/dsh-ipaper @isomoes/dsh-web-ui@0.5.1 --registry=https://registry.npmjs.org
-dsh --profile ipaper
+DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper add @isomoes/dsh-ipaper @isomoes/dsh-web-ui@0.5.1 --registry=https://registry.npmjs.org
+DSH_HOME="$HOME/.ipaper" dsh --profile ipaper
 ```
 
 Only `@isomoes/dsh-ipaper` belongs in `dsh.profile.bundles`. `@isomoes/dsh-web-ui` is a direct plain dependency, not a second bundle. Use `--host`, `--port`, or repeated `--trusted-host` options when the browser must be reachable beyond the default `127.0.0.1:3090`.
@@ -18,8 +18,8 @@ Only `@isomoes/dsh-ipaper` belongs in `dsh.profile.bundles`. `@isomoes/dsh-web-u
 Keep the Web UI version exact when updating the product:
 
 ```sh
-dsh plugin --profile ipaper add @isomoes/dsh-ipaper@latest @isomoes/dsh-web-ui@0.5.1 --registry=https://registry.npmjs.org
-dsh plugin --profile ipaper remove @isomoes/dsh-ipaper @isomoes/dsh-web-ui
+DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper add @isomoes/dsh-ipaper@latest @isomoes/dsh-web-ui@0.5.1 --registry=https://registry.npmjs.org
+DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper remove @isomoes/dsh-ipaper @isomoes/dsh-web-ui
 ```
 
 After an update, restart DSH and refresh the existing browser page.

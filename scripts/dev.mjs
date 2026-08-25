@@ -1,11 +1,14 @@
 import { spawn } from 'node:child_process'
+import { homedir } from 'node:os'
+import { join } from 'node:path'
 
 const args = process.argv.slice(2)
 if (args[0] === '--') args.shift()
 
+const dshEnv = { ...process.env, DSH_HOME: join(homedir(), '.ipaper') }
 const children = [
   spawn(process.execPath, ['packages/dsh-ipaper/scripts/watch-brand.mjs'], { stdio: 'inherit' }),
-  spawn('dsh', ['--profile', 'ipaper-dev', ...args], { stdio: 'inherit' }),
+  spawn('dsh', ['--profile', 'ipaper-dev', ...args], { stdio: 'inherit', env: dshEnv }),
 ]
 const exits = children.map(child => new Promise((resolve, reject) => {
   child.once('error', reject)
