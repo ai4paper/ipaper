@@ -2,6 +2,7 @@ import { networkInterfaces } from 'node:os'
 import { fileURLToPath } from 'node:url'
 import type { Context } from '@deepseek-ai/cordis'
 import z from '@deepseek-ai/schemastery'
+import { addHarnessSourceSection } from '@deepseek-ai/dsh-app-boot'
 import * as FrontendStatic from '@deepseek-ai/dsh-host-frontend-static'
 import type {} from '@deepseek-ai/cordis-plugin-loader'
 import type {} from '@deepseek-ai/dsh-host-webserver'
@@ -28,6 +29,7 @@ export interface WebRuntimeValues {
   trustedHosts: string[]
 }
 
+const SOURCE_ROOT = fileURLToPath(new URL('../../../..', import.meta.url))
 const LOOPBACK_HOST = '127.0.0.1'
 const ALL_INTERFACES_HOST = '0.0.0.0'
 
@@ -71,6 +73,7 @@ export function apply(ctx: Context, config: Config): void {
 
   if (config.surfaceContext) {
     ctx.inject(['systemPrompt'], promptCtx => {
+      addHarnessSourceSection(promptCtx, SOURCE_ROOT)
       promptCtx.systemPrompt.section({
         name: 'app:web-surface',
         order: -98,
