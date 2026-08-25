@@ -9,15 +9,26 @@ const copyScript = await readFile(new URL('scripts/copy-web-ui-assets.mjs', root
 const hostRuntime = await readFile(new URL('src/index.ts', root), 'utf8')
 const startup = await readFile(new URL('src/startup.ts', root), 'utf8')
 const readme = await readFile(new URL('README.md', root), 'utf8')
+const brand = await readFile(new URL('client/ui-brand-ipaper/client/Brand.tsx', root), 'utf8')
 
 test('publishes one product bundle with an exact shared runtime dependency', () => {
   assert.equal(manifest.name, '@isomoes/dsh-ipaper')
+  assert.equal(manifest.version, '0.1.0')
   assert.equal(manifest.dependencies['@isomoes/dsh-web-ui'], '0.5.1')
   assert.equal(manifest.devDependencies['@isomoes/dsh-web-ui'], undefined)
   assert.equal(manifest.dsh.bundle.patch, './cordis.patch.yml')
   assert.equal(manifest.exports['./src/*'], undefined)
   assert.ok(manifest.files.includes('lib/web/**'))
   assert.ok(manifest.files.includes('preset/ipaper/**'))
+})
+
+test('shows IPaper and the product package version in product-owned branding', () => {
+  assert.match(brand, /import manifest from '\.\.\/\.\.\/\.\.\/package\.json' with \{ type: 'json' \}/)
+  assert.match(brand, /IPAPER_VERSION = manifest\.version/)
+  assert.match(brand, /closest\('\[data-slot="conversation\.hero\.brand\.mark"\]'\)/)
+  assert.match(brand, /headline\.textContent = 'IPaper'/)
+  assert.match(brand, /closest\('\[data-slot="sidebar\.brand\.name"\]'\)/)
+  assert.equal((brand.match(/versionBadge\.textContent = `v\$\{IPAPER_VERSION\}`/g) ?? []).length, 2)
 })
 
 test('copies the built shell through the dependency public export only', () => {

@@ -5,6 +5,7 @@
     "moduleResolution": "Bundler",
     "jsx": "react-jsx",
     "allowImportingTsExtensions": true,
+    "resolveJsonModule": true,
     "types": ["react"],
     "strict": true,
     "noUncheckedIndexedAccess": true,
