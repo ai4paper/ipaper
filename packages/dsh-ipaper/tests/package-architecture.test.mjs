@@ -13,7 +13,7 @@ const brand = await readFile(new URL('client/ui-brand-ipaper/client/Brand.tsx', 
 
 test('publishes one product bundle with an exact shared runtime dependency', () => {
   assert.equal(manifest.name, '@ai4paper/dsh-ipaper')
-  assert.equal(manifest.version, '0.1.1')
+  assert.equal(manifest.version, '0.1.2')
   assert.equal(manifest.dependencies['@isomoes/dsh-web-ui'], '0.5.1')
   assert.equal(manifest.devDependencies['@isomoes/dsh-web-ui'], undefined)
   assert.equal(manifest.dsh.bundle.patch, './cordis.patch.yml')

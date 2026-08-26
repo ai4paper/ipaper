@@ -51,14 +51,18 @@ for (const { relative, url } of files.filter(item => item.relative.endsWith('.js
   }
 }
 
-const [html, manifest, readme] = await Promise.all([
+const [html, manifest, readme, agentComposition] = await Promise.all([
   readFile(new URL('lib/web/index.html', root), 'utf8'),
   readFile(new URL('lib/web/manifest.webmanifest', root), 'utf8'),
   readFile(new URL('README.md', root), 'utf8'),
+  readFile(new URL('preset/ipaper/agent.cordis.yml', root), 'utf8'),
 ])
 if (!html.includes('<title>IPaper</title>')) throw new Error('Packed Web title is not IPaper')
 if (JSON.parse(manifest).name !== 'IPaper') throw new Error('Packed Web manifest is not IPaper')
 if (/iKanban|DeepSeek Harness|kanban/i.test(`${html}\n${manifest}`)) throw new Error('Packed Web metadata leaks another product brand')
 if (!readme.includes('@isomoes/dsh-web-ui@0.5.1')) throw new Error('Packed README omits the exact shared dependency')
+if (!/- id: apaper-plugin\s+name: '@ai4paper\/apaper-plugin\/dsh'/.test(agentComposition)) {
+  throw new Error('Packed IPaper preset omits the APaper DSH plugin')
+}
 
 console.log(`Validated ${files.length} packed files in ${target}`)
