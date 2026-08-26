@@ -33,10 +33,6 @@ test('runtime asset lookup remains inside a relocated installed product', async 
 })
 
 test('LAN trust preserves explicit authorities', async () => {
-  const { resolveLanTrust, webSurfacePrompt } = await import('../lib/index.js')
+  const { resolveLanTrust } = await import('../lib/index.js')
   assert.deepEqual(resolveLanTrust('127.0.0.1', ['papers.example']), { lanAddresses: [], trustedHosts: ['papers.example'] })
-  const prompt = webSurfacePrompt('http://127.0.0.1:3080')
-  assert.match(prompt, /IPaper Web GUI/)
-  assert.match(prompt, /window\.__DSH_BOOT__/)
-  assert.doesNotMatch(prompt, /coding app|iKanban/i)
 })

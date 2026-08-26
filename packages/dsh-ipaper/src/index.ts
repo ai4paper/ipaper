@@ -48,18 +48,6 @@ function localWebUrl(ctx: Context): string {
   return `http://${LOOPBACK_HOST}:${String(port)}`
 }
 
-export function webSurfacePrompt(webUrl: string): string {
-  return `You are interacting with the user through the IPaper Web GUI at ${webUrl}. `
-    + 'When the user refers to "this page", "this GUI", or "this app" without naming another target, they mean this GUI. '
-    + 'The browser provides no implicit DOM, route, or screenshot context. '
-    + 'The client-plugin HMR receiver is active, but IPaper branding changes reload without a refresh only while the product brand watcher is running. '
-    + 'Shared Web UI changes arrive only through a tested @isomoes/dsh-web-ui dependency update; rebuild IPaper, restart DSH, and refresh this page after updating it. '
-    + 'Shell changes require rebuilding the affected Web artifacts and refreshing this existing URL. '
-    + 'Starting another server does not update this GUI. '
-    + 'The shared Vite shell is not a standalone application because only DSH injects window.__DSH_BOOT__. '
-    + 'Do not start a replacement server unless the user asks; if one is needed, use a managed background job and verify its exact URL.'
-}
-
 function resolveDistIndex(): string {
   return fileURLToPath(new URL('./web/index.html', import.meta.url))
 }
@@ -74,11 +62,6 @@ export function apply(ctx: Context, config: Config): void {
   if (config.surfaceContext) {
     ctx.inject(['systemPrompt'], promptCtx => {
       addHarnessSourceSection(promptCtx, SOURCE_ROOT)
-      promptCtx.systemPrompt.section({
-        name: 'app:web-surface',
-        order: -98,
-        text: () => webSurfacePrompt(localWebUrl(promptCtx)),
-      })
     })
     ctx.inject(['shellEnv'], runtimeCtx => {
       runtimeCtx.shellEnv.register({

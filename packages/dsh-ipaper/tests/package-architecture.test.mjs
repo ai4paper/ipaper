@@ -51,7 +51,6 @@ test('composition keeps shared clients neutral and branding product-owned', () =
 
 test('host registry identities remain product-neutral', () => {
   assert.match(hostRuntime, /export const name = 'web-app'/)
-  assert.match(hostRuntime, /name: 'app:web-surface'/)
   assert.match(hostRuntime, /name: 'web-runtime'/)
   assert.match(startup, /export const name = 'web-startup'/)
   assert.doesNotMatch(`${hostRuntime}\n${startup}`, /(?:name\s*=|name:)\s*['"](?:app:)?ipaper-web-/i)

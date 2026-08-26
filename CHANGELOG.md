@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.0] - Unreleased
+## [0.1.0] 
 
 - Replaced the standalone Bun/Claude prototype with `@ai4paper/dsh-ipaper`.
 - Added the DSH Web runtime, IPaper branding client, and built-in academic-writing preset.
