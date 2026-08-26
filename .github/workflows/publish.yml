@@ -46,6 +46,6 @@ jobs:
           path: dist/*
       - name: Publish product tarball only
         if: startsWith(github.ref, 'refs/tags/v')
-        run: npm publish dist/ai4paper-dsh-ipaper-*.tgz --provenance --access public
+        run: npm publish ./dist/ai4paper-dsh-ipaper-*.tgz --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
