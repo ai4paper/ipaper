@@ -37,7 +37,7 @@ Useful development commands:
 ```sh
 pnpm dev          # install the ipaper-dev profile and run brand watcher + DSH
 pnpm dev:config   # print the effective installed composition
-pnpm dev:remove   # remove both profile dependencies
+pnpm dev:remove   # remove all three profile dependencies
 ```
 
 Run the narrowest relevant check while iterating, then run `pnpm typecheck`, `pnpm test`, and `pnpm pack:check` for changes that affect shipped artifacts or package composition. Tests build the package first.

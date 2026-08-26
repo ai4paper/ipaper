@@ -8,6 +8,9 @@ importers:
 
   .:
     devDependencies:
+      '@ai4paper/apaper-plugin':
+        specifier: 0.2.3
+        version: 0.2.3(b23e1476680e2fc848944102d2a500cd)
       '@deepseek-ai/dsh':
         specifier: ^0.1.1-rc.1
         version: 0.1.1-rc.2(01ea98db1d2b716ae5ed65ff4281c7cc)
@@ -215,6 +218,10 @@ importers:
         version: 6.0.3
 
 packages:
+
+  '@ai4paper/apaper-plugin@0.2.3':
+    resolution: {integrity: sha512-j4oFcoHxcJ/enPB6+NDrnBjVfnCxAHgPdZDSOO85lhMHyedUAa5ZKClyh1NW6SVb6n+z/KGQ3xAG2wNuvq0R4A==}
+    engines: {node: '>=20'}
 
   '@anthropic-ai/sdk@0.91.1':
     resolution: {integrity: sha512-LAmu761tSN9r66ixvmciswUj/ZC+1Q4iAfpedTfSVLeswRwnY3n2Nb6Tsk+cLPP28aLOPWeMgIuTuCcMC6W/iw==}
@@ -1373,6 +1380,17 @@ packages:
       '@deepseek-ai/dsh-brand': ^0.1.1-rc.2
       '@deepseek-ai/dsh-invariants': ^0.1.1-rc.2
       '@deepseek-ai/dsh-timeout': ^0.1.1-rc.2
+
+  '@deepseek-ai/dsh-mcp-client@0.1.0-rc.8':
+    resolution: {integrity: sha512-pcqXawjq9jRJQNHZTLN7pswJFMWjxCsEOdHUI9BdJqb9lRDsMi2cul1Hizfi51oKkcNo1u/K9Toqgh8o/ScAXg==}
+    peerDependencies:
+      '@deepseek-ai/cordis': ^4.0.1
+      '@deepseek-ai/dsh-attachment': ^0.1.0-rc.8
+      '@deepseek-ai/dsh-invariants': ^0.1.0-rc.8
+      '@deepseek-ai/dsh-llm': ^0.1.0-rc.8
+      '@deepseek-ai/dsh-subprocess': ^0.1.0-rc.8
+      '@deepseek-ai/dsh-timeout': ^0.1.0-rc.8
+      '@deepseek-ai/dsh-tools': ^0.1.0-rc.8
 
   '@deepseek-ai/dsh-mcp-client@0.1.1-rc.2':
     resolution: {integrity: sha512-oxNes59UTkXuTmOqQr6+GhZW7u2JtqSYiI5eZyBQ6K+yjPEQESa3/rYnRI+gHGAtx8EFgn6hsdOS5uoEwtFuXg==}
@@ -4234,6 +4252,20 @@ packages:
 
 snapshots:
 
+  '@ai4paper/apaper-plugin@0.2.3(b23e1476680e2fc848944102d2a500cd)':
+    dependencies:
+      '@deepseek-ai/dsh-mcp-client': 0.1.0-rc.8(b23e1476680e2fc848944102d2a500cd)
+    transitivePeerDependencies:
+      - '@cfworker/json-schema'
+      - '@deepseek-ai/cordis'
+      - '@deepseek-ai/dsh-attachment'
+      - '@deepseek-ai/dsh-invariants'
+      - '@deepseek-ai/dsh-llm'
+      - '@deepseek-ai/dsh-subprocess'
+      - '@deepseek-ai/dsh-timeout'
+      - '@deepseek-ai/dsh-tools'
+      - supports-color
+
   '@anthropic-ai/sdk@0.91.1(zod@4.4.3)':
     dependencies:
       json-schema-to-ts: 3.1.1
@@ -5658,6 +5690,22 @@ snapshots:
       '@deepseek-ai/dsh-invariants': 0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)
       '@deepseek-ai/dsh-timeout': 0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1))
       '@deepseek-ai/schemastery': 3.18.1
+
+  '@deepseek-ai/dsh-mcp-client@0.1.0-rc.8(b23e1476680e2fc848944102d2a500cd)':
+    dependencies:
+      '@deepseek-ai/cordis': 4.0.1(@deepseek-ai/cordis-plugin-include@1.0.6)(@deepseek-ai/cordis-plugin-loader@1.0.2)
+      '@deepseek-ai/dsh-attachment': 0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-brand@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)))(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1))
+      '@deepseek-ai/dsh-invariants': 0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)
+      '@deepseek-ai/dsh-llm': 0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-attachment@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-brand@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)))(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)))(@deepseek-ai/dsh-brand@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)))(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1))(@deepseek-ai/dsh-timeout@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)))
+      '@deepseek-ai/dsh-subprocess': 0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1))
+      '@deepseek-ai/dsh-timeout': 0.1.1-rc.2(@deepseek-ai/cordis@4.0.1)(@deepseek-ai/dsh-invariants@0.1.1-rc.2(@deepseek-ai/cordis@4.0.1))
+      '@deepseek-ai/dsh-tools': 0.1.1-rc.2(119bc70f73f8eddebfaa6b47561adeb3)
+      '@deepseek-ai/schemastery': 3.18.1
+      '@modelcontextprotocol/sdk': 1.30.0(zod@4.4.3)
+      zod: 4.4.3
+    transitivePeerDependencies:
+      - '@cfworker/json-schema'
+      - supports-color
 
   '@deepseek-ai/dsh-mcp-client@0.1.1-rc.2(b23e1476680e2fc848944102d2a500cd)':
     dependencies:

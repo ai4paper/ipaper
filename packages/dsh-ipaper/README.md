@@ -1,32 +1,32 @@
 # @ai4paper/dsh-ipaper
 
-IPaper is the DeepSeek Harness (DSH) product bundle for planning, researching, drafting, and revising academic papers. It owns the academic-writing preset and IPaper branding while reusing the exact external shared browser dependency `@isomoes/dsh-web-ui@0.5.1`; no shared Web UI source is copied into this package.
+IPaper is the DeepSeek Harness (DSH) product bundle for planning, researching, drafting, and revising academic papers. It owns the academic-writing preset and IPaper branding while reusing the exact external shared browser dependency `@isomoes/dsh-web-ui@0.5.1` and the profile-root academic toolkit `@ai4paper/apaper-plugin@0.2.3`; neither dependency's source is copied into this package.
 
 ## Install and run
 
-Both packages must be direct dependencies of the same DSH profile because browser modules resolve from that profile root:
+All three packages must be direct dependencies of the same DSH profile because browser modules and agent-preset extensions resolve from that profile root:
 
 ```sh
-DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper add @ai4paper/dsh-ipaper @isomoes/dsh-web-ui@0.5.1 --registry=https://registry.npmjs.org
+DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper add @ai4paper/dsh-ipaper @isomoes/dsh-web-ui@0.5.1 @ai4paper/apaper-plugin@0.2.3 --registry=https://registry.npmjs.org
 DSH_HOME="$HOME/.ipaper" dsh --profile ipaper
 ```
 
-Only `@ai4paper/dsh-ipaper` belongs in `dsh.profile.bundles`. `@isomoes/dsh-web-ui` is a direct plain dependency, not a second bundle. Use `--host`, `--port`, or repeated `--trusted-host` options when the browser must be reachable beyond the default `127.0.0.1:3090`.
+Only `@ai4paper/dsh-ipaper` belongs in `dsh.profile.bundles`. `@isomoes/dsh-web-ui` and `@ai4paper/apaper-plugin` are direct plain dependencies, not additional bundles. Use `--host`, `--port`, or repeated `--trusted-host` options when the browser must be reachable beyond the default `127.0.0.1:3090`.
 
 ## Update or remove
 
-Keep the Web UI version exact when updating the product:
+Keep the Web UI and APaper versions exact when updating the product:
 
 ```sh
-DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper add @ai4paper/dsh-ipaper@latest @isomoes/dsh-web-ui@0.5.1 --registry=https://registry.npmjs.org
-DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper remove @ai4paper/dsh-ipaper @isomoes/dsh-web-ui
+DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper add @ai4paper/dsh-ipaper@latest @isomoes/dsh-web-ui@0.5.1 @ai4paper/apaper-plugin@0.2.3 --registry=https://registry.npmjs.org
+DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper remove @ai4paper/dsh-ipaper @isomoes/dsh-web-ui @ai4paper/apaper-plugin
 ```
 
 After an update, restart DSH and refresh the existing browser page.
 
 ## Built-in preset
 
-`ipaper` is the product's supported built-in agent preset. It is installed as read-only system-trust and is the default for new sessions. In **Agent presets**, users can duplicate `ipaper` into `<dshHome>/.agent-presets`, customize the copied composition and metadata in its own files, and select that custom preset for later sessions. General and code-agent preset roots remain excluded. The supported persona preserves author intent, separates sourced claims from inference, identifies uncertainty and verification gaps, and prohibits fabricated citations, quotations, bibliographic metadata, data, and results.
+`ipaper` is the product's supported built-in agent preset. It is installed as read-only system-trust and is the default for new sessions. It activates [APaper](https://github.com/ai4paper/apaper-plugin), which contributes the `writing` and `creating-figures` skills and `apaper-mcp` literature-research tools. In **Agent presets**, users can duplicate `ipaper` into `<dshHome>/.agent-presets`, customize the copied composition and metadata in its own files, and select that custom preset for later sessions. General and code-agent preset roots remain excluded. The supported persona preserves author intent, separates sourced claims from inference, identifies uncertainty and verification gaps, and prohibits fabricated citations, quotations, bibliographic metadata, data, and results.
 
 ## Architecture
 
@@ -68,7 +68,7 @@ pnpm dev          # builds, installs profile ipaper-dev, starts brand watcher + 
 pnpm dev:config   # print the effective installed composition
 ```
 
-`pnpm dev` links this package and the exact installed Web UI dependency into `ipaper-dev`, matching iKanban's two-link development topology so DSH service symbols stay in one workspace dependency graph. `pnpm dev:remove` removes both direct profile dependencies. Product-brand HMR requires the watcher started by `pnpm dev`; shared shell updates always require rebuilding, restarting DSH, and refreshing the existing URL.
+`pnpm dev` links this package plus the exact installed Web UI and APaper dependencies into `ipaper-dev`, keeping DSH service symbols in one workspace dependency graph. `pnpm dev:remove` removes all three direct profile dependencies. Product-brand HMR requires the watcher started by `pnpm dev`; shared shell updates always require rebuilding, restarting DSH, and refreshing the existing URL.
 
 ## License
 

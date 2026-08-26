@@ -1,21 +1,21 @@
 # IPaper
 
-IPaper is an academic paper-writing product bundle for [DeepSeek Harness (DSH)](https://www.npmjs.com/package/@deepseek-ai/dsh). The publishable package is `@ai4paper/dsh-ipaper`; it owns the product preset and branding while reusing exactly `@isomoes/dsh-web-ui@0.5.1` as an external shared browser dependency.
+IPaper is an academic paper-writing product bundle for [DeepSeek Harness (DSH)](https://www.npmjs.com/package/@deepseek-ai/dsh). The publishable package is `@ai4paper/dsh-ipaper`; it owns the product preset and branding while reusing exactly `@isomoes/dsh-web-ui@0.5.1` as an external shared browser dependency and `@ai4paper/apaper-plugin@0.2.3` as its profile-root academic toolkit.
 
 ## Install, run, and update
 
-Both packages must be direct dependencies of the same DSH profile because browser client modules resolve from the profile root:
+All three packages must be direct dependencies of the same DSH profile because browser modules and agent-preset extensions resolve from the profile root:
 
 ```sh
-DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper add @ai4paper/dsh-ipaper @isomoes/dsh-web-ui@0.5.1 --registry=https://registry.npmjs.org
+DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper add @ai4paper/dsh-ipaper @isomoes/dsh-web-ui@0.5.1 @ai4paper/apaper-plugin@0.2.3 --registry=https://registry.npmjs.org
 DSH_HOME="$HOME/.ipaper" dsh --profile ipaper
 ```
 
-Only `@ai4paper/dsh-ipaper` belongs in `dsh.profile.bundles`; Web UI remains a direct plain dependency. To update or remove:
+Only `@ai4paper/dsh-ipaper` belongs in `dsh.profile.bundles`; Web UI and APaper remain direct plain dependencies. To update or remove:
 
 ```sh
-DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper add @ai4paper/dsh-ipaper@latest @isomoes/dsh-web-ui@0.5.1 --registry=https://registry.npmjs.org
-DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper remove @ai4paper/dsh-ipaper @isomoes/dsh-web-ui
+DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper add @ai4paper/dsh-ipaper@latest @isomoes/dsh-web-ui@0.5.1 @ai4paper/apaper-plugin@0.2.3 --registry=https://registry.npmjs.org
+DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper remove @ai4paper/dsh-ipaper @isomoes/dsh-web-ui @ai4paper/apaper-plugin
 ```
 
 Restart DSH and refresh the existing browser page after updates.
@@ -34,11 +34,11 @@ pnpm dev
 pnpm dev:config
 ```
 
-`pnpm dev` builds IPaper and links both direct profile dependencies into this workspace's installed dependency graph, then runs the IPaper brand watcher beside DSH. Linking Web UI as well as the live IPaper checkout prevents a second profile-root DSH tool runtime from splitting private service symbols, while rebuilt host, preset, and browser artifacts remain immediately visible. `pnpm dev:remove` removes both packages. The build copies the prebuilt shell through the dependency's public `./web/*` export, applies locally owned IPaper metadata, and does not contain or rebuild shared Web UI source.
+`pnpm dev` builds IPaper and links all three direct profile dependencies into this workspace's installed dependency graph, then runs the IPaper brand watcher beside DSH. Linking Web UI and APaper alongside the live IPaper checkout prevents duplicate profile-root DSH runtimes from splitting private service symbols, while rebuilt host, preset, and browser artifacts remain immediately visible. `pnpm dev:remove` removes all three packages. The build copies the prebuilt shell through the dependency's public `./web/*` export, applies locally owned IPaper metadata, and does not contain or rebuild shared Web UI source.
 
 ## Built-in preset
 
-`ipaper` is the product's supported built-in agent preset. It is read-only, system-trust, and the default for new sessions, supporting scholarly planning, research, drafting, and revision while preserving author intent and forbidding fabricated citations, quotations, bibliographic metadata, data, and results. In **Agent presets**, users can duplicate `ipaper` into their writable profile preset directory, customize the copied composition and metadata, and select it for later sessions. General and code-agent preset roots remain excluded.
+`ipaper` is the product's supported built-in agent preset. It is read-only, system-trust, and the default for new sessions. The preset activates [APaper](https://github.com/ai4paper/apaper-plugin), providing its `writing` and `creating-figures` skills and `apaper-mcp` literature-research tools, while preserving author intent and forbidding fabricated citations, quotations, bibliographic metadata, data, and results. In **Agent presets**, users can duplicate `ipaper` into their writable profile preset directory, customize the copied composition and metadata, and select it for later sessions. General and code-agent preset roots remain excluded.
 
 ## Architecture and extensions
 

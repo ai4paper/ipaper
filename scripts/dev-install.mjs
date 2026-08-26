@@ -10,6 +10,7 @@ const packageUrl = new URL('../packages/dsh-ipaper/', import.meta.url)
 const packageDir = fileURLToPath(packageUrl)
 const require = createRequire(packageUrl)
 const webUiDir = dirname(require.resolve('@isomoes/dsh-web-ui/package.json'))
+const apaperPluginDir = fileURLToPath(new URL('../', import.meta.resolve('@ai4paper/apaper-plugin/dsh')))
 const manifest = JSON.parse(await readFile(new URL('package.json', packageUrl), 'utf8'))
 const dshHome = join(homedir(), '.ipaper')
 const env = { ...process.env, DSH_HOME: dshHome }
@@ -32,12 +33,13 @@ run('pnpm', [
   'build:package',
 ])
 
-// Link both direct profile packages into this workspace's dependency graph.
-// Linking only IPaper while installing Web UI from the registry would place a
-// second @deepseek-ai/dsh-tools instance at the profile root and split the
-// private tool scheduler symbol used by linked host plugins.
+// Link all direct profile packages into this workspace's dependency graph.
+// Linking only IPaper while installing its profile-root dependencies from the
+// registry could place a second DSH runtime at the profile root and split
+// private service symbols used by linked host plugins.
 run('dsh', [
   'plugin', '--profile', 'ipaper-dev', 'add',
   `link:${webUiDir}`,
+  `link:${apaperPluginDir}`,
   `link:${packageDir}`,
 ])

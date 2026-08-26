@@ -61,6 +61,7 @@ test('published documentation defines the external extension contract', () => {
     assert.match(readme, new RegExp(phrase.replaceAll('.', '\\.'), 'i'))
   }
   assert.match(readme, /@isomoes\/dsh-web-ui@0\.5\.1/)
+  assert.match(readme, /@ai4paper\/apaper-plugin@0\.2\.3/)
   assert.match(readme, /install and run/i)
   assert.match(readme, /update or remove/i)
 })

@@ -39,6 +39,11 @@
 - id: tool-skill
   name: '@deepseek-ai/dsh-tool-skill'
 
+# IPaper's profile-root APaper extension contributes the writing and
+# creating-figures skills plus the apaper-mcp literature-research tools.
+- id: apaper-plugin
+  name: '@ai4paper/apaper-plugin/dsh'
+
 - id: tool-goal
   name: '@deepseek-ai/dsh-tool-goal'
 
