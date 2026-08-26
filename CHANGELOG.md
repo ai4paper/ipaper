@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.2]
+
+- Added the APaper DSH plugin to the built-in IPaper agent preset.
+- Added packed-artifact validation to prevent publishing a preset without APaper.
+
 ## [0.1.1]
 
 - Removed the obsolete Web surface prompt from the academic-writing preset.
