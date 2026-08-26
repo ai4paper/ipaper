@@ -33,7 +33,7 @@ jobs:
           tar -tzf "${tarball[0]}" | tee dist/contents.txt
           grep -q 'package/lib/web/index.html' dist/contents.txt
           grep -q 'package/lib/clients/ui-brand-ipaper/client.js' dist/contents.txt
-          grep -q 'package/preset/academic-writing/agent.cordis.yml' dist/contents.txt
+          grep -q 'package/preset/ipaper/agent.cordis.yml' dist/contents.txt
           ! grep -q 'package/src/' dist/contents.txt
           ! grep -q 'package/lib/clients/ui-conversation/' dist/contents.txt
           mkdir dist/extracted
