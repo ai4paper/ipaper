@@ -68,7 +68,7 @@ pnpm dev          # builds, installs profile ipaper-dev, starts brand watcher + 
 pnpm dev:config   # print the effective installed composition
 ```
 
-`pnpm dev:remove` removes both direct profile dependencies. Product-brand HMR requires the watcher started by `pnpm dev`; shared shell updates always require rebuilding, restarting DSH, and refreshing the existing URL.
+`pnpm dev` links this package and the exact installed Web UI dependency into `ipaper-dev`, matching iKanban's two-link development topology so DSH service symbols stay in one workspace dependency graph. `pnpm dev:remove` removes both direct profile dependencies. Product-brand HMR requires the watcher started by `pnpm dev`; shared shell updates always require rebuilding, restarting DSH, and refreshing the existing URL.
 
 ## License
 
