@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.1.1]
+
+- Removed the obsolete Web surface prompt from the academic-writing preset.
+- Linked development profile packages so local changes are reflected without reinstalling.
+
 ## [0.1.0] 
 
 - Replaced the standalone Bun/Claude prototype with `@ai4paper/dsh-ipaper`.
