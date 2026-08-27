@@ -44,7 +44,9 @@ test('composition keeps shared clients neutral and branding product-owned', () =
   assert.match(composition, /name: '@isomoes\/dsh-web-ui\/client\/ui-conversation'/)
   assert.match(composition, /name: '@isomoes\/dsh-web-ui\/client\/ui-timeline'/)
   assert.match(composition, /name: '@ai4paper\/dsh-ipaper\/client\/ui-brand-ipaper'/)
+  assert.match(composition, /name: '@ai4paper\/dsh-ipaper\/client\/ui-paper-project'/)
   assert.equal((composition.match(/ui-brand-ipaper/g) ?? []).length, 2)
+  assert.equal((composition.match(/ui-paper-project/g) ?? []).length, 2)
   assert.doesNotMatch(composition, /dsh-ikanban|ui-brand-ikanban|project-mcp|coding agent/i)
   assert.match(composition, /default: ipaper/)
   assert.match(composition, /includeUserRoot: true/)
@@ -62,6 +64,13 @@ test('mounts and publishes the singleton paper project storage service', () => {
   assert.ok(workspaceAt < paperProjectAt)
   assert.match(composition, /name: '@ai4paper\/dsh-ipaper\/paper-project'/)
   assert.match(composition, /inject: \[storageDomain, workspaceRegistry, agents\]/)
+  assert.deepEqual(manifest.exports['./paper-project-remote'], {
+    types: './lib/types/paper-project-remote.d.ts',
+    default: './lib/paper-project-remote.js',
+  })
+  assert.match(composition, /name: '@ai4paper\/dsh-ipaper\/paper-project-remote'/)
+  assert.match(composition, /inject: \[connection, paperProjects\]/)
+  assert.ok(composition.indexOf("- id: connection") < composition.indexOf("- id: paper-project-remote"))
   assert.deepEqual(manifest.exports['./paper-project-tools'], {
     types: './lib/types/paper-project/tools.d.ts',
     default: './lib/paper-project/tools.js',

@@ -180,6 +180,11 @@
         # its literals, for example: ['app.internal', ...ctx.webRuntime.trustedHosts].
         trustedHosts: !!js ctx.webRuntime.trustedHosts
 
+    # Trusted, read-only workspace graph endpoint for the IPaper status plane.
+    - id: paper-project-remote
+      name: '@ai4paper/dsh-ipaper/paper-project-remote'
+      inject: [connection, paperProjects]
+
     - id: api-remotes
       name: '@deepseek-ai/dsh-api-remotes'
 
@@ -261,6 +266,10 @@
 
     - id: ui-commands
       name: '@isomoes/dsh-web-ui/client/ui-commands'
+
+    # Sidebar launcher, full status view, and Mod+Shift+P quick switch.
+    - id: ui-paper-project
+      name: '@ai4paper/dsh-ipaper/client/ui-paper-project'
 
     # Browser-only branch-and-restart picker over Session fork/archive APIs.
     - id: ui-timeline
