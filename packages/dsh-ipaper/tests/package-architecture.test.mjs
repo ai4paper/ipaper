@@ -5,6 +5,7 @@ import { test } from 'node:test'
 const root = new URL('../', import.meta.url)
 const manifest = JSON.parse(await readFile(new URL('package.json', root), 'utf8'))
 const composition = await readFile(new URL('cordis.patch.yml', root), 'utf8')
+const agentComposition = await readFile(new URL('preset/ipaper/agent.cordis.yml', root), 'utf8')
 const copyScript = await readFile(new URL('scripts/copy-web-ui-assets.mjs', root), 'utf8')
 const hostRuntime = await readFile(new URL('src/index.ts', root), 'utf8')
 const startup = await readFile(new URL('src/startup.ts', root), 'utf8')
@@ -47,6 +48,31 @@ test('composition keeps shared clients neutral and branding product-owned', () =
   assert.doesNotMatch(composition, /dsh-ikanban|ui-brand-ikanban|project-mcp|coding agent/i)
   assert.match(composition, /default: ipaper/)
   assert.match(composition, /includeUserRoot: true/)
+})
+
+test('mounts and publishes the singleton paper project storage service', () => {
+  assert.deepEqual(manifest.exports['./paper-project'], {
+    types: './lib/types/paper-project/index.d.ts',
+    default: './lib/paper-project/index.js',
+  })
+  const storageDomainAt = composition.indexOf("- id: storage-domain")
+  const paperProjectAt = composition.indexOf("- id: paper-project")
+  const workspaceAt = composition.indexOf("- id: workspace")
+  assert.ok(storageDomainAt >= 0 && storageDomainAt < workspaceAt)
+  assert.ok(workspaceAt < paperProjectAt)
+  assert.match(composition, /name: '@ai4paper\/dsh-ipaper\/paper-project'/)
+  assert.match(composition, /inject: \[storageDomain, workspaceRegistry, agents\]/)
+  assert.deepEqual(manifest.exports['./paper-project-tools'], {
+    types: './lib/types/paper-project/tools.d.ts',
+    default: './lib/paper-project/tools.js',
+  })
+  assert.deepEqual(manifest.exports['./product-protocol'], {
+    types: './lib/types/product-protocol.d.ts',
+    default: './lib/product-protocol.js',
+  })
+  assert.match(agentComposition, /- id: paper-project-tools\s+name: '@ai4paper\/dsh-ipaper\/paper-project-tools'/)
+  assert.match(agentComposition, /- id: product-protocol\s+name: '@ai4paper\/dsh-ipaper\/product-protocol'/)
+  assert.doesNotMatch(composition, /name: '@ai4paper\/dsh-ipaper\/product-protocol'/)
 })
 
 test('host registry identities remain product-neutral', () => {

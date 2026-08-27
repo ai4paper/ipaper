@@ -80,6 +80,11 @@
     - id: workspace
       name: '@deepseek-ai/dsh-workspace'
 
+    # Singleton owner of the workspace-scoped Paper Project Graph domain.
+    - id: paper-project
+      name: '@ai4paper/dsh-ipaper/paper-project'
+      inject: [storageDomain, workspaceRegistry, agents]
+
     - id: session-projection-cache
       name: '@deepseek-ai/dsh-session-projection-cache'
       config:

@@ -30,7 +30,7 @@ After an update, restart DSH and refresh the existing browser page.
 
 ## Architecture
 
-The Cordis patch composes the shared DSH host/session/transport services, a complete shared Web client roster, the IPaper brand client, and the academic preset. Host registry identities remain product-neutral; product wording is confined to user-facing CLI text, prompts, metadata, branding, and preset content.
+The Cordis patch composes the shared DSH host/session/transport services, a complete shared Web client roster, the IPaper brand client, and the academic preset. It mounts the singleton `paperProjects` host service after DSH storage and workspace services. The service owns the versioned `ipaper_project` domain, one durable graph per workspace, trusted session/parent-lineage resolution, deterministic IDs, optimistic versions, per-workspace write queues, recovery markers, committed snapshots, dynamic process lenses, and paginated graph/history views. The `ipaper` preset exposes exactly `ipaper_record` and `ipaper_state`, with a scoped system-prompt protocol for root and subagent use. Host registry identities remain product-neutral; product wording is confined to user-facing CLI text, prompts, metadata, branding, and preset content.
 
 The package build:
 

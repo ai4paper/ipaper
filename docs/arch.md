@@ -1,6 +1,6 @@
 # IPaper Paper Project Graph Architecture
 
-**Status:** Proposed  
+**Status:** Implemented (initial v1)
 **Scope:** Workspace-scoped scholarly process model, host storage, agent tools, and read-model contract  
 **Inspiration:** [`howmp/dsh-pentest`](https://github.com/howmp/dsh-pentest), adapted from a session-scoped engagement graph to a workspace-scoped paper project
 
@@ -248,10 +248,12 @@ interface ArtifactAttributes {
   readonly mimeType?: string
   readonly checksum?: string
   readonly versionLabel?: string
+  readonly pathStatus?: 'exists' | 'missing'
+  readonly pathCheckedAt?: string
 }
 ```
 
-Paths are workspace-relative in the wire/tool contract and canonicalized by the host before validation. Recording an artifact does not imply that a file exists; a path-bearing artifact must be checked explicitly.
+Paths are workspace-relative in the wire/tool contract and canonicalized by the host before validation. Recording an artifact does not imply that a file exists. For each path-bearing create or update, the host performs a path check and records `pathStatus` with `pathCheckedAt`; model-supplied check fields are overwritten.
 
 ### 6.5 Source and evidence attributes
 
@@ -263,6 +265,11 @@ interface SourceAttributes {
   readonly doi?: string
   readonly url?: string
   readonly bibliographicMetadataVerified: boolean
+  readonly verification?: {
+    readonly method: 'doi' | 'url' | 'manual'
+    readonly verifiedAt: string
+    readonly basis: string
+  }
 }
 
 interface EvidenceAttributes {
@@ -273,7 +280,7 @@ interface EvidenceAttributes {
 }
 ```
 
-A verbatim evidence node requires an exact locator. Evidence must have a `derived_from` relationship to a source, dataset, artifact, or other inspectable origin before it can justify a supported claim.
+A verbatim evidence node requires an exact locator. Evidence must have a `derived_from` relationship to an inspected or verified source, or to a non-planned inspectable artifact, before any `supports` edge may use it. A verified source requires `bibliographicMetadataVerified`, a syntactically valid DOI or URL, or an explicit structured manual verification record; a citation key and boolean alone are insufficient.
 
 ## 7. Edge vocabulary
 
@@ -366,14 +373,16 @@ This is the primary mechanism for showing changing process context without fixed
 
 ## 9. Storage domain
 
-The proposed domain name is `ipaper-project`, version 1.
+The conceptual domain name is `ipaper-project`, version 1. The DSH storage unit name is physically `ipaper_project` because the current storage backend permits underscores but not hyphens in unit names.
 
 ```text
-ipaper-project
+ipaper_project
 ├── projects
 ├── nodes
 └── edges
 ```
+
+The `PaperProjectService` is the sole owner of the open domain handle. Other host plugins, model tools, and future Remotes must use that service rather than opening the domain or reading its tables directly. This ownership boundary is what lets the service provide batch-level visibility over a backend whose primitive writes are atomic only one record at a time.
 
 ### 9.1 Project index record
 
@@ -390,6 +399,23 @@ interface PaperProjectRecord {
   readonly updatedAt: string
 }
 ```
+
+The stored project row may additionally carry one service-private recovery marker:
+
+```ts
+interface PendingPaperMutation {
+  readonly mutationId: string
+  readonly finalProject: PaperProjectRecord
+  readonly nodes: readonly PaperNode[]
+  readonly edges: readonly PaperEdge[]
+}
+
+interface StoredPaperProjectRecord extends PaperProjectRecord {
+  readonly pendingMutation?: PendingPaperMutation
+}
+```
+
+The marker contains complete after-images for every record changed by the batch. It is not part of the public project contract.
 
 ### 9.2 Physical keys and deterministic IDs
 
@@ -419,12 +445,15 @@ The host returns actual IDs from every mutation so later calls never guess ident
 
 ### 9.3 Concurrency and atomicity
 
-- Writes serialize per project, not per session.
-- A batch validates completely before its first durable write.
-- Failed batches must not expose partial nodes or edges.
-- Backends without transactions require rollback or a recoverable pending-mutation marker.
+- Writes serialize per project, not per session. The storage domain serializes individual primitives only, so the service also owns a per-workspace promise queue around each complete batch.
+- A batch allocates IDs, builds its complete candidate graph, validates schemas and graph invariants, and prepares its event before its first durable write.
+- The service writes the project row with `pendingMutation`, idempotently writes the marker's node and edge after-images, and writes `finalProject` last. The last write is the logical commit point and clears the marker.
+- Service reads come from committed snapshots. They are replaced only after the logical commit, so intermediate table writes are not exposed through `PaperProjectService`.
+- Startup completes every pending marker before publishing any snapshot. If a live write fails, the service retries completion once; if recovery also fails, the marker remains durable for the next operation or restart.
+- Only the service may access the domain tables. Publishing raw `domain/changed` events or table handles would bypass logical batch visibility and is prohibited.
+- The JSON backend is single-host storage; it does not provide cross-process locking for two DSH hosts sharing one storage root.
 - Updates carry an expected node version when replacing mutable content. A stale version rejects and requires `ipaper_state` followed by a deliberate retry.
-- The project revision increments once per successful batch.
+- The project revision increments once per successful model mutation batch. Idempotent host creation of the initial root uses revision 0.
 
 ### 9.4 Mutation events
 
@@ -697,7 +726,7 @@ Under the current repository ownership rules, IPaper bundles only its branding b
 
 ## 14. Suggested implementation boundaries
 
-The eventual host implementation should remain split into focused modules:
+The host implementation is split into focused modules:
 
 ```text
 packages/dsh-ipaper/src/paper-project/
@@ -711,7 +740,7 @@ packages/dsh-ipaper/src/paper-project/
 └── instructions.ts  concise graph-recording protocol
 ```
 
-Composition should mount the storage/service host row before any dependent Remote or browser row. The model-facing tool row belongs in `preset/ipaper/agent.cordis.yml`, while singleton storage and project services remain in `cordis.patch.yml`.
+Composition mounts the storage/service host row after the storage and workspace services and before any dependent Remote or browser row. The model-facing tool row belongs in `preset/ipaper/agent.cordis.yml`, while singleton storage and project services remain in `cordis.patch.yml`. The same preset mounts `product-protocol`, which contributes `instructions.ts` as the scoped `ipaper:paper-project-protocol` system-prompt section; the process-wide `systemPrompt` service remains host-owned.
 
 Generated `packages/dsh-ipaper/lib/` files must never be edited directly.
 
