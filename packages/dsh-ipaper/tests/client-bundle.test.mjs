@@ -44,6 +44,7 @@ test('emits the sidebar toggle and full paper status main view', async () => {
   assert.match(bundle, /mod\+shift\+p/)
   assert.match(bundle, /data-composer-seat/)
   assert.match(bundle, /sidebar\.workspaces/)
+  assert.match(bundle, /Project graph/)
   assert.match(bundle, /Project lenses/)
   assert.equal(manifest.name, statusId)
   assert.equal(manifest.dsh.client.platform, 'web')
