@@ -21,6 +21,11 @@ test('publishes one product bundle with an exact shared runtime dependency', () 
   assert.equal(manifest.exports['./src/*'], undefined)
   assert.ok(manifest.files.includes('lib/web/**'))
   assert.ok(manifest.files.includes('preset/ipaper/**'))
+  assert.ok(manifest.files.includes('skills/**'))
+  assert.deepEqual(manifest.exports['./ipaper-skills'], {
+    types: './lib/types/ipaper-skills.d.ts',
+    default: './lib/ipaper-skills.js',
+  })
 })
 
 test('shows IPaper and the product package version in product-owned branding', () => {

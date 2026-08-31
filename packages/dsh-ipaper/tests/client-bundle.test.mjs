@@ -46,6 +46,13 @@ test('emits the sidebar toggle and full paper status main view', async () => {
   assert.match(bundle, /sidebar\.workspaces/)
   assert.doesNotMatch(bundle, /Project graph/)
   assert.match(bundle, /Project lenses/)
+  assert.match(bundle, /Find a question/)
+  assert.match(bundle, /Questions × people × methods/)
+  assert.match(bundle, /People care/)
+  assert.match(bundle, /Start guided workflow/)
+  assert.match(bundle, /\/find-the-problem/)
+  assert.match(bundle, /\.session\.prompt/)
+  assert.doesNotMatch(bundle, /\.session\.command/)
   assert.equal(manifest.name, statusId)
   assert.equal(manifest.dsh.client.platform, 'web')
   assert.deepEqual(manifest.dsh.client.inject, [

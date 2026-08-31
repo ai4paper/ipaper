@@ -18,8 +18,18 @@ export const projectAttributesSchema = z.object({
   workspacePath: z.string().min(1),
 }).strict()
 
+const gateLevel = z.enum(['unknown', 'low', 'medium', 'high'])
+
 export const objectiveAttributesSchema = z.object({
   objectiveType: z.enum(['question', 'hypothesis', 'contribution', 'scope', 'other']).optional(),
+  questionStage: z.enum(['candidate', 'covered', 'gap', 'selected']).optional(),
+  verificationStatus: z.enum(['pending', 'verified']).optional(),
+  interest: gateLevel.optional(),
+  novelty: gateLevel.optional(),
+  feasibility: gateLevel.optional(),
+  interestBasis: optionalNonempty,
+  noveltyBasis: optionalNonempty,
+  feasibilityBasis: optionalNonempty,
 }).strict()
 
 export const requirementAttributesSchema = z.object({
@@ -35,6 +45,18 @@ export const sourceAttributesSchema = z.object({
   citationKey: optionalNonempty,
   doi: z.string().regex(/^10\.\d{4,9}\/\S+$/i, 'invalid DOI').optional(),
   url: z.url().optional(),
+  sourceType: z.enum(['paper', 'dataset', 'web', 'book', 'other']).optional(),
+  authors: z.array(z.string().min(1)).optional(),
+  publicationDate: optionalNonempty,
+  venue: optionalNonempty,
+  bibtex: optionalNonempty,
+  searchProvenance: z.array(z.object({
+    provider: z.enum(['arxiv', 'dblp', 'google-scholar', 'iacr', 'cnki', 'other']),
+    query: z.string().min(1),
+    filters: optionalNonempty,
+    searchedAt: timestamp,
+  }).strict()).optional(),
+  shortlisted: z.boolean().optional(),
   bibliographicMetadataVerified: z.boolean(),
   verification: z.object({
     method: z.enum(['doi', 'url', 'manual']),
@@ -59,7 +81,9 @@ export const evidenceAttributesSchema = z.object({
 })
 
 export const claimAttributesSchema = z.object({
-  claimType: z.enum(['statement', 'hypothesis', 'result', 'conclusion', 'other']).optional(),
+  claimType: z.enum(['statement', 'hypothesis', 'result', 'conclusion', 'contribution', 'method', 'limitation', 'boundary', 'research-gap', 'other']).optional(),
+  inferenceType: z.enum(['explicit', 'inferred']).optional(),
+  verificationStatus: z.enum(['pending', 'verified']).optional(),
 }).strict()
 
 export const artifactAttributesSchema = z.object({

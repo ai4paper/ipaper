@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { attentionNodes } from './attentionNodes.ts'
 import { counted } from './counted.ts'
 import { Empty } from './Empty.tsx'
+import { FindProblemView } from './FindProblemView.tsx'
 import { nodesOf } from './nodesOf.ts'
 import { OverviewView } from './OverviewView.tsx'
 import { RecordsView } from './RecordsView.tsx'
@@ -16,16 +17,17 @@ export interface PaperStatusViewProps {
   readonly rpc: ClientConnectionRpc
   readonly sessions: Observable<SessionListState>
   readonly workspaces: Observable<WorkspaceState>
+  readonly startFindProblem: (sessionId: SessionId) => void
 }
 
-const TAB_LABELS: Record<Tab, string> = { overview: 'Overview', research: 'Research & argument', manuscript: 'Manuscript', activity: 'Activity' }
+const TAB_LABELS: Record<Tab, string> = { questions: 'Find a question', overview: 'Overview', research: 'Research & argument', manuscript: 'Manuscript', activity: 'Activity' }
 
 /** Full workspace status surface rendered in place of the conversation view. */
-export function PaperStatusView({ sessionId, rpc, sessions, workspaces }: PaperStatusViewProps) {
+export function PaperStatusView({ sessionId, rpc, sessions, workspaces, startFindProblem }: PaperStatusViewProps) {
   const sessionState = useSyncExternalStore(sessions.subscribe, sessions.getSnapshot, sessions.getSnapshot)
   const workspaceState = useSyncExternalStore(workspaces.subscribe, workspaces.getSnapshot, workspaces.getSnapshot)
   const workspace = workspaceForSession(sessionId, sessionState, workspaceState)
-  const [tab, setTab] = useState<Tab>('overview')
+  const [tab, setTab] = useState<Tab>('questions')
   const { status, error } = usePaperProjectStatus(rpc, workspace?.workspaceId)
 
   useEffect(() => {
@@ -56,6 +58,7 @@ export function PaperStatusView({ sessionId, rpc, sessions, workspaces }: PaperS
       <p className="ipaper-view-summary">{counted(semanticCount, 'project record')}: {counted(sourceCount, 'source')}, {counted(claimCount, 'claim')}, and {counted(artifactCount, 'artifact')}. {gapCount === 0 ? 'No integrity gaps.' : `${counted(gapCount, 'integrity gap')}.`}</p>
     </header>
     <nav className="ipaper-view-tabs" aria-label="Paper project views">{TABS.map(key => <button key={key} type="button" aria-selected={tab === key} onClick={() => { setTab(key) }}>{TAB_LABELS[key]}</button>)}</nav>
+    {tab === 'questions' && <FindProblemView problemMap={status.problemMap} onStart={() => { startFindProblem(sessionId) }} />}
     {tab === 'overview' && <OverviewView status={status} attention={attention} openWork={openWork} />}
     {tab === 'research' && <RecordsView title="Research & argument" countLabel="records" nodes={research} empty="No sources, evidence, or claims recorded yet." />}
     {tab === 'manuscript' && <RecordsView title="Manuscript & review" countLabel="records" nodes={manuscript} empty="No artifacts, reviews, or decisions recorded yet." />}

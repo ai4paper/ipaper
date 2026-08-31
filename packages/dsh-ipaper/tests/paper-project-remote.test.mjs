@@ -40,6 +40,8 @@ test('projects one workspace snapshot into a dashboard status payload', () => {
   assert.equal(status.overview.workspaceId, 'workspace-a')
   assert.equal(status.overview.revision, 2)
   assert.equal(status.overview.lenses.framing.status, 'clear')
+  assert.deepEqual(status.problemMap.questions, [])
+  assert.equal(status.problemMap.paperCount, 0)
   assert.equal(paperProjectStatus(source, 'missing'), null)
 })
 

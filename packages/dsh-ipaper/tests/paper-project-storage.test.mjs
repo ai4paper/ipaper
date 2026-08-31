@@ -204,6 +204,48 @@ test('enforces append-only task-scoped subagent checkpoints', async () => {
   )
 })
 
+test('records question discovery metadata and paper-to-question coverage', async () => {
+  const { store } = await openProject()
+  await store.record('workspace-a', caller, {
+    operationSummary: 'Map one researched question',
+    nodes: [
+      {
+        ref: 'question',
+        kind: 'objective',
+        title: 'Can smaller models verify citations?',
+        attributes: {
+          objectiveType: 'question',
+          questionStage: 'gap',
+          verificationStatus: 'pending',
+          interest: 'high',
+          novelty: 'unknown',
+          feasibility: 'medium',
+        },
+      },
+      {
+        ref: 'paper',
+        kind: 'source',
+        title: 'Citation Verifier',
+        status: 'inspected',
+        attributes: {
+          sourceType: 'paper',
+          authors: ['Ada Author'],
+          venue: 'ACL',
+          shortlisted: true,
+          searchProvenance: [{ provider: 'dblp', query: 'citation verifier', filters: '2024-2026', searchedAt: '2026-01-01T00:00:00.000Z' }],
+          bibliographicMetadataVerified: false,
+        },
+      },
+    ],
+    edges: [{ source: 'paper', kind: 'addresses', target: 'question' }],
+  })
+  const snapshot = store.getSnapshot('workspace-a')
+  const paper = snapshot.nodes.find(item => item.id === 'source-1')
+  assert.deepEqual(paper.attributes.authors, ['Ada Author'])
+  assert.equal(paper.attributes.searchProvenance[0].provider, 'dblp')
+  assert.ok(snapshot.edges.some(item => item.kind === 'addresses' && item.sourceId === 'source-1' && item.targetId === 'objective-1'))
+})
+
 test('canonicalizes and host-checks artifact paths without implying existence', async () => {
   const { store } = await openProject()
   await store.record('workspace-a', caller, {

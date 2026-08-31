@@ -45,6 +45,11 @@
 - id: tool-skill
   name: '@deepseek-ai/dsh-tool-skill'
 
+# IPaper-owned packaged skills. Add each skill name to the registry plugin;
+# find-the-problem is available to the model and as /find-the-problem.
+- id: ipaper-skills
+  name: '@ai4paper/dsh-ipaper/ipaper-skills'
+
 # IPaper's profile-root APaper extension contributes the writing and
 # creating-figures skills plus the apaper-mcp literature-research tools.
 - id: apaper-plugin

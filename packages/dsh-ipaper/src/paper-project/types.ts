@@ -71,6 +71,14 @@ export interface ProjectAttributes {
 
 export interface ObjectiveAttributes {
   readonly objectiveType?: 'question' | 'hypothesis' | 'contribution' | 'scope' | 'other'
+  readonly questionStage?: 'candidate' | 'covered' | 'gap' | 'selected'
+  readonly verificationStatus?: 'pending' | 'verified'
+  readonly interest?: 'unknown' | 'low' | 'medium' | 'high'
+  readonly novelty?: 'unknown' | 'low' | 'medium' | 'high'
+  readonly feasibility?: 'unknown' | 'low' | 'medium' | 'high'
+  readonly interestBasis?: string
+  readonly noveltyBasis?: string
+  readonly feasibilityBasis?: string
 }
 
 export interface RequirementAttributes {
@@ -82,10 +90,24 @@ export interface TaskAttributes {
   readonly taskType?: 'research' | 'analysis' | 'writing' | 'revision' | 'review' | 'other'
 }
 
+export interface SourceSearchProvenance {
+  readonly provider: 'arxiv' | 'dblp' | 'google-scholar' | 'iacr' | 'cnki' | 'other'
+  readonly query: string
+  readonly filters?: string
+  readonly searchedAt: string
+}
+
 export interface SourceAttributes {
   readonly citationKey?: string
   readonly doi?: string
   readonly url?: string
+  readonly sourceType?: 'paper' | 'dataset' | 'web' | 'book' | 'other'
+  readonly authors?: readonly string[]
+  readonly publicationDate?: string
+  readonly venue?: string
+  readonly bibtex?: string
+  readonly searchProvenance?: readonly SourceSearchProvenance[]
+  readonly shortlisted?: boolean
   readonly bibliographicMetadataVerified: boolean
   readonly verification?: {
     readonly method: 'doi' | 'url' | 'manual'
@@ -102,7 +124,9 @@ export interface EvidenceAttributes {
 }
 
 export interface ClaimAttributes {
-  readonly claimType?: 'statement' | 'hypothesis' | 'result' | 'conclusion' | 'other'
+  readonly claimType?: 'statement' | 'hypothesis' | 'result' | 'conclusion' | 'contribution' | 'method' | 'limitation' | 'boundary' | 'research-gap' | 'other'
+  readonly inferenceType?: 'explicit' | 'inferred'
+  readonly verificationStatus?: 'pending' | 'verified'
 }
 
 export interface ArtifactAttributes {
@@ -299,6 +323,36 @@ export interface PaperHistoryPage {
   readonly events: readonly PaperNodeBase<'event', EventAttributes>[]
   readonly affects: readonly PaperEdge[]
   readonly cursor?: string
+}
+
+export interface PaperQuestionCoverage {
+  readonly paperId: string
+  readonly title: string
+  readonly authors: readonly string[]
+  readonly venue?: string
+  readonly methods: readonly string[]
+  readonly contributions: readonly string[]
+  readonly limitations: readonly string[]
+}
+
+export interface PaperQuestionMapItem {
+  readonly questionId: string
+  readonly title: string
+  readonly summary: string
+  readonly stage: 'candidate' | 'covered' | 'gap' | 'selected'
+  readonly verificationStatus: 'pending' | 'verified'
+  readonly interest: 'unknown' | 'low' | 'medium' | 'high'
+  readonly novelty: 'unknown' | 'low' | 'medium' | 'high'
+  readonly feasibility: 'unknown' | 'low' | 'medium' | 'high'
+  readonly coverage: readonly PaperQuestionCoverage[]
+}
+
+export interface PaperProblemMap {
+  readonly questions: readonly PaperQuestionMapItem[]
+  readonly paperCount: number
+  readonly shortlistedPaperCount: number
+  readonly searchedProviders: readonly string[]
+  readonly unlinkedPaperIds: readonly string[]
 }
 
 export type PaperStateResult = PaperProjectOverview | PaperGraphPage | PaperRelatedPage | PaperHistoryPage

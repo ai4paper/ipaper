@@ -39,7 +39,7 @@ function assertEdgeVocabulary(edge: PaperEdge, source: PaperNode, target: PaperN
       assertKinds(edge, source, target, ['project', 'artifact'], ['objective', 'requirement', 'task', 'source', 'evidence', 'claim', 'artifact', 'review', 'decision', 'note'])
       return
     case 'addresses':
-      assertKinds(edge, source, target, ['task', 'claim', 'artifact', 'decision'], ['objective', 'requirement'])
+      assertKinds(edge, source, target, ['task', 'source', 'claim', 'artifact', 'decision'], ['objective', 'requirement'])
       return
     case 'depends_on':
       if (!isSemantic(source) || !isSemantic(target)) reject(`edge '${edge.id}' must connect semantic nodes`)

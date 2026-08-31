@@ -6,6 +6,7 @@ import type {
   PaperNode,
   PaperNodeBase,
   EventAttributes,
+  PaperProblemMap,
   PaperProjectOverview,
   PaperProjectSnapshot,
   PaperRelatedPage,
@@ -165,6 +166,67 @@ function filteredNodes(snapshot: PaperProjectSnapshot, input: PaperStateInput): 
     }
     return true
   }))
+}
+
+export function deriveProblemMap(snapshot: PaperProjectSnapshot): PaperProblemMap {
+  const questions = snapshot.nodes.filter((node): node is Extract<PaperNode, { kind: 'objective' }> => (
+    node.kind === 'objective' && node.attributes.objectiveType === 'question'
+  ))
+  const papers = snapshot.nodes.filter((node): node is Extract<PaperNode, { kind: 'source' }> => (
+    node.kind === 'source' && (node.attributes.sourceType === 'paper' || node.attributes.authors !== undefined)
+  ))
+  const claims = snapshot.nodes.filter((node): node is Extract<PaperNode, { kind: 'claim' }> => node.kind === 'claim')
+  const addressedQuestionIds = new Set<string>()
+  const items = questions.map(question => {
+    const addressingIds = new Set(snapshot.edges
+      .filter(edge => edge.kind === 'addresses' && edge.targetId === question.id)
+      .map(edge => edge.sourceId))
+    const questionClaims = claims.filter(claim => addressingIds.has(claim.id))
+    const directPaperIds = new Set(papers.filter(paper => addressingIds.has(paper.id)).map(paper => paper.id))
+    for (const claim of questionClaims) {
+      for (const edge of snapshot.edges) {
+        if (edge.kind === 'derived_from' && edge.sourceId === claim.id) directPaperIds.add(edge.targetId)
+      }
+    }
+    const coverage = papers.filter(paper => directPaperIds.has(paper.id)).map(paper => {
+      addressedQuestionIds.add(paper.id)
+      const paperClaimIds = new Set(snapshot.edges
+        .filter(edge => edge.kind === 'derived_from' && edge.targetId === paper.id)
+        .map(edge => edge.sourceId))
+      const related = questionClaims.filter(claim => paperClaimIds.has(claim.id))
+      const titles = (types: readonly string[]): string[] => related
+        .filter(claim => claim.attributes.claimType !== undefined && types.includes(claim.attributes.claimType))
+        .map(claim => claim.title)
+      return {
+        paperId: paper.id,
+        title: paper.title,
+        authors: paper.attributes.authors ?? [],
+        ...(paper.attributes.venue === undefined ? {} : { venue: paper.attributes.venue }),
+        methods: titles(['method']),
+        contributions: titles(['contribution']),
+        limitations: titles(['limitation', 'boundary']),
+      }
+    })
+    return {
+      questionId: question.id,
+      title: question.title,
+      summary: question.summary,
+      stage: question.attributes.questionStage ?? (coverage.length > 0 ? 'covered' : 'candidate'),
+      verificationStatus: question.attributes.verificationStatus ?? 'pending',
+      interest: question.attributes.interest ?? 'unknown',
+      novelty: question.attributes.novelty ?? 'unknown',
+      feasibility: question.attributes.feasibility ?? 'unknown',
+      coverage,
+    }
+  })
+  const providers = new Set(papers.flatMap(paper => paper.attributes.searchProvenance?.map(item => item.provider) ?? []))
+  return {
+    questions: items,
+    paperCount: papers.length,
+    shortlistedPaperCount: papers.filter(paper => paper.attributes.shortlisted === true).length,
+    searchedProviders: [...providers].sort(),
+    unlinkedPaperIds: papers.filter(paper => !addressedQuestionIds.has(paper.id)).map(paper => paper.id),
+  }
 }
 
 export function deriveGraph(snapshot: PaperProjectSnapshot, input: PaperStateInput): PaperGraphPage {

@@ -1,9 +1,9 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type {} from '@deepseek-ai/dsh-client-connection'
 import type { RpcResult } from '@deepseek-ai/dsh-host-apiproxy'
-import { deriveOverview } from './paper-project/derive.js'
+import { deriveOverview, deriveProblemMap } from './paper-project/derive.js'
 import type {} from './paper-project/service.js'
-import type { PaperProjectOverview, PaperProjectSnapshot } from './paper-project/types.js'
+import type { PaperProblemMap, PaperProjectOverview, PaperProjectSnapshot } from './paper-project/types.js'
 
 export const IPAPER_RPC_CHANNEL = '/ipaper'
 export const IPAPER_STATUS_ENDPOINT = 'paper-project/status'
@@ -11,6 +11,7 @@ export const IPAPER_STATUS_ENDPOINT = 'paper-project/status'
 export interface PaperProjectStatus {
   readonly snapshot: PaperProjectSnapshot
   readonly overview: PaperProjectOverview
+  readonly problemMap: PaperProblemMap
 }
 
 interface PaperProjectStatusSource {
@@ -35,7 +36,7 @@ export function paperProjectStatus(
 ): PaperProjectStatus | null {
   const snapshot = source.getSnapshot(workspaceId)
   if (snapshot === undefined) return null
-  return { snapshot, overview: deriveOverview(snapshot) }
+  return { snapshot, overview: deriveOverview(snapshot), problemMap: deriveProblemMap(snapshot) }
 }
 
 /** Build the trusted browser RPC handler independently for focused tests. */

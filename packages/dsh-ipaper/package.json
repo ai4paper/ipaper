@@ -21,6 +21,7 @@
     "./paper-project-remote": { "types": "./lib/types/paper-project-remote.d.ts", "default": "./lib/paper-project-remote.js" },
     "./paper-project-tools": { "types": "./lib/types/paper-project/tools.d.ts", "default": "./lib/paper-project/tools.js" },
     "./product-protocol": { "types": "./lib/types/product-protocol.d.ts", "default": "./lib/product-protocol.js" },
+    "./ipaper-skills": { "types": "./lib/types/ipaper-skills.d.ts", "default": "./lib/ipaper-skills.js" },
     "./client/*/client": "./lib/clients/*/client.js",
     "./client/*/package.json": "./lib/clients/*/package.json",
     "./client/*": "./lib/clients/*/index.js",
@@ -35,6 +36,7 @@
     "!lib/**/*.js.map",
     "cordis.patch.yml",
     "preset/ipaper/**",
+    "skills/**",
     "README.md"
   ],
   "engines": { "node": "^22.19.0 || >=24.0.0" },

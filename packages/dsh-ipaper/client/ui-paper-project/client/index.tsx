@@ -40,6 +40,12 @@ export function apply(ctx: ClientContext): void {
   }
   const rpc = (ctx as ClientContext & { connection: { readonly rpc: ClientConnectionRpc } }).connection.rpc
   const commandUi = (ctx as ClientContext & { commandUi: PaperStatusCommandUi }).commandUi
+  const startFindProblem = (sessionId: SessionId): void => {
+    const binding = ctx.sessions.binding(sessionId)
+    if (binding === undefined) return
+    togglePaperStatusView()
+    void binding.session.prompt([{ type: 'text', text: '/find-the-problem' }], 'queue')
+  }
 
   ctx.effect(() => commandUi.registerAction({
     id: 'view.paper-status',
@@ -65,7 +71,7 @@ export function apply(ctx: ClientContext): void {
         order: 20,
         label: 'Paper status',
       }, (props: { readonly sessionId: SessionId }) => (
-        <PaperStatusView sessionId={props.sessionId} rpc={rpc} sessions={sessions} workspaces={workspaces} />
+        <PaperStatusView sessionId={props.sessionId} rpc={rpc} sessions={sessions} workspaces={workspaces} startFindProblem={startFindProblem} />
       ))
     }))
 }
