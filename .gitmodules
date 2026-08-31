@@ -1,0 +1,3 @@
+[submodule "book"]
+	path = book
+	url = https://github.com/ai4paper/book.git

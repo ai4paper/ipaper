@@ -23,18 +23,12 @@ test('registers built-in ipaper before the writable customization root, idempote
 test('ships an academic integrity persona and complete useful tools', async () => {
   const source = await readFile(new URL('../preset/ipaper/agent.cordis.yml', import.meta.url), 'utf8')
   for (const phrase of ['Never fabricate citations', 'bibliographic metadata', 'State uncertainty', 'author intent']) assert.match(source, new RegExp(phrase, 'i'))
-  for (const row of ['tool-fs', 'tool-web', 'tool-todo', 'tool-subagent', 'plan-mode', 'apaper-plugin', 'product-protocol', 'paper-project-tools']) assert.match(source, new RegExp(`- id: ${row}`))
+  for (const row of ['tool-fs', 'tool-web', 'tool-todo', 'tool-subagent', 'plan-mode', 'apaper-plugin']) assert.match(source, new RegExp(`- id: ${row}`))
   for (const row of ['tool-ralph', 'tool-workflow', 'workflow-worker-thread', 'tool-subagent-fork']) assert.doesNotMatch(source, new RegExp(`- id: ${row}`))
   assert.match(source, /name: '@ai4paper\/apaper-plugin\/dsh'/)
   assert.doesNotMatch(source, /project-mcp|coding agent|iKanban|actual repository|tracked files|formatters|code generation|public APIs?|another engineer|commit/i)
   for (const phrase of ['manuscript', 'argument, evidence, and section structure', 'citation, attribution, and verification gaps', 'author or a collaborator']) {
     assert.match(source, new RegExp(phrase, 'i'))
-  }
-  const protocol = await import('../lib/product-protocol.js')
-  assert.equal(protocol.IPAPER_PROTOCOL_SECTION, 'ipaper:paper-project-protocol')
-  assert.equal(protocol.IPAPER_PROTOCOL_ORDER, 10)
-  for (const phrase of ['ipaper_record', 'ipaper_state', 'taskId', 'expectedVersion', 'call-local refs', 'no fixed stages', 'Never promote a claim']) {
-    assert.match(protocol.IPAPER_PRODUCT_PROTOCOL, new RegExp(phrase, 'i'))
   }
 })
 
