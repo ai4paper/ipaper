@@ -17,6 +17,10 @@
     "./session-reference": { "types": "./lib/types/session-reference.d.ts", "default": "./lib/session-reference.js" },
     "./academic-writing-preset": { "types": "./lib/types/academic-writing-preset.d.ts", "default": "./lib/academic-writing-preset.js" },
     "./invariant": { "types": "./lib/types/invariant.d.ts", "default": "./lib/invariant.js" },
+    "./paper-project": { "types": "./lib/types/paper-project/index.d.ts", "default": "./lib/paper-project/index.js" },
+    "./paper-project-remote": { "types": "./lib/types/paper-project-remote.d.ts", "default": "./lib/paper-project-remote.js" },
+    "./paper-project-tools": { "types": "./lib/types/paper-project/tools.d.ts", "default": "./lib/paper-project/tools.js" },
+    "./product-protocol": { "types": "./lib/types/product-protocol.d.ts", "default": "./lib/product-protocol.js" },
     "./client/*/client": "./lib/clients/*/client.js",
     "./client/*/package.json": "./lib/clients/*/package.json",
     "./client/*": "./lib/clients/*/index.js",
@@ -45,6 +49,7 @@
     "prepack": "pnpm build:package"
   },
   "dependencies": {
+    "@deepseek-ai/dsh-agent": "^0.1.1-rc.1",
     "@deepseek-ai/dsh-agent-loop": "^0.1.1-rc.1",
     "@deepseek-ai/dsh-agent-presets": "^0.1.1-rc.1",
     "@deepseek-ai/dsh-api-gateway": "^0.1.1-rc.1",
@@ -77,6 +82,8 @@
     "@deepseek-ai/dsh-sandbox": "^0.1.1-rc.1",
     "@deepseek-ai/dsh-sandbox-policy": "^0.1.1-rc.1",
     "@deepseek-ai/dsh-scope": "^0.1.1-rc.1",
+    "@deepseek-ai/dsh-session": "^0.1.1-rc.1",
+    "@deepseek-ai/dsh-session-persistence": "^0.1.1-rc.1",
     "@deepseek-ai/dsh-session-projection-cache": "^0.1.1-rc.1",
     "@deepseek-ai/dsh-session-reference": "^0.1.1-rc.1",
     "@deepseek-ai/dsh-session-stats": "^0.1.1-rc.1",
@@ -92,7 +99,8 @@
     "@deepseek-ai/dsh-workspace": "^0.1.1-rc.1",
     "@deepseek-ai/schemastery": "^3.18.1",
     "@isomoes/dsh-web-ui": "0.5.1",
-    "commander": "^15.0.0"
+    "commander": "^15.0.0",
+    "zod": "^4.4.3"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "^4.0.1",
@@ -109,7 +117,9 @@
     "@deepseek-ai/dsh-system-prompt": "^0.1.1-rc.1",
     "@types/node": "^22.0.0",
     "@types/react": "~18.3.1",
+    "@types/react-dom": "~18.3.0",
     "react": "^18.2.0",
+    "react-dom": "^18.2.0",
     "tsdown": "^0.22.2",
     "typescript": "^6.0.3"
   }

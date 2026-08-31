@@ -30,12 +30,12 @@ After an update, restart DSH and refresh the existing browser page.
 
 ## Architecture
 
-The Cordis patch composes the shared DSH host/session/transport services, a complete shared Web client roster, the IPaper brand client, and the academic preset. Host registry identities remain product-neutral; product wording is confined to user-facing CLI text, prompts, metadata, branding, and preset content.
+The Cordis patch composes the shared DSH host/session/transport services, a complete shared Web client roster, IPaper-owned brand and paper-status clients, and the academic preset. It mounts the singleton `paperProjects` host service after DSH storage and workspace services. The service owns the versioned `ipaper_project` domain, one durable graph per workspace, trusted session/parent-lineage resolution, deterministic IDs, optimistic versions, per-workspace write queues, recovery markers, committed snapshots, dynamic process lenses, and paginated graph/history views. A trusted read-only Connection RPC powers a full **Paper status** surface that replaces the conversation viewport while selected. A single Paper status button in the left sidebar—or the `Mod+Shift+P` shortcut—toggles between that surface and chat; framing, research, argument, production, and validation signals are shown without inventing fixed stages or a completion percentage. The `ipaper` preset exposes exactly `ipaper_record` and `ipaper_state`, with a scoped system-prompt protocol for root and subagent use. Host registry identities remain product-neutral; product wording is confined to user-facing CLI text, prompts, metadata, branding, and preset content.
 
 The package build:
 
-1. compiles product host adapters;
-2. bundles only `ui-brand-ipaper` into shared sidebar/conversation brand slots;
+1. compiles product host adapters and the read-only Paper Project status RPC;
+2. bundles `ui-brand-ipaper` into shared brand slots and `ui-paper-project` into the shared sidebar-action and conversation-view slots;
 3. resolves `@isomoes/dsh-web-ui/web/index.html` through the dependency's public export;
 4. copies the prebuilt shell, applies locally owned IPaper title/manifest/favicon metadata, and removes dangling upstream source-map directives.
 

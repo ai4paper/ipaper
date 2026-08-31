@@ -21,6 +21,12 @@ for (const required of [
   'cordis.patch.yml',
   'lib/index.js',
   'lib/types/index.d.ts',
+  'lib/paper-project/index.js',
+  'lib/paper-project/tools.js',
+  'lib/types/paper-project/index.d.ts',
+  'lib/types/paper-project/tools.d.ts',
+  'lib/product-protocol.js',
+  'lib/types/product-protocol.d.ts',
   'lib/clients/ui-brand-ipaper/client.js',
   'lib/web/index.html',
   'lib/web/manifest.webmanifest',
@@ -63,6 +69,12 @@ if (/iKanban|DeepSeek Harness|kanban/i.test(`${html}\n${manifest}`)) throw new E
 if (!readme.includes('@isomoes/dsh-web-ui@0.5.1')) throw new Error('Packed README omits the exact shared dependency')
 if (!/- id: apaper-plugin\s+name: '@ai4paper\/apaper-plugin\/dsh'/.test(agentComposition)) {
   throw new Error('Packed IPaper preset omits the APaper DSH plugin')
+}
+if (!/- id: paper-project-tools\s+name: '@ai4paper\/dsh-ipaper\/paper-project-tools'/.test(agentComposition)) {
+  throw new Error('Packed IPaper preset omits the Paper Project tools')
+}
+if (!/- id: product-protocol\s+name: '@ai4paper\/dsh-ipaper\/product-protocol'/.test(agentComposition)) {
+  throw new Error('Packed IPaper preset omits the Paper Project system-prompt protocol')
 }
 
 console.log(`Validated ${files.length} packed files in ${target}`)
