@@ -22,6 +22,14 @@ function PaperIcon() {
   )
 }
 
+function ChevronIcon() {
+  return (
+    <svg viewBox="0 0 16 16" width="14" height="14" fill="none" aria-hidden="true">
+      <path d="m6 3.5 4.5 4.5L6 12.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  )
+}
+
 /** Sidebar launcher that switches the resident conversation viewport to/from Paper status. */
 export function PaperProjectSidebar({ wide, sessions }: PaperProjectSidebarProps) {
   const snapshot = useSyncExternalStore(sessions.subscribe, sessions.getSnapshot, sessions.getSnapshot)
@@ -46,7 +54,7 @@ export function PaperProjectSidebar({ wide, sessions }: PaperProjectSidebarProps
 
   if (workspaceRegion === undefined) return null
   return createPortal(
-    <div className="ipaper-sidebar-launcher-seat">
+    <div className="ipaper-sidebar-launcher-seat" data-wide={wide || undefined}>
       <button
         type="button"
         className="ipaper-sidebar-button"
@@ -58,8 +66,13 @@ export function PaperProjectSidebar({ wide, sessions }: PaperProjectSidebarProps
         title="Paper status"
         onClick={toggle}
       >
-        <PaperIcon />
-        {wide && <span>Paper status</span>}
+        <span className="ipaper-sidebar-button-icon"><PaperIcon /></span>
+        {wide && (
+          <>
+            <span className="ipaper-sidebar-button-label">Paper status</span>
+            <span className="ipaper-sidebar-button-chevron"><ChevronIcon /></span>
+          </>
+        )}
       </button>
     </div>,
     workspaceRegion,
