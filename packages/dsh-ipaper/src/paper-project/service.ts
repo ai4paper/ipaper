@@ -49,8 +49,8 @@ async function parentHeader(ctx: Context, id: string, signal?: AbortSignal): Pro
   if (live !== undefined) return resolvableHeader(live.session.header)
   const persistence = ctx.get('sessionPersistence')
   if (persistence === undefined) return undefined
-  const persisted = (await persistence.list(signal)).find(header => String(header.id) === id)
-  return persisted === undefined ? undefined : resolvableHeader(persisted)
+  const persisted = (await persistence.list(signal === undefined ? {} : { signal })).find(snapshot => String(snapshot.header.id) === id)
+  return persisted === undefined ? undefined : resolvableHeader(persisted.header)
 }
 
 /** Resolve an agent's workspace through its own header or durable parent lineage. */

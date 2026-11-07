@@ -1,23 +1,47 @@
 import assert from 'node:assert/strict'
-import { access, readFile } from 'node:fs/promises'
+import { cp, mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises'
+import { join } from 'node:path'
+import { tmpdir } from 'node:os'
 import { test } from 'node:test'
 
-const root = new URL('../', import.meta.url)
-
-test('registers built-in ipaper before the writable customization root, idempotently', async () => {
+test('registers system preset before user copies and prevents user shadowing', async t => {
   const preset = await import('../lib/academic-writing-preset.js')
-  const userRoot = { path: '/user/presets', trust: 'user' }
-  const registry = { roots: [userRoot] }
-  assert.equal(preset.registerAcademicWritingPresetRoot(registry), 'registered')
-  assert.deepEqual(registry.roots, [
-    { path: preset.ACADEMIC_WRITING_PRESET_ROOT, trust: 'system' },
-    userRoot,
-  ])
-  assert.equal(preset.registerAcademicWritingPresetRoot(registry), 'existing')
-  assert.equal(registry.roots.length, 2)
-  assert.equal(preset.ACADEMIC_WRITING_PRESET_ID, 'ipaper')
-  assert.equal(preset.ACADEMIC_WRITING_PRESET_NAME, 'ipaper')
-  await access(new URL('../preset/ipaper/preset.yml', import.meta.url))
+  const root = await mkdtemp(join(tmpdir(), 'ipaper-presets-'))
+  t.after(() => rm(root, { recursive: true, force: true }))
+  await cp(new URL('../preset/ipaper', import.meta.url), join(root, 'custom'), { recursive: true })
+  await mkdir(join(root, 'ipaper'))
+  // Deliberately invalid shadow: it must never be read or evaluated.
+  await writeFile(join(root, 'ipaper', 'preset.yml'), 'name: [')
+  const definitions = []
+  const released = []
+  const dispose = await preset.registerAcademicWritingPresets({
+    async register(definition) {
+      definitions.push(definition)
+      return async () => { released.push(definition.id) }
+    },
+  }, [...preset.academicWritingPresetRoots(root)].reverse())
+  assert.deepEqual(definitions.map(row => row.id), ['ipaper', 'custom'])
+  assert.equal(definitions[0].plugins.find(row => row.id === 'tool-bash').disabled.__jsExpr, "process.platform === 'win32'")
+  assert.match(definitions[0].plugins.find(row => row.id === 'persona').config.prefix, /Never fabricate citations/)
+  await dispose()
+  await dispose()
+  assert.deepEqual(released, ['custom', 'ipaper'])
+})
+
+test('missing user root is optional and invalid user compositions roll back registrations', async t => {
+  const preset = await import('../lib/academic-writing-preset.js')
+  const root = await mkdtemp(join(tmpdir(), 'ipaper-presets-'))
+  t.after(() => rm(root, { recursive: true, force: true }))
+  const released = []
+  const registry = { async register(definition) { return async () => { released.push(definition.id) } } }
+  const dispose = await preset.registerAcademicWritingPresets(registry, preset.academicWritingPresetRoots(join(root, 'missing')))
+  await dispose()
+  assert.deepEqual(released, ['ipaper'])
+  await mkdir(join(root, 'broken'))
+  await writeFile(join(root, 'broken', 'preset.yml'), 'name: broken')
+  await writeFile(join(root, 'broken', 'agent.cordis.yml'), 'not: an-entry-list')
+  await assert.rejects(preset.registerAcademicWritingPresets(registry, preset.academicWritingPresetRoots(root)), /entry|array|list/i)
+  assert.deepEqual(released, ['ipaper', 'ipaper'])
 })
 
 test('ships an academic integrity persona and complete useful tools', async () => {
@@ -41,10 +65,11 @@ test('ships an academic integrity persona and complete useful tools', async () =
   }
 })
 
-test('startup command uses IPaper academic-writing wording', async () => {
-  const { webCommand } = await import('../lib/startup.js')
-  const command = webCommand()
-  assert.equal(command.name(), 'dsh --profile ipaper')
-  assert.match(command.description(), /IPaper academic-writing browser UI/)
-  assert.match(command.helpInformation(), /--trusted-host/)
+test('product patch inherits upstream startup and only contributes product rows', async () => {
+  const source = await readFile(new URL('../cordis.patch.yml', import.meta.url), 'utf8')
+  assert.doesNotMatch(source, /name: '@deepseek-ai\/dsh-(?:web-app|client-|host-)/)
+  assert.doesNotMatch(source, /webRuntime|trustedHosts|typert-loader/)
+  assert.match(source, /id: connection\n  inject: \[webStartup, webServer\]/)
+  for (const id of ['standard', 'minimal', 'cordis', 'ptc']) assert.match(source, new RegExp(`id: preset-${id}\\n  disabled: true`))
+  assert.match(source, /id: agent-preset-registry\n  config:\n    default: ipaper/)
 })

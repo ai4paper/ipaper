@@ -13,10 +13,16 @@ function snapshot(workspaceId) {
   }
 }
 
-function context({ liveAgents = [], persistedHeaders = [] } = {}) {
+function context({ liveAgents = [], persistedHeaders = [], onList = () => {} } = {}) {
   return {
     agents: { list: () => liveAgents },
-    sessionPersistence: { list: async () => persistedHeaders },
+    sessionPersistence: {
+      async list(options) {
+        onList(options)
+        options.signal?.throwIfAborted()
+        return persistedHeaders.map(header => ({ header, revision: 'saved-revision', eventCount: 5 }))
+      },
+    },
     get(name) {
       return name === 'sessionPersistence' ? this.sessionPersistence : undefined
     },
@@ -82,4 +88,35 @@ test('rejects sessions outside the registered workspace boundary', async () => {
     resolvePaperWorkspace(context(), agent, async workspaceId => snapshot(workspaceId)),
     /not registered as a DSH workspace/,
   )
+})
+
+test('resolves nested saved parent snapshots with cancellation and preserves the child caller', async () => {
+  const signal = new AbortController().signal
+  const listings = []
+  const ctx = context({
+    persistedHeaders: [
+      { id: 'unrelated', cwd: '/other' },
+      { id: 'parent', parentSession: 'root-a', origin: 'subagent' },
+      { id: 'root-a', cwd: '/paper' },
+    ],
+    onList: options => listings.push(options),
+  })
+  const child = { id: 'child', session: { header: { id: 'child', parentSession: 'parent', origin: 'subagent' } } }
+  const resolved = await resolvePaperWorkspace(ctx, child, async (workspaceId, path, sessionId) => {
+    assert.equal(path, '/paper')
+    assert.equal(sessionId, 'child')
+    return snapshot(workspaceId)
+  }, signal)
+  assert.equal(resolved.workspaceId, 'workspace-a')
+  assert.deepEqual(resolved.caller, { sessionId: 'child', origin: 'subagent' })
+  assert.deepEqual(listings, [{ signal }, { signal }])
+})
+
+test('rejects cyclic saved lineage and cancellation without creating a paper project', async () => {
+  const child = { id: 'child', session: { header: { id: 'child', parentSession: 'parent', origin: 'subagent' } } }
+  const ensure = async () => assert.fail('invalid lineage must not create a project')
+  await assert.rejects(resolvePaperWorkspace(context({ persistedHeaders: [{ id: 'parent', parentSession: 'parent' }] }), child, ensure), /lineage repeats/)
+  const controller = new AbortController()
+  const ctx = context({ onList: () => controller.abort(new Error('cancel saved lookup')) })
+  await assert.rejects(resolvePaperWorkspace(ctx, child, ensure, controller.signal), /cancel saved lookup/)
 })

@@ -1,6 +1,5 @@
 import type { Context } from '@deepseek-ai/cordis'
-import type {} from '@deepseek-ai/dsh-client-connection'
-import type { RpcResult } from '@deepseek-ai/dsh-host-apiproxy'
+import type { ConnectionRpcResult as RpcResult, PeerScope } from '@deepseek-ai/dsh-client-connection'
 import { deriveOverview, deriveProblemMap } from './paper-project/derive.js'
 import type {} from './paper-project/service.js'
 import type { PaperProblemMap, PaperProjectOverview, PaperProjectSnapshot } from './paper-project/types.js'
@@ -40,8 +39,13 @@ export function paperProjectStatus(
 }
 
 /** Build the trusted browser RPC handler independently for focused tests. */
-export function createPaperProjectRpcHandler(source: PaperProjectStatusSource) {
-  return async (endpoint: string, payload: unknown): Promise<RpcResult<unknown>> => {
+export function createPaperProjectRpcHandler(source: PaperProjectStatusSource): (
+  endpoint: string, payload: unknown, signal: AbortSignal, peer: Pick<PeerScope, 'principal'>,
+) => Promise<RpcResult<unknown>> {
+  return async (endpoint, payload, _signal, peer) => {
+    if (peer.principal.kind !== 'owner') {
+      return { ok: false, error: { code: 'forbidden', message: 'Paper status requires the host owner', details: {} } }
+    }
     if (endpoint !== IPAPER_STATUS_ENDPOINT) return badRequest(`unknown IPaper endpoint '${endpoint}'`)
     if (typeof payload !== 'object' || payload === null || Array.isArray(payload)) {
       return badRequest('IPaper status requires an object payload')
@@ -54,13 +58,11 @@ export function createPaperProjectRpcHandler(source: PaperProjectStatusSource) {
   }
 }
 
-export const inject = ['connection', 'paperProjects']
+export const inject = ['connection', 'paperProjects', 'webServer']
 
 /** Expose the workspace Paper Project Graph to the product browser status plane. */
 export function apply(ctx: Context): void {
   const handler = createPaperProjectRpcHandler(ctx.paperProjects)
-  ctx.effect(
-    () => ctx.connection.rpc.handle(IPAPER_RPC_CHANNEL, handler, { authority: 'trusted-host' }),
-    'ipaper.paperProjectRemote',
-  )
+  // Connection owns registration disposal in the calling plugin's scope.
+  ctx.connection.rpc.handle(IPAPER_RPC_CHANNEL, handler)
 }

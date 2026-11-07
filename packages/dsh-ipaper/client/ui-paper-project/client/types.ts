@@ -1,4 +1,4 @@
-import type { WorkspaceView } from '@deepseek-ai/dsh-client-connection/client'
+import type { WorkspaceView } from '@deepseek-ai/dsh-api-workspace-controller/client'
 import type { PaperProblemMap, PaperProjectOverview, PaperProjectSnapshot } from '../../../src/paper-project/types.js'
 
 export const TABS = ['questions', 'overview', 'research', 'manuscript', 'activity'] as const

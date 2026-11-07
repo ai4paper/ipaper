@@ -1,5 +1,6 @@
-import type { SessionId, WorkspaceView } from '@deepseek-ai/dsh-client-connection/client'
-import type { SessionListState } from '@deepseek-ai/dsh-client-runtime/client'
+import type { SessionId } from '@deepseek-ai/dsh-client-connection/client'
+import type { WorkspaceView } from '@deepseek-ai/dsh-api-workspace-controller/client'
+import type { SessionListState } from '@deepseek-ai/dsh-api-session-controller/client'
 import type { WorkspaceState } from './types.ts'
 
 export function workspaceForSession(sessionId: SessionId, sessions: SessionListState, workspaces: WorkspaceState): WorkspaceView | undefined {

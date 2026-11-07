@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Replaced the shared Web fork with upstream DSH `0.2.2-rc.1` composition and profile-local launching.
+- Migrated academic presets, Paper status, product branding, and the optional colorblind palette to upstream extension contracts.
+- Added clean packaged-profile and Chromium verification; documented interaction changes and compatibility adaptations in [Upstream Web migration](docs/upstream-web-migration.md).
+
 ## [0.1.2]
 
 - Added the APaper DSH plugin to the built-in IPaper agent preset.

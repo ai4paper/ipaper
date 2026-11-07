@@ -1,27 +1,20 @@
-/** IPaper's workspace-scoped Paper Project status plane. */
-import type { ClientContext } from '@deepseek-ai/dsh-client-runtime/client'
-import type { ClientConnectionRpc, SessionId } from '@deepseek-ai/dsh-client-connection/client'
-import type {} from '@isomoes/dsh-web-ui/client/ui-conversation/client'
-import type {} from '@isomoes/dsh-web-ui/client/ui-sidebar/client'
-import { PaperProjectSidebar } from './PaperProjectSidebar.tsx'
-import { PaperStatusView } from './PaperStatusView.tsx'
+/** IPaper's workspace-scoped view in the upstream conversation navigation. */
+import type { Context } from '@deepseek-ai/cordis'
+import type { ConnectionHandle, SessionId } from '@deepseek-ai/dsh-client-connection/client'
+import type {} from '@deepseek-ai/dsh-api-session-controller/client'
+import type {} from '@deepseek-ai/dsh-api-workspace-controller/client'
+import type {} from '@deepseek-ai/dsh-client-ui-renderer/client'
+import type {} from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type {} from '@deepseek-ai/dsh-client-ui-sidebar/client'
+import type {} from '@deepseek-ai/dsh-client-ui-layout/client'
+import { PaperStatusView, type PaperStatusViewProps } from './PaperStatusView.tsx'
+import { PaperProjectPanel, PaperProjectIcon } from './PaperProjectPanel.tsx'
 import { PAPER_PROJECT_STYLES } from './styles.ts'
-import { togglePaperStatusView } from './toggle.ts'
 
-export const inject = ['slots', 'sessions', 'workspaces', 'connection', 'commandUi']
+export const inject = ['slots', 'sessions', 'workspaces', 'connection', 'layout']
 
-interface PaperStatusCommandUi {
-  registerAction(action: {
-    readonly id: string
-    readonly title: () => string
-    readonly category: () => string
-    readonly keybind: string
-    readonly disabled: () => boolean
-    readonly run: () => void
-  }): () => void
-}
-
-export function apply(ctx: ClientContext): void {
+export function apply(ctx: Context): void {
+  const connection = ctx.get('connection') as ConnectionHandle
   ctx.effect(() => {
     const style = document.createElement('style')
     style.dataset.plugin = '@ai4paper/dsh-ipaper/ui-paper-project'
@@ -38,40 +31,28 @@ export function apply(ctx: ClientContext): void {
     getSnapshot: () => ctx.workspaces.list.getSnapshot(),
     subscribe: (listener: () => void) => ctx.workspaces.list.subscribe(listener),
   }
-  const rpc = (ctx as ClientContext & { connection: { readonly rpc: ClientConnectionRpc } }).connection.rpc
-  const commandUi = (ctx as ClientContext & { commandUi: PaperStatusCommandUi }).commandUi
-  const startFindProblem = (sessionId: SessionId): void => {
+  const startFindProblem = async (sessionId: SessionId): Promise<void> => {
     const binding = ctx.sessions.binding(sessionId)
-    if (binding === undefined) return
-    togglePaperStatusView()
-    void binding.session.prompt([{ type: 'text', text: '/find-the-problem' }], 'queue')
+    if (binding === undefined) throw new Error('This session is no longer available. Return to chat and select a session.')
+    const result = await binding.session.prompt([{ type: 'text', text: '/find-the-problem' }], 'queue')
+    if (!result.ok) throw new Error(result.error.message)
+    ctx.layout.selectPanel(null)
   }
-
-  ctx.effect(() => commandUi.registerAction({
-    id: 'view.paper-status',
-    title: () => 'Toggle Paper status',
-    category: () => 'View',
-    keybind: 'mod+shift+p',
-    disabled: () => sessions.getSnapshot().current === undefined,
-    run: () => { togglePaperStatusView() },
-  }), 'ipaper.paperStatusShortcut')
-
-  ctx.slots.inject('sidebar.footer.action', () =>
-    ctx.slots.inject('conversation.view', function* () {
-      yield ctx.slots.register({
-        name: 'sidebar.footer.action',
-        id: 'paper-project-status',
-        order: 10,
-      }, (props: { readonly wide: boolean }) => (
-        <PaperProjectSidebar wide={props.wide} sessions={sessions} />
-      ))
-      yield ctx.slots.register({
-        name: 'conversation.view',
-        id: 'paper-project',
-        order: 20,
-        label: 'Paper status',
-      }, (props: { readonly sessionId: SessionId }) => (
-        <PaperStatusView sessionId={props.sessionId} rpc={rpc} sessions={sessions} workspaces={workspaces} startFindProblem={startFindProblem} />
-      ))
-    }))
+  ctx.slots.inject('main', () => ctx.slots.register({
+    name: 'main', key: 'ipaper.paper-status',
+    inject: () => ({ rpc: connection.rpc, sessions, workspaces, startFindProblem, back: () => ctx.layout.selectPanel(null) }),
+  }, PaperProjectPanel))
+  ctx.slots.inject('sidebar.panellist', () => ctx.slots.register({
+    name: 'sidebar.panellist', id: 'ipaper.paper-status', label: 'Paper status', order: 20,
+  }, PaperProjectIcon))
+  ctx.slots.inject('conversation.view', () => ctx.slots.register({
+    name: 'conversation.view',
+    id: 'paper-project',
+    order: 20,
+    label: 'Paper status',
+    inject: (sessionId: SessionId): PaperStatusViewProps => ({
+      sessionId, rpc: connection.rpc, sessions, workspaces,
+      startFindProblem: () => startFindProblem(sessionId),
+    }),
+  }, PaperStatusView))
 }

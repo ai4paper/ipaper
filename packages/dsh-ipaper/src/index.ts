@@ -1,88 +1,55 @@
-import { networkInterfaces } from 'node:os'
+import { readFile } from 'node:fs/promises'
 import { fileURLToPath } from 'node:url'
 import type { Context } from '@deepseek-ai/cordis'
-import z from '@deepseek-ai/schemastery'
-import { addHarnessSourceSection } from '@deepseek-ai/dsh-app-boot'
-import * as FrontendStatic from '@deepseek-ai/dsh-host-frontend-static'
-import type {} from '@deepseek-ai/cordis-plugin-loader'
 import type {} from '@deepseek-ai/dsh-host-webserver'
-import type {} from '@deepseek-ai/dsh-shell-env'
-import type {} from '@deepseek-ai/dsh-system-prompt'
 
-export const name = 'web-app'
+export const name = 'ipaper-brand'
 export const inject = ['webServer']
 
 export interface Config {
-  printUrl: boolean
-  surfaceContext: boolean
-  trustedHosts: string[]
+  /** Enable the product's dual-mode colorblind accents on the next page load. */
+  colorblind?: boolean
 }
 
-export const Config: z<Config> = z.object({
-  printUrl: z.boolean().default(true),
-  surfaceContext: z.boolean().default(true),
-  trustedHosts: z.array(String).default([]),
-})
+export const PRODUCT_ASSETS = [
+  { file: 'favicon.svg', type: 'image/svg+xml' },
+  { file: 'manifest.webmanifest', type: 'application/manifest+json' },
+] as const
 
-export interface WebRuntimeValues {
-  lanAddresses: string[]
-  trustedHosts: string[]
+export function productAssetPath(file: typeof PRODUCT_ASSETS[number]['file']): string {
+  return fileURLToPath(new URL(`./web/${file}`, import.meta.url))
 }
 
-const SOURCE_ROOT = fileURLToPath(new URL('../../../..', import.meta.url))
-const LOOPBACK_HOST = '127.0.0.1'
-const ALL_INTERFACES_HOST = '0.0.0.0'
-
-export function resolveLanTrust(bindHost: string, extra: readonly string[]): WebRuntimeValues {
-  const lanAddresses = bindHost === ALL_INTERFACES_HOST
-    ? Object.values(networkInterfaces()).flat()
-      .filter((iface): iface is NonNullable<typeof iface> => iface !== undefined && iface.family === 'IPv4' && !iface.internal)
-      .map(iface => iface.address)
-    : []
-  return { lanAddresses, trustedHosts: [...lanAddresses, ...extra] }
-}
-
-function localWebUrl(ctx: Context): string {
-  const port = ctx.get('webServer')?.port
-  if (port === undefined) throw new Error('ipaper: webServer service missing while resolving Web runtime')
-  return `http://${LOOPBACK_HOST}:${String(port)}`
-}
-
-function resolveDistIndex(): string {
-  return fileURLToPath(new URL('./web/index.html', import.meta.url))
-}
-
-export const internals: { resolveDistIndex: () => string } = { resolveDistIndex }
-
-export function apply(ctx: Context, config: Config): void {
-  const runtime = resolveLanTrust(ctx.webServer.host, config.trustedHosts)
-  ctx.provide('webRuntime', runtime)
-  ctx.plugin(FrontendStatic, { distIndex: internals.resolveDistIndex() })
-
-  if (config.surfaceContext) {
-    ctx.inject(['systemPrompt'], promptCtx => {
-      addHarnessSourceSection(promptCtx, SOURCE_ROOT)
+/** Replace document branding while preserving upstream shell and boot injections. */
+export function brandIndex(html: string, config: Config = {}): string {
+  if (!/<\/head\s*>/i.test(html)) throw new Error('ipaper-brand: upstream index has no closing head')
+  const clean = html
+    .replace(/<title\b[^>]*>[\s\S]*?<\/title\s*>\s*/gi, '')
+    .replace(/<meta\b[^>]*>\s*/gi, tag => {
+      const name = /\bname\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1]?.toLowerCase()
+      return name === 'ipaper-colorblind' ? '' : tag
     })
-    ctx.inject(['shellEnv'], runtimeCtx => {
-      runtimeCtx.shellEnv.register({
-        name: 'web-runtime',
-        variables: {
-          DSH_WEB_URL: { description: 'Canonical local URL of the IPaper Web GUI serving this session.' },
-        },
-        resolve: () => ({ DSH_WEB_URL: localWebUrl(runtimeCtx) }),
-      })
+    .replace(/<link\b[^>]*>\s*/gi, tag => {
+      const rel = /\brel\s*=\s*["']([^"']+)["']/i.exec(tag)?.[1]?.toLowerCase().split(/\s+/)
+      return rel?.some(value => ['icon', 'manifest', 'apple-touch-icon'].includes(value)) ? '' : tag
     })
-  }
+  return clean.replace(/<\/head\s*>/i, `<title>IPaper</title>\n<meta name="ipaper-colorblind" content="${config.colorblind === true}">\n<link rel="icon" type="image/svg+xml" href="/favicon.svg">\n<link rel="manifest" href="/manifest.webmanifest">\n</head>`)
+}
 
-  if (!config.printUrl) return
-  const printUrl = (): void => {
-    const lanCandidate = runtime.lanAddresses[0]
-    const port = ctx.webServer.port
-    console.log(`IPaper Web GUI: ${localWebUrl(ctx)}${lanCandidate === undefined ? '' : ` (LAN: http://${lanCandidate}:${String(port)})`}`)
+/** Contribute product metadata through public Web hooks; upstream retains its fallback. */
+export async function apply(ctx: Context, config: Config = {}): Promise<void> {
+  const assets = await Promise.all(PRODUCT_ASSETS.map(async asset => ({
+    ...asset,
+    content: await readFile(productAssetPath(asset.file), 'utf8'),
+  })))
+  ctx.effect(() => ctx.webServer.tapIndex(html => brandIndex(html, config)), 'ipaper.brandIndex')
+  for (const asset of assets) {
+    ctx.effect(() => ctx.webServer.register({
+      kind: 'exact',
+      path: `/${asset.file}`,
+      resource: async () => new Response(asset.content, {
+        headers: { 'content-type': asset.type, 'cache-control': 'no-cache' },
+      }),
+    }), `ipaper.brandAsset.${asset.file}`)
   }
-  const settled = ctx.get('loader')?.await()
-  if (settled === undefined) printUrl()
-  else void settled.then(() => {
-    if (ctx.get('webServer') !== undefined) printUrl()
-  }, () => {})
 }

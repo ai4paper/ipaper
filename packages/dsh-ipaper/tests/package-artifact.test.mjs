@@ -15,18 +15,17 @@ async function filesBelow(directory) {
 }
 
 test('shipped browser metadata is locally owned IPaper branding', async () => {
-  const [html, manifest, favicon, sourceManifest, sourceFavicon] = await Promise.all([
-    readFile(new URL('lib/web/index.html', root), 'utf8'),
+  const [manifest, favicon, sourceManifest, sourceFavicon] = await Promise.all([
     readFile(new URL('lib/web/manifest.webmanifest', root), 'utf8'),
     readFile(new URL('lib/web/favicon.svg', root), 'utf8'),
     readFile(new URL('web-brand/manifest.webmanifest', root), 'utf8'),
     readFile(new URL('web-brand/favicon.svg', root), 'utf8'),
   ])
-  assert.match(html, /<title>IPaper<\/title>/)
+  assert.deepEqual((await readdir(new URL('lib/web/', root))).sort(), ['favicon.svg', 'manifest.webmanifest'])
   assert.equal(manifest, sourceManifest)
   assert.equal(favicon, sourceFavicon)
   assert.equal(JSON.parse(manifest).name, 'IPaper')
-  assert.doesNotMatch(`${html}\n${manifest}`, /iKanban|DeepSeek Harness|kanban/i)
+  assert.doesNotMatch(manifest, /iKanban|DeepSeek Harness|kanban/i)
 })
 
 test('every shipped JavaScript and declaration source-map reference resolves', async () => {

@@ -4,9 +4,9 @@ IPaper is an academic paper-writing product bundle for DeepSeek Harness (DSH). T
 
 ## Product and runtime ownership
 
-IPaper owns academic presets, DSH composition, host adapters, and product branding. The current browser dependency is the exact supported `@isomoes/dsh-web-ui` version. Keep it a direct profile dependency, outside `dsh.profile.bundles`, until the [upstream Web migration](docs/upstream-web-migration.md) is implemented and these instructions are updated together.
+IPaper owns academic presets, product host adapters, and branding. Compose the exact supported DSH `0.2.2-rc.1` layers in order: `@deepseek-ai/dsh-base`, `@deepseek-ai/dsh-web-app`, then `@ai4paper/dsh-ipaper`. Upstream Web owns startup, transport, the shell, and the standard browser roster. Keep APaper a separate profile-root extension. Migration rationale and verification belong in [Upstream Web migration](docs/upstream-web-migration.md).
 
-**Application launch.** Use DSH profiles. The shared Web shell requires DSH-injected `window.__DSH_BOOT__`; it is not a standalone Vite application.
+**Application launch.** Use the profile-local DSH CLI and the documented profile dependency policy to preserve shared runtime identities. The shared Web shell requires DSH-injected `window.__DSH_BOOT__`; it is not a standalone Vite application.
 
 ## Repository layout
 
@@ -34,7 +34,7 @@ docs/                     Architecture and development documentation
 ## Conventions
 
 - **Source, not generated output.** Edit source, presets, composition, tests, and branding inputs; never edit `lib/` directly.
-- **Reuse the shared Web UI.** Do not copy or fork its source here. Consume the dependency's public `./web/*` export and keep locally owned browser behavior product-specific.
+- **Reuse upstream Web.** Do not copy its shell, assets, or shared UI source here. Use upstream public extension contracts and keep locally owned browser behavior and assets product-specific.
 - **Explicit composition.** Preserve Cordis row ordering and dependencies. A patch replaces a row's whole `config`; restate every owned key. Place host rows before dependent browser rows, with unique IDs and explicit `inject` ordering.
 - **Separate extensions.** Keep extensions as profile-root packages rather than adding private editor, citation, or reference APIs to the core product.
 - **Product wording, neutral services.** Keep IPaper-specific wording in prompts, presets, metadata, CLI text, and branding; preserve established product-neutral host/service identities.

@@ -11,4 +11,7 @@ allowBuilds:
 
 minimumReleaseAgeExclude:
   - '@deepseek-ai/*'
-  - '@isomoes/dsh-web-ui@0.5.1'
+
+# APaper's DSH adapter must share the profile's runtime service identities.
+overrides:
+  '@ai4paper/apaper-plugin@0.2.3>@deepseek-ai/dsh-mcp-client': 0.2.2-rc.1

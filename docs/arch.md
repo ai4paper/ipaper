@@ -39,7 +39,7 @@ The architecture borrows dsh-pentest's authoritative host store, deterministic i
 - No hidden browser manuscript store or private editor API.
 - No automatic claim or citation creation based only on filenames or generated prose.
 - No deletion tool. Nodes are archived, rejected, cancelled, or superseded so process history remains available.
-- No bundled replacement for the shared `@isomoes/dsh-web-ui` shell.
+- No bundled replacement for the upstream DSH Web shell.
 
 ## 4. System architecture
 

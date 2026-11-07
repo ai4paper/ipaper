@@ -1,18 +1,21 @@
 import { spawnSync } from 'node:child_process'
-import { readFile } from 'node:fs/promises'
+import { mkdir, readFile, writeFile } from 'node:fs/promises'
 import { createRequire } from 'node:module'
 import { homedir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { mergeProfileSettings, migrateDevManifest } from './profile-settings.mjs'
 
 const root = new URL('../', import.meta.url)
 const packageUrl = new URL('../packages/dsh-ipaper/', import.meta.url)
 const packageDir = fileURLToPath(packageUrl)
 const require = createRequire(packageUrl)
-const webUiDir = dirname(require.resolve('@isomoes/dsh-web-ui/package.json'))
+const baseDir = dirname(require.resolve('@deepseek-ai/dsh-base/package.json'))
+const webAppDir = dirname(require.resolve('@deepseek-ai/dsh-web-app/package.json'))
+const cliDir = dirname(require.resolve('@deepseek-ai/dsh/package.json'))
 const apaperPluginDir = fileURLToPath(new URL('../', import.meta.resolve('@ai4paper/apaper-plugin/dsh')))
 const manifest = JSON.parse(await readFile(new URL('package.json', packageUrl), 'utf8'))
-const dshHome = join(homedir(), '.ipaper')
+const dshHome = process.env.DSH_HOME ?? join(homedir(), '.ipaper')
 const env = { ...process.env, DSH_HOME: dshHome }
 
 function run(command, args, options = {}) {
@@ -33,13 +36,33 @@ run('pnpm', [
   'build:package',
 ])
 
+const profileDir = join(dshHome, 'profiles', 'ipaper-dev')
+await mkdir(profileDir, { recursive: true })
+async function readOptional(path) {
+  try { return await readFile(path, 'utf8') } catch (error) {
+    if (error.code !== 'ENOENT') throw error
+    return undefined
+  }
+}
+const settingsPath = join(profileDir, 'pnpm-workspace.yaml')
+await writeFile(settingsPath, mergeProfileSettings(await readOptional(settingsPath)))
+const profileManifestPath = join(profileDir, 'package.json')
+const existingManifest = await readOptional(profileManifestPath)
+if (existingManifest !== undefined) {
+  await writeFile(profileManifestPath, `${JSON.stringify(migrateDevManifest(JSON.parse(existingManifest)), null, 2)}\n`)
+}
+
 // Link all direct profile packages into this workspace's dependency graph.
 // Linking only IPaper while installing its profile-root dependencies from the
 // registry could place a second DSH runtime at the profile root and split
 // private service symbols used by linked host plugins.
 run('dsh', [
   'plugin', '--profile', 'ipaper-dev', 'add',
-  `link:${webUiDir}`,
+  `link:${baseDir}`,
+  `link:${cliDir}`,
+  `link:${webAppDir}`,
   `link:${apaperPluginDir}`,
   `link:${packageDir}`,
 ])
+const installed = JSON.parse(await readFile(profileManifestPath, 'utf8'))
+await writeFile(profileManifestPath, `${JSON.stringify(migrateDevManifest(installed), null, 2)}\n`)

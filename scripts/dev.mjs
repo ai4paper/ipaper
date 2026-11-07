@@ -5,10 +5,11 @@ import { join } from 'node:path'
 const args = process.argv.slice(2)
 if (args[0] === '--') args.shift()
 
-const dshEnv = { ...process.env, DSH_HOME: join(homedir(), '.ipaper') }
+const dshEnv = { ...process.env, DSH_HOME: process.env.DSH_HOME ?? join(homedir(), '.ipaper') }
+const profile = join(dshEnv.DSH_HOME, 'profiles', 'ipaper-dev')
 const children = [
   spawn(process.execPath, ['packages/dsh-ipaper/scripts/watch-brand.mjs'], { stdio: 'inherit', env: dshEnv }),
-  spawn('dsh', ['--profile', 'ipaper-dev', ...args], { stdio: 'inherit', env: dshEnv }),
+  spawn('pnpm', ['--dir', profile, 'exec', 'dsh', '--profile', 'ipaper-dev', ...args], { stdio: 'inherit', env: dshEnv }),
 ]
 const exits = children.map(child => new Promise((resolve, reject) => {
   child.once('error', reject)

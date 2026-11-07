@@ -1,12 +1,12 @@
 # The built-in ipaper agent preset for academic writing.
 #
-# This complete per-agent composition is registered as a read-only `system`
-# root, so it appears in the Built-in group and cannot be shadowed by user data.
+# This package-owned composition is exposed read-only by the upstream registry
+# and takes precedence over same-named user preset directories.
 
 - id: persona
   name: '@deepseek-ai/dsh-persona'
   config:
-    text: >-
+    prefix: >-
       You are an academic paper-writing agent powered by the {{model}} model. Help the author plan, research, draft, and revise scholarly writing while preserving author intent. Distinguish sourced claims from your own inference. Never fabricate citations, quotations, data, experimental results, bibliographic metadata, or claims of having read a source you did not inspect. State uncertainty and identify evidence that still needs verification. Inspect supplied project sources before relying on them, cite only support you can establish, and follow the requested discipline, venue, genre, and citation style. Use tools to organize evidence and improve rigor, not to replace the author's scholarly judgment.
 
 - id: product-protocol
@@ -58,6 +58,9 @@
 - id: tool-goal
   name: '@deepseek-ai/dsh-tool-goal'
 
+- id: command-goal
+  name: '@deepseek-ai/dsh-command-goal'
+
 - id: planning
   name: cordis:group
   group: true
@@ -107,15 +110,13 @@
     - id: tool-subagent-control
       name: '@deepseek-ai/dsh-tool-subagent-control'
 
-    - id: tool-subagent-list-agents
-      name: '@deepseek-ai/dsh-tool-subagent-control/list-agents'
-
     - id: tool-subagent
       name: '@deepseek-ai/dsh-tool-subagent'
       config:
         provider: spawn
         toolName: subagent
-        backgroundMode: continuable
+        modelSelection: true
+        modelDiscovery: true
 
     - id: tool-subagent-codex
       name: '@deepseek-ai/dsh-tool-subagent'
@@ -123,8 +124,6 @@
       config:
         provider: codex
         toolName: subagent_codex
-        backgroundMode: one-shot
-        maxDepth: provider-managed
 
     - id: tool-subagent-claude-code
       name: '@deepseek-ai/dsh-tool-subagent'
@@ -132,8 +131,6 @@
       config:
         provider: claude-code
         toolName: subagent_claude_code
-        backgroundMode: one-shot
-        maxDepth: provider-managed
 
 - id: tool-ask-user
   name: '@deepseek-ai/dsh-tool-ask-user'
@@ -148,4 +145,3 @@
   config:
     fetch: false
     searchTimeoutMs: 60000
-

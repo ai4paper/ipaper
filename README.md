@@ -1,24 +1,46 @@
 # IPaper
 
-IPaper is an academic paper-writing product bundle for [DeepSeek Harness (DSH)](https://www.npmjs.com/package/@deepseek-ai/dsh). The publishable package is `@ai4paper/dsh-ipaper`; it owns the product preset and branding while reusing exactly `@isomoes/dsh-web-ui@0.5.1` as an external shared browser dependency and `@ai4paper/apaper-plugin@0.2.3` as its profile-root academic toolkit.
+IPaper is an academic paper-writing product bundle for [DeepSeek Harness (DSH)](https://www.npmjs.com/package/@deepseek-ai/dsh). The publishable package, `@ai4paper/dsh-ipaper`, contributes academic presets, paper-project tools and views, and branding to upstream DSH Web `0.2.2-rc.1`. APaper supplies the profile-root academic toolkit.
 
 ## Install, run, and update
 
-All three packages must be direct dependencies of the same DSH profile because browser modules and agent-preset extensions resolve from the profile root:
+Use DSH `0.2.2-rc.1` and pnpm 11. APaper `0.2.3` requires a profile-local override so its MCP adapter shares the supported DSH runtime. For a new profile, create this configuration before installing:
 
 ```sh
-DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper add @ai4paper/dsh-ipaper @isomoes/dsh-web-ui@0.5.1 @ai4paper/apaper-plugin@0.2.3 --registry=https://registry.npmjs.org
-DSH_HOME="$HOME/.ipaper" dsh --profile ipaper
+mkdir -p "$HOME/.ipaper/profiles/ipaper"
+cat > "$HOME/.ipaper/profiles/ipaper/pnpm-workspace.yaml" <<'YAML'
+packages:
+  - .
+nodeLinker: hoisted
+autoInstallPeers: true
+overrides:
+  '@ai4paper/apaper-plugin@0.2.3>@deepseek-ai/dsh-mcp-client': 0.2.2-rc.1
+allowBuilds:
+  '@deepseek-ai/dsh-subprocess-local': true
+  node-pty: true
+  '@google/genai': false
+  esbuild: true
+  koffi: true
+  protobufjs: false
+YAML
 ```
 
-Only `@ai4paper/dsh-ipaper` belongs in `dsh.profile.bundles`; Web UI and APaper remain direct plain dependencies. To update or remove:
+Install upstream Web before IPaper; APaper remains a separate direct dependency:
 
 ```sh
-DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper add @ai4paper/dsh-ipaper@latest @isomoes/dsh-web-ui@0.5.1 @ai4paper/apaper-plugin@0.2.3 --registry=https://registry.npmjs.org
-DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper remove @ai4paper/dsh-ipaper @isomoes/dsh-web-ui @ai4paper/apaper-plugin
+DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper add @deepseek-ai/dsh-base@0.2.2-rc.1 @deepseek-ai/dsh-web-app@0.2.2-rc.1 --registry=https://registry.npmjs.org
+DSH_HOME="$HOME/.ipaper" dsh plugin --profile ipaper add @deepseek-ai/dsh@0.2.2-rc.1 @ai4paper/dsh-ipaper @ai4paper/apaper-plugin@0.2.3 --registry=https://registry.npmjs.org
+DSH_HOME="$HOME/.ipaper" pnpm --dir "$HOME/.ipaper/profiles/ipaper" exec dsh --profile ipaper
 ```
 
-Restart DSH and refresh the existing browser page after updates.
+The profile's bundle order is `@deepseek-ai/dsh-base`, `@deepseek-ai/dsh-web-app`, then `@ai4paper/dsh-ipaper`. The CLI and APaper are plain dependencies, not bundles. Launch and manage the installed product through its profile-local CLI to keep DSH service identities shared. To update or remove the product:
+
+```sh
+DSH_HOME="$HOME/.ipaper" pnpm --dir "$HOME/.ipaper/profiles/ipaper" exec dsh plugin --profile ipaper add @ai4paper/dsh-ipaper@latest @ai4paper/apaper-plugin@0.2.3 --registry=https://registry.npmjs.org
+DSH_HOME="$HOME/.ipaper" pnpm --dir "$HOME/.ipaper/profiles/ipaper" exec dsh plugin --profile ipaper remove @ai4paper/dsh-ipaper @ai4paper/apaper-plugin
+```
+
+Preserve the profile override during updates; merge it into an existing workspace file rather than replacing other settings. Restart DSH and refresh the browser page after updates. See the [migration reference](docs/upstream-web-migration.md) before updating an existing fork-based profile.
 
 ## Development and validation
 
@@ -34,23 +56,19 @@ pnpm dev
 pnpm dev:config
 ```
 
-`pnpm dev` builds IPaper and links all three direct profile dependencies into this workspace's installed dependency graph, then runs the IPaper brand watcher beside DSH. Linking Web UI and APaper alongside the live IPaper checkout prevents duplicate profile-root DSH runtimes from splitting private service symbols, while rebuilt host, preset, and browser artifacts remain immediately visible. `pnpm dev:remove` removes all three packages. The build copies the prebuilt shell through the dependency's public `./web/*` export, applies locally owned IPaper metadata, and does not contain or rebuild shared Web UI source.
+`pnpm dev` builds IPaper, provisions the development profile, and runs the product-client watcher beside DSH. Upstream Web supplies the shell and standard plugins; IPaper builds only its product plugins and branding assets. The shell requires DSH-injected `window.__DSH_BOOT__`.
 
 ## Built-in preset
 
-`ipaper` is the product's supported built-in agent preset. It is read-only, system-trust, and the default for new sessions. The preset includes IPaper's `find-the-problem` skill and activates [APaper](https://github.com/ai4paper/apaper-plugin), providing its `writing` and `creating-figures` skills and `apaper-mcp` literature-research tools, while preserving author intent and forbidding fabricated citations, quotations, bibliographic metadata, data, and results. Users can select `/find-the-problem` from the composer or press **Start guided workflow** in Paper status to launch the live-search, shortlist, boundary-map, verification, and three-gate decision process. In **Agent presets**, users can duplicate `ipaper` into their writable profile preset directory, customize the copied composition and metadata, and select it for later sessions. General and code-agent preset roots remain excluded.
+`ipaper` is the supported built-in agent preset: read-only, system-trust, and the default for new sessions. It includes IPaper's `find-the-problem` skill and activates [APaper](https://github.com/ai4paper/apaper-plugin), providing `writing`, `creating-figures`, and literature-research tools. The persona preserves author intent and prohibits fabricated citations, quotations, bibliographic metadata, data, and results. Users can manually copy the preset into the writable user root, customize it, and restart DSH; the [package README](packages/dsh-ipaper/README.md#custom-presets) describes the procedure. General and code-agent system roots are excluded.
+
+Select `/find-the-problem` from the composer or **Start guided workflow** in Paper status to begin live search, shortlisting, boundary mapping, gap verification, and interest/novelty/feasibility selection.
 
 ## Architecture and extensions
 
-The Cordis patch composes product-neutral DSH host/session/transport services, the complete shared browser roster, IPaper's branding and paper-status clients, and the academic preset. It also mounts one host-owned `paperProjects` service over the versioned `ipaper_project` DSH storage domain. That service owns workspace/session resolution, per-workspace serialization, deterministic graph IDs, optimistic node versions, recoverable multi-record commits, and committed read snapshots. A read-only trusted RPC supplies a workspace-scoped **Paper status** main surface with a provenance-first **Find a question** boundary map plus dynamic framing, research, argument, production, and validation signals—never a fabricated global completion percentage. The question map connects each research question to the papers, authors, methods, contributions, and limitations that address it, keeps unsupported gaps pending verification, and compares candidate directions by interest, novelty, and feasibility. One button in the left sidebar—or `Mod+Shift+P`—toggles that surface in place of the conversation and returns to chat when invoked again. The `ipaper` preset exposes exactly two graph tools—`ipaper_record` and `ipaper_state`—and injects their provenance and checkpoint protocol as a scoped system-prompt section. The shared shell uses DSH-injected `window.__DSH_BOOT__` and is not a standalone Vite app.
+The product Cordis patch extends upstream Web with academic presets, branding, and Paper status. One host-owned `paperProjects` service stores the workspace-scoped [Paper Project Graph](docs/arch.md), with provenance, deterministic IDs, optimistic versions, recoverable commits, and read-only trusted browser access. The `ipaper_record` and `ipaper_state` tools expose the graph to root agents and subagents. Paper status shows the **Find a question** boundary map and framing, research, argument, production, and validation signals without inventing a global completion percentage.
 
-Extensions remain separate profile-root packages rather than forks of IPaper. Define host services and Remote/Typert contracts in the extension, register required contract packages in `typert-loader.config.packages`, and publish `dsh.client` entries that inject documented shared Web UI clients and occupy shared conversation, composer, reference, or settings slots. Add host rows before dependent browser rows in a later profile patch, with unique IDs and explicit ordering. Reference providers should use DSH reference contracts; citation providers should keep retrieval/validation in typed host services; editor integrations should preserve author files through explicit save services. Validate resolution, Typert registration, service availability, and slot ordering in an isolated profile with the unmodified IPaper bundle.
-
-The publishable package README contains the complete extension recipe and package-specific runtime details.
-
-## Historical note
-
-Before this migration, IPaper was a standalone Bun/Hono/React 19/Claude Agent SDK chat prototype. That runtime has been removed; repository history retains it for archaeology.
+Extensions remain separate profile-root packages and use upstream public service, RPC, and browser-slot contracts. The [package README](packages/dsh-ipaper/README.md) defines the extension recipe and package-specific runtime details.
 
 ## License
 

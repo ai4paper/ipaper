@@ -1,26 +1,12 @@
-import type { HeroBrandMarkOwnerProps } from '@isomoes/dsh-web-ui/client/ui-conversation/client'
-import type { SidebarBrandMarkOwnerProps } from '@isomoes/dsh-web-ui/client/ui-sidebar/client'
-import { useLayoutEffect, useRef } from 'react'
-import manifest from '../../../package.json' with { type: 'json' }
-
-const IPAPER_VERSION = manifest.version
+import type { HeroBrandMarkOwnerProps } from '@deepseek-ai/dsh-client-ui-conversation/client'
+import type { SidebarBrandMarkOwnerProps } from '@deepseek-ai/dsh-client-ui-sidebar/client'
 
 type IPaperBrandMarkProps = HeroBrandMarkOwnerProps & SidebarBrandMarkOwnerProps
 
 /** A compact paper-and-pen mark for IPaper. */
 export function IPaperBrandMark({ size = 24, className }: IPaperBrandMarkProps) {
-  const brandMark = useRef<SVGSVGElement>(null)
-
-  useLayoutEffect(() => {
-    const slot = brandMark.current?.closest('[data-slot="conversation.hero.brand.mark"]')
-    const headline = slot?.parentElement?.nextElementSibling
-    const versionBadge = headline?.nextElementSibling
-    if (headline instanceof HTMLElement) headline.textContent = 'IPaper'
-    if (versionBadge instanceof HTMLElement) versionBadge.textContent = `v${IPAPER_VERSION}`
-  }, [])
-
   return (
-    <svg ref={brandMark} width={size} height={size} className={className} viewBox="0 0 512 512" fill="none" aria-hidden="true">
+    <svg width={size} height={size} className={className} viewBox="0 0 512 512" fill="none" aria-hidden="true">
       <rect width="512" height="512" rx="116" fill="#17324D" />
       <path d="M132 88h174l74 74v246c0 8.8-7.2 16-16 16H148c-8.8 0-16-7.2-16-16V88Z" fill="#FBF8F0" />
       <path d="M306 88v58c0 8.8 7.2 16 16 16h58" fill="#C9D6E2" />
@@ -34,16 +20,8 @@ export function IPaperBrandMark({ size = 24, className }: IPaperBrandMarkProps) 
 }
 
 export function IPaperBrandName() {
-  const brandName = useRef<SVGSVGElement>(null)
-
-  useLayoutEffect(() => {
-    const slot = brandName.current?.closest('[data-slot="sidebar.brand.name"]')
-    const versionBadge = slot?.parentElement?.nextElementSibling
-    if (versionBadge instanceof HTMLElement) versionBadge.textContent = `v${IPAPER_VERSION}`
-  }, [])
-
   return (
-    <svg ref={brandName} width="72" height="24" viewBox="0 0 72 24" fill="none" aria-label="IPaper">
+    <svg width="72" height="24" viewBox="0 0 72 24" fill="none" aria-label="IPaper">
       <text x="0" y="17.5" fill="currentColor" fontFamily="Inter, ui-sans-serif, system-ui, sans-serif" fontSize="17" fontWeight="650" letterSpacing="-0.4">IPaper</text>
     </svg>
   )
