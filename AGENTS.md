@@ -1,79 +1,55 @@
 # AGENTS.md
 
-## Scope
+IPaper is an academic paper-writing product bundle for DeepSeek Harness (DSH). The publishable package is `packages/dsh-ipaper` (`@ai4paper/dsh-ipaper`). Read its [README](packages/dsh-ipaper/README.md) before changing package composition and [Paper Project Graph architecture](docs/arch.md) before changing the scholarly process model; follow [docs/AGENTS.md](docs/AGENTS.md) for documentation.
 
-These instructions apply to the entire repository.
+## Product and runtime ownership
 
-IPaper is an academic paper-writing product bundle for DeepSeek Harness (DSH). The publishable package is `packages/dsh-ipaper` (`@ai4paper/dsh-ipaper`). It owns the product preset, DSH composition, host adapters, and IPaper branding while consuming the exact external browser dependency `@isomoes/dsh-web-ui`.
+IPaper owns academic presets, DSH composition, host adapters, and product branding. The current browser dependency is the exact supported `@isomoes/dsh-web-ui` version. Keep it a direct profile dependency, outside `dsh.profile.bundles`, until the [upstream Web migration](docs/upstream-web-migration.md) is implemented and these instructions are updated together.
 
-## Repository map
+**Application launch.** Use DSH profiles. The shared Web shell requires DSH-injected `window.__DSH_BOOT__`; it is not a standalone Vite application.
 
-- `packages/dsh-ipaper/src/`: TypeScript host plugins and adapters.
-- `packages/dsh-ipaper/client/ui-brand-ipaper/`: the locally owned browser branding client.
-- `packages/dsh-ipaper/preset/ipaper/`: the academic-writing preset and agent composition.
-- `packages/dsh-ipaper/cordis.patch.yml`: the DSH host/browser plugin roster and configuration.
-- `packages/dsh-ipaper/web-brand/`: locally owned manifest and favicon inputs.
-- `packages/dsh-ipaper/tests/`: Node test-runner integration and package-artifact tests.
-- `packages/dsh-ipaper/scripts/`: package build helpers.
-- `scripts/`: workspace development, validation, and packing helpers.
-- `packages/dsh-ipaper/lib/`: generated build output; do not edit it directly.
+## Repository layout
 
-## Toolchain and commands
-
-Use Node `^22.19.0 || >=24.0.0` and pnpm 11.7.0.
-
-From the repository root:
-
-```sh
-pnpm install --frozen-lockfile
-pnpm typecheck
-pnpm build
-pnpm test
-pnpm pack:check
+```text
+packages/dsh-ipaper/       Publishable product bundle
+  src/                    TypeScript host plugins and adapters
+  client/                 Product-owned browser plugins
+  preset/ipaper/          Academic-writing preset and agent composition
+  cordis.patch.yml        Host/browser plugin roster and configuration
+  web-brand/              Manifest and favicon inputs
+  tests/                  Integration and package-artifact tests
+  scripts/                Package build helpers
+  lib/                    Generated output; never edit directly
+scripts/                  Workspace development, validation, and packing
+docs/                     Architecture and development documentation
 ```
 
-Useful development commands:
+### Run relevant checks locally
 
-```sh
-pnpm dev          # install the ipaper-dev profile and run brand watcher + DSH
-pnpm dev:config   # print the effective installed composition
-pnpm dev:remove   # remove all three profile dependencies
-```
+- Use the narrowest relevant check while iterating. For shipped-artifact or package-composition changes, run `pnpm typecheck`, `pnpm test`, and `pnpm pack:check`.
+- Add or update tests for behavior changes. Match verification to the affected behavior: host/browser types, preset installation and selection, read-only/system trust, service resolution, Typert registration, and browser ordering.
+- Verify package exports, shipped files, title/manifest/favicon/branding, and absence of dangling source-map references when changing artifacts. Report only checks actually run.
+- Product-brand HMR requires the watcher started by `pnpm dev`. Shared shell or dependency changes require rebuilding IPaper, restarting DSH, and refreshing the existing browser page.
 
-Run the narrowest relevant check while iterating, then run `pnpm typecheck`, `pnpm test`, and `pnpm pack:check` for changes that affect shipped artifacts or package composition. Tests build the package first.
+## Conventions
 
-## Change guidelines
+- **Source, not generated output.** Edit source, presets, composition, tests, and branding inputs; never edit `lib/` directly.
+- **Reuse the shared Web UI.** Do not copy or fork its source here. Consume the dependency's public `./web/*` export and keep locally owned browser behavior product-specific.
+- **Explicit composition.** Preserve Cordis row ordering and dependencies. A patch replaces a row's whole `config`; restate every owned key. Place host rows before dependent browser rows, with unique IDs and explicit `inject` ordering.
+- **Separate extensions.** Keep extensions as profile-root packages rather than adding private editor, citation, or reference APIs to the core product.
+- **Product wording, neutral services.** Keep IPaper-specific wording in prompts, presets, metadata, CLI text, and branding; preserve established product-neutral host/service identities.
+- **ESM and strict TypeScript.** Use two-space indentation, single quotes, and no semicolons. Use `import type` for type-only imports and explicit return types for exported functions.
+- **Public types.** Use public interfaces for configuration/service values; respect `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, and unused-code checks.
+- **Focused plugins.** Keep plugins small and declarative; expose pure helpers when logic needs direct testing.
+- **Behavior tests.** Use `node:test` and `node:assert/strict` in `*.test.mjs` files.
+- **Durable decisions.** Record substantial architecture and migration rationale in topic-named documents under `docs/`, following [the documentation standard](docs/AGENTS.md). Update the existing owner when possible; mechanical/local edits do not require a new document.
 
-- Edit source files, presets, composition, tests, or branding inputs—not generated `lib/` files.
-- Keep `@isomoes/dsh-web-ui` pinned to the exact supported version. It must remain a direct profile dependency and must not be added to `dsh.profile.bundles`.
-- Do not copy or fork shared Web UI source into this repository. IPaper should bundle only its branding client and consume the shared shell through the dependency's public `./web/*` export.
-- The shared Web shell depends on DSH-injected `window.__DSH_BOOT__`; do not treat it as a standalone Vite application.
-- Keep product-specific wording in prompts, preset content, metadata, CLI text, and branding. Host and service identities should remain product-neutral where established.
-- Preserve the Cordis row ordering and dependency relationships in `cordis.patch.yml`. A patch replaces a row's complete `config`, so restate every owned key when overriding one.
-- Add host rows before browser rows that depend on them. Use unique row/plugin IDs and explicit `inject` ordering.
-- Keep extensions as separate profile-root packages rather than adding private editor, citation, or reference APIs to the core product.
-- Preserve scholarly integrity requirements: never weaken the preset's prohibition on fabricated citations, quotations, bibliographic metadata, data, or results.
-- If behavior or installation changes, update both the root README and the publishable package README when applicable.
+## Type safety and documentation
 
-## Code style
+Comments and documentation state behavior, ownership, failure conditions, and safe-use requirements rather than narrating implementation. Keep package contracts with their owners and link decision rationale instead of repeating it.
 
-- The codebase uses ESM and strict TypeScript.
-- Follow existing formatting: two-space indentation, single quotes, and no semicolons.
-- Prefer explicit return types for exported functions and public interfaces for configuration/service values.
-- Use `import type` for type-only imports.
-- Respect `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`, and unused-code checks.
-- Keep plugins small and declarative; expose focused pure helpers when logic needs direct testing.
-- Tests use `node:test` and `node:assert/strict` in `*.test.mjs` files.
+Update affected documentation with code changes. Behavior or installation changes update both the root README and publishable package README when applicable. Document placement, Markdown-only authoring, current-state prose, and review rules live in [docs/AGENTS.md](docs/AGENTS.md).
 
-## Validation expectations
+## Editing these instructions
 
-Add or update tests for behavior changes. Depending on the affected area, verify:
-
-- TypeScript host and browser client typechecking.
-- Preset installation, visibility, default selection, and read-only/system-trust behavior.
-- Cordis package resolution, Typert registration, service availability, and browser slot ordering.
-- Shipped package exports and file contents.
-- IPaper-owned title, manifest, favicon, and branding.
-- Absence of dangling source-map references in published JavaScript and declarations.
-
-For product-brand client changes, HMR works only while the watcher started by `pnpm dev` is running. Shared shell or dependency changes require rebuilding IPaper, restarting DSH, and refreshing the existing browser page.
+Keep root instructions short, self-contained, and repository-wide; link detailed owners. Subtree instructions add only subtree-specific rules. Preserve actual package constraints and commands when adapting upstream conventions; proposals do not describe shipped behavior.
