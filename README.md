@@ -66,7 +66,9 @@ Select `/find-the-problem` from the composer or **Start guided workflow** in Pap
 
 ## Architecture and extensions
 
-The product Cordis patch extends upstream Web with academic presets, branding, and Paper status. One host-owned `paperProjects` service stores the workspace-scoped [Paper Project Graph](docs/arch.md), with provenance, deterministic IDs, optimistic versions, recoverable commits, and read-only trusted browser access. The `ipaper_record` and `ipaper_state` tools expose the graph to root agents and subagents. Paper status shows the **Find a question** boundary map and framing, research, argument, production, and validation signals without inventing a global completion percentage.
+The product Cordis patch extends upstream Web with academic presets, branding, and Paper status. One host-owned `paperProjects` service stores the workspace-scoped [Paper Project Graph](packages/dsh-ipaper/README.md#architecture), with provenance, deterministic IDs, optimistic versions, recoverable commits, and read-only trusted browser access. The `ipaper_record` and `ipaper_state` tools expose the graph to root agents and subagents. Paper status shows the **Find a question** boundary map and framing, research, argument, production, and validation signals without inventing a global completion percentage.
+
+The [shared research memory design](docs/arch.md) describes the planned simplification to sources, findings, and notes and the migration from the current graph.
 
 Extensions remain separate profile-root packages and use upstream public service, RPC, and browser-slot contracts. The [package README](packages/dsh-ipaper/README.md) defines the extension recipe and package-specific runtime details.
 

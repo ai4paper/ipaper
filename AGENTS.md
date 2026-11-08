@@ -1,6 +1,6 @@
 # AGENTS.md
 
-IPaper is an academic paper-writing product bundle for DeepSeek Harness (DSH). The publishable package is `packages/dsh-ipaper` (`@ai4paper/dsh-ipaper`). Read its [README](packages/dsh-ipaper/README.md) before changing package composition and [Paper Project Graph architecture](docs/arch.md) before changing the scholarly process model; follow [docs/AGENTS.md](docs/AGENTS.md) for documentation.
+IPaper is an academic paper-writing product bundle for DeepSeek Harness (DSH). The publishable package is `packages/dsh-ipaper` (`@ai4paper/dsh-ipaper`). Read its [README](packages/dsh-ipaper/README.md) before changing package composition and the [shared research memory design](docs/arch.md) before changing the scholarly process model; follow [docs/AGENTS.md](docs/AGENTS.md) for documentation.
 
 ## Product and runtime ownership
 

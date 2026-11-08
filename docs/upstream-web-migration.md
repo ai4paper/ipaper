@@ -1,6 +1,6 @@
 # Upstream Web migration
 
-This reference records IPaper's implemented migration from the shared Web fork to upstream DSH Web `0.2.2-rc.1`, the retained compatibility adaptations, and verification evidence. The migration adopts upstream interaction policies; it does not claim parity with every historical fork feature. The [Paper Project Graph architecture](arch.md) owns the scholarly process model.
+This reference records IPaper's implemented migration from the shared Web fork to upstream DSH Web `0.2.2-rc.1`, the retained compatibility adaptations, and verification evidence. The migration adopts upstream interaction policies; it does not claim parity with every historical fork feature. The [shared research memory design](arch.md) defines the target scholarly process model and its migration from the implemented graph.
 
 ## Composition and ownership
 
