@@ -4,6 +4,9 @@ import { join } from 'node:path'
 
 const args = process.argv.slice(2)
 if (args[0] === '--') args.shift()
+if (!args.some(arg => arg === '--port' || arg.startsWith('--port='))) {
+  args.unshift('--port', '0')
+}
 
 const dshEnv = { ...process.env, DSH_HOME: process.env.DSH_HOME ?? join(homedir(), '.ipaper') }
 const profile = join(dshEnv.DSH_HOME, 'profiles', 'ipaper-dev')

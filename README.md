@@ -58,6 +58,8 @@ pnpm dev:config
 
 `pnpm dev` builds IPaper, provisions the development profile, and runs the product-client watcher beside DSH. Upstream Web supplies the shell and standard plugins; IPaper builds only its product plugins and branding assets. The shell requires DSH-injected `window.__DSH_BOOT__`.
 
+Each dev launch uses an OS-assigned available port and DSH prints its browser URL, so concurrent launches do not compete for port 3080. To request a fixed port, use `pnpm dev --port 3081` or `npm run dev -- --port 3081`.
+
 ## Built-in preset
 
 `ipaper` is the supported built-in agent preset: read-only, system-trust, and the default for new sessions. It includes IPaper's `find-the-problem` skill and activates [APaper](https://github.com/ai4paper/apaper-plugin), providing `writing`, `creating-figures`, and literature-research tools. The persona preserves author intent and prohibits fabricated citations, quotations, bibliographic metadata, data, and results. Users can manually copy the preset into the writable user root, customize it, and restart DSH; the [package README](packages/dsh-ipaper/README.md#custom-presets) describes the procedure. General and code-agent system roots are excluded.

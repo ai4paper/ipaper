@@ -142,6 +142,8 @@ pnpm dev:config   # print the effective installed composition
 
 `pnpm dev` provisions upstream Web and IPaper in `ipaper-dev`, keeping DSH service symbols in one workspace dependency graph. Product-brand HMR requires the watcher started by `pnpm dev`; upstream dependency updates require rebuilding, restarting DSH, and refreshing the existing URL.
 
+The workspace dev launcher defaults to an OS-assigned available port and DSH prints the browser URL. See the [workspace development instructions](../../README.md#development-and-validation) for fixed-port usage.
+
 ## License
 
 MIT
