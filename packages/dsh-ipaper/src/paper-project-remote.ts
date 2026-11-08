@@ -1,20 +1,17 @@
 import type { Context } from '@deepseek-ai/cordis'
 import type { ConnectionRpcResult as RpcResult, PeerScope } from '@deepseek-ai/dsh-client-connection'
-import { deriveOverview, deriveProblemMap } from './paper-project/derive.js'
+import { deriveMemorySummary } from './paper-project/memory-derive.js'
 import type {} from './paper-project/service.js'
-import type { PaperProblemMap, PaperProjectOverview, PaperProjectSnapshot } from './paper-project/types.js'
+import type { PaperProjectStatus } from './paper-project/memory-view-types.js'
+import type { MemorySnapshot } from './paper-project/memory-spec.js'
 
 export const IPAPER_RPC_CHANNEL = '/ipaper'
 export const IPAPER_STATUS_ENDPOINT = 'paper-project/status'
 
-export interface PaperProjectStatus {
-  readonly snapshot: PaperProjectSnapshot
-  readonly overview: PaperProjectOverview
-  readonly problemMap: PaperProblemMap
-}
+export type { PaperProjectStatus } from './paper-project/memory-view-types.js'
 
 interface PaperProjectStatusSource {
-  getSnapshot(workspaceId: string): PaperProjectSnapshot | undefined
+  statusSnapshot(workspaceId: string): Promise<MemorySnapshot | undefined>
 }
 
 function badRequest(message: string): RpcResult<never> {
@@ -28,14 +25,14 @@ function badRequest(message: string): RpcResult<never> {
   }
 }
 
-/** Resolve one workspace-owned graph into the complete read-only status payload. */
-export function paperProjectStatus(
+/** Return a bounded workspace summary without exposing storage or legacy snapshots. */
+export async function paperProjectStatus(
   source: PaperProjectStatusSource,
   workspaceId: string,
-): PaperProjectStatus | null {
-  const snapshot = source.getSnapshot(workspaceId)
+): Promise<PaperProjectStatus | null> {
+  const snapshot = await source.statusSnapshot(workspaceId)
   if (snapshot === undefined) return null
-  return { snapshot, overview: deriveOverview(snapshot), problemMap: deriveProblemMap(snapshot) }
+  return { summary: deriveMemorySummary(snapshot) }
 }
 
 /** Build the trusted browser RPC handler independently for focused tests. */
@@ -54,13 +51,13 @@ export function createPaperProjectRpcHandler(source: PaperProjectStatusSource): 
     if (typeof workspaceId !== 'string' || workspaceId.trim() === '') {
       return badRequest('IPaper status requires workspaceId')
     }
-    return { ok: true, value: paperProjectStatus(source, workspaceId) }
+    return { ok: true, value: await paperProjectStatus(source, workspaceId) }
   }
 }
 
 export const inject = ['connection', 'paperProjects', 'webServer']
 
-/** Expose the workspace Paper Project Graph to the product browser status plane. */
+/** Expose shared research memory to the product browser status plane. */
 export function apply(ctx: Context): void {
   const handler = createPaperProjectRpcHandler(ctx.paperProjects)
   // Connection owns registration disposal in the calling plugin's scope.

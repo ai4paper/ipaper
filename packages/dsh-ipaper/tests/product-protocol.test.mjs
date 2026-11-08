@@ -32,5 +32,5 @@ test('registers the Paper Project protocol as one scoped system-prompt section',
     text: IPAPER_PRODUCT_PROTOCOL,
   }])
   assert.equal(effects[0].label, 'ipaper.productProtocolSection()')
-  assert.match(IPAPER_PRODUCT_PROTOCOL, /Do not fabricate citations/)
+  assert.match(IPAPER_PRODUCT_PROTOCOL, /Never fabricate citations/)
 })

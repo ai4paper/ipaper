@@ -63,7 +63,31 @@ Edit `my-paper/preset.yml` and `my-paper/agent.cordis.yml`, then restart DSH and
 
 ## Architecture
 
-The product Cordis patch extends upstream Web with IPaper-owned brand and paper-status clients and the academic preset. It mounts the singleton `paperProjects` host service after DSH storage and workspace services. The service owns the versioned `ipaper_project` domain, one durable graph per workspace, trusted session/parent-lineage resolution, deterministic IDs, optimistic versions, per-workspace write queues, recovery markers, committed snapshots, dynamic process lenses, and paginated graph/history views. Trusted read-only RPC powers **Paper status**. Its **Find a question** view connects research questions to papers, authors, methods, contributions, and limitations; live-search provenance and shortlist counts stay visible; unverified gaps remain pending; and candidates are compared through interest, novelty, and feasibility gates. Framing, research, argument, production, and validation signals do not invent a global completion percentage. The `ipaper` preset exposes exactly `ipaper_record` and `ipaper_state`, with a scoped system-prompt protocol for root and subagent use. Host registry identities remain product-neutral; product wording is confined to prompts, metadata, branding, and preset content.
+The product Cordis patch extends upstream Web with IPaper-owned brand and paper-status clients and the academic preset. It mounts the singleton `paperProjects` host service after DSH storage and workspace services. The service owns one durable research memory per workspace in the `ipaper_memory` domain, trusted session/parent-lineage resolution, project-scoped IDs, optimistic versions, and per-workspace write queues. Sources, findings, and notes contain origin, related-record, and workspace-file references. Manuscripts and working plans remain author-owned files. Trusted read-only RPC powers **Paper status**, showing bounded counts, recent records, and author-marked unresolved questions. The `ipaper` preset exposes exactly `ipaper_record` and `ipaper_state`, with a scoped system-prompt protocol for root and subagent use. Host registry identities remain product-neutral; product wording is confined to prompts, metadata, branding, and preset content.
+
+### Research memory tools
+
+`ipaper_record` accepts `records` and/or `updates`, with at most 50 entries in each array. Creates require `ref`, `kind` (`source`, `finding`, or `note`), `title`, and `text`. Updates require `id` and `expectedVersion`. Optional mutable fields are `title`, `text`, `archived`, `unresolved`, `quotation`, `uncertainty`, `source`, and `references`. Supplied arrays and source metadata replace their previous values. Unspecified fields retain their values. Titles are limited to 1,000 characters, text to 50,000, uncertainty to 5,000, and references to 100 per supplied record.
+
+Source metadata has `inspection` (`discovered` or `inspected`), optional `doi`, `url`, `citationKey`, and plain-text `bibliographicMetadata`. Inspected sources also require `inspectedContent`, describing what was actually read. Source metadata is only valid on sources. `unresolved` marks an author-identified question on a finding or note. `quotation` is valid only on findings and requires an origin reference with a precise locator. Findings describe uncertainty in plain text; a reference or identifier does not certify verification or scholarly support.
+
+Migrated inspected sources with no recorded summary carry an explicit historical description of that gap; see [migration normalization](../../docs/arch.md#migration-from-the-graph).
+
+References use one of these shapes:
+
+- `{ "kind": "origin", "recordId": "<source ID or batch ref>", "locator": "Section 2, p. 3" }`, or the same shape with `path` instead of `recordId`;
+- `{ "kind": "related", "recordId": "<ID or batch ref>", "explanation": "Optional relationship description" }`;
+- `{ "kind": "file", "path": "draft.md", "locator": "Optional location" }`.
+
+Paths must remain inside the workspace, including through existing symlinks. They do not create files. Record reads report current file existence and check time. A missing file is permitted; an escaping path is rejected. Creates may reference each other's call-local aliases. All record IDs belong to the caller's resolved project. Root agents can update and archive; subagents can append and reference records without a `taskId`, but cannot update existing records. Results return `projectId`, `revision`, alias-to-ID `created` mappings, and `updated` IDs with versions. Read fresh state and reconcile before retrying a version conflict.
+
+Containment checks also resolve symlinks whose targets are missing and reject symlink loops. A symlinked workspace root is supported.
+
+`ipaper_state` defaults to `view: "summary"`, with active-record counts, up to ten recent records, and up to ten explicitly unresolved findings or notes. `search` supports `kinds`, case-insensitive `query`, and `includeArchived`. `record` requires `recordId` and returns full content, references, and paginated incoming references. `history` optionally filters by `recordId` and returns change summaries. Paginated views accept `limit` (1–100, default 20) and a returned `cursor`; repeat the same query to continue and restart pagination after a revision change. Search and history text snippets are capped at 400 characters. Full before/after records remain in host storage.
+
+The host creates memory on the first agent or registered-workspace browser read. Each complete workspace revision is stored atomically as one format-version-2 record, including change history. This provides single-host batch visibility and restart safety, but rewrites the workspace's memory and history on each batch; large archives may need a later storage optimization. Browser reads never expose the complete storage record or legacy snapshots.
+
+Startup recovers pending v1 graph commits and migrates sources to sources, evidence/claims to findings, and other semantic nodes to notes. Original nodes, relationships, events, and project metadata remain in a recoverable host-only legacy snapshot and the retained `ipaper_project` domain. The memory format uses project-scoped IDs; original IDs remain in migration metadata. Migration does not overwrite workspace files or infer unresolved questions from legacy statuses. Legacy history is retained in storage rather than merged into the new history view. Restart skips already migrated projects. Legacy graph payloads (`nodes`, `edges`, `taskId`, and old read views) receive a compatibility error; use the current tool schemas after upgrading.
 
 The package build:
 
@@ -77,7 +101,7 @@ The Web shell requires DSH to inject `window.__DSH_BOOT__`; it is not a standalo
 
 ### Browser contributions
 
-**Paper status** is available from the sidebar even before the first message, and as a conversation-view tab. Both views use the selected session's workspace. The upstream tab overflow menu exposes the tab when the viewport is narrow. **Start guided workflow** is available before a graph exists; it submits `/find-the-problem` through the upstream session binding, returns to chat on success, and displays submission failures inline.
+**Paper status** is available from the sidebar even before the first message, and as a conversation-view tab. Both views use the selected session's workspace. The upstream tab overflow menu exposes the tab when the viewport is narrow. **Start guided workflow** is available with empty memory; it submits `/find-the-problem` through the upstream session binding, returns to chat on success, and displays submission failures inline. The summary shows up to ten records per section; use agent memory search and record reads for details.
 
 The brand client occupies upstream sidebar and conversation artwork slots. Upstream owns its headline, version labels, navigation, and shortcut policy. To use blue/orange status accents while preserving upstream light/dark/system preferences, add this profile patch:
 

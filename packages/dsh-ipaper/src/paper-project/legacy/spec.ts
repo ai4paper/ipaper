@@ -1,3 +1,4 @@
+// Preserve the v1 storage contract for recovery and lossless migration.
 import { z } from 'zod'
 import { defineDomain, domainTable } from '@deepseek-ai/dsh-storage-domain'
 import {

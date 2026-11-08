@@ -3,17 +3,17 @@ import type { Context } from '@deepseek-ai/cordis'
 import type { Agent } from '@deepseek-ai/dsh-agent'
 import type {} from '@deepseek-ai/dsh-session-persistence'
 import type {} from '@deepseek-ai/dsh-workspace'
-import { derivePaperState } from './derive.js'
+import { deriveMemoryState } from './memory-derive.js'
+import type { MemoryStateResult as PaperStateResult } from './memory-derive.js'
 import type {
-  PaperMutationCaller,
-  PaperMutationInput,
-  PaperMutationResult,
-  PaperProjectRecord,
-  PaperProjectSnapshot,
-  PaperStateInput,
-  PaperStateResult,
-} from './types.js'
-import { PaperProjectStore } from './store.js'
+  MemoryMutationInput as PaperMutationInput,
+  MemoryMutationResult as PaperMutationResult,
+  MemoryProject as PaperProjectRecord,
+  MemorySnapshot as PaperProjectSnapshot,
+  MemoryStateInput as PaperStateInput,
+} from './memory-spec.js'
+import type { MemoryCaller as PaperMutationCaller } from './memory-spec.js'
+import { MemoryStore as PaperProjectStore } from './memory-store.js'
 
 declare module '@deepseek-ai/cordis' {
   interface Context {
@@ -77,7 +77,7 @@ export async function resolvePaperWorkspace(
         workspacePath: workspace.path,
         caller: {
           sessionId: agent.id,
-          origin: agent.session.header.origin === 'subagent' ? 'subagent' : 'root',
+          origin: agent.session.header.origin === 'subagent' || agent.session.header.parentSession !== undefined ? 'subagent' : 'root',
         },
         snapshot,
       }
@@ -91,7 +91,7 @@ export async function resolvePaperWorkspace(
   }
 }
 
-/** Singleton host service owning the durable workspace paper graphs. */
+/** Singleton host service owning durable workspace research memory. */
 export class PaperProjectService extends Service {
   static inject = ['storageDomain', 'workspaceRegistry', 'agents']
   private store?: PaperProjectStore
@@ -112,6 +112,12 @@ export class PaperProjectService extends Service {
 
   getSnapshot(workspaceId: string): PaperProjectSnapshot | undefined {
     return this.requireStore().getSnapshot(workspaceId)
+  }
+
+  async statusSnapshot(workspaceId: string): Promise<PaperProjectSnapshot | undefined> {
+    const workspace = this.ctx.workspaceRegistry.list().find(item => item.id === workspaceId)
+    if (workspace === undefined) return undefined
+    return await this.ensurePaperProject(workspace.id, workspace.path, 'host')
   }
 
   async ensurePaperProject(
@@ -150,7 +156,7 @@ export class PaperProjectService extends Service {
     signal?.throwIfAborted()
     const snapshot = this.getSnapshot(resolved.workspaceId)
     if (snapshot === undefined) throw new Error(`paper project for workspace '${resolved.workspaceId}' was not created`)
-    return derivePaperState(snapshot, input)
+    return await deriveMemoryState(snapshot, input)
   }
 
   private requireStore(): PaperProjectStore {

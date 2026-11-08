@@ -1,3 +1,4 @@
+/** Frozen v1 graph vocabulary used only for legacy recovery and migration. */
 export const PAPER_NODE_KINDS = [
   'project',
   'objective',

@@ -1,6 +1,6 @@
 # IPaper Shared Research Memory
 
-This design reference defines the simplified target architecture for IPaper. The current implementation uses a Paper Project Graph with typed nodes, edges, and process lenses; the shared-memory model below is not yet implemented. Current package behavior is documented in the [package README](../packages/dsh-ipaper/README.md#architecture).
+This design reference describes IPaper's implemented shared research memory and its migration from the earlier Paper Project Graph. The [package README](../packages/dsh-ipaper/README.md#research-memory-tools) owns the tool contract and storage limitations.
 
 ## Core decision
 
@@ -52,7 +52,7 @@ References are stored with the record. There is no separate edge catalog, requir
 
 ## Two tools
 
-The tool names remain stable. Their simplified inputs and outputs require an implementation change; existing graph payloads are not the target contract.
+The tool names remain stable. Their simplified inputs and outputs replace graph payloads; legacy graph calls receive a compatibility error.
 
 ### `ipaper_record`
 
@@ -88,7 +88,7 @@ The host enforces:
 - caller permissions and expected-version checks;
 - all-or-nothing batch visibility and recovery after interrupted writes.
 
-Writes serialize per project. A successful batch advances the project revision once and records internal change history with caller attribution. History is not a record kind that agents create or connect. The service remains the only storage access boundary, including for browser reads. Storage remains single-host unless cross-process coordination is implemented separately.
+Writes serialize per project. A successful batch advances the project revision once and records internal change history with caller attribution. Each workspace's complete revision, records, history, and retained legacy snapshot occupy one atomic storage record in the `ipaper_memory` domain. This removes the need for a multi-table commit protocol; a failed write leaves the previous revision visible. History is not a record kind that agents create or connect. The service remains the only storage access boundary, including for browser reads. Storage remains single-host unless cross-process coordination is implemented separately.
 
 These guarantees validate structure and attribution. They do not establish that a quotation is accurate, a source supports a finding, or a research result is correct. Agents must inspect the underlying material and state verification gaps. IPaper's prohibition on fabricated citations, quotations, metadata, data, and results continues to apply.
 
@@ -104,16 +104,18 @@ Reliable persistence, version checks, and attribution remain necessary even with
 
 ## Migration from the graph
 
-The implementation transition must preserve existing work and update the service, tools, preset protocol, browser view, and product documentation together.
+The service migrates existing work at startup before exposing memory tools or browser reads. Legacy recovery code is isolated under `src/paper-project/legacy/` and is not part of the public tool API.
 
-1. Introduce a versioned memory format and a restart-safe migration. Preserve the original graph and its history as a recoverable legacy snapshot.
-2. Map source nodes to sources, evidence and claim nodes to findings, and note nodes to notes. Preserve original IDs in migration metadata and retain uncertainty and source inspection information.
-3. Preserve objectives, requirements, tasks, artifacts, reviews, and decisions as notes with their original kind, status, and attributes. Carry artifact paths into file references. Moving planning content into author-owned documents is a later explicit edit, not an automatic overwrite.
-4. Convert provenance edges into origin references where representable. Preserve other semantic edges as related-record references with their original relationship names. Keep event nodes in legacy history and project roots in project metadata.
-5. Replace graph-specific tool schemas and prompts together. Existing graph payloads must receive a clear compatibility error or pass through an explicit versioned adapter; never silently reinterpret them.
-6. Adapt Paper status to the memory read contract and remove its dependency on graph lenses. Update both READMEs when the simplified behavior ships.
+1. Finish any pending v1 graph commit, then write format-version-2 memory atomically. Preserve the original graph and its history in a legacy snapshot; retain the original `ipaper_project` storage domain. Restart skips projects already migrated.
+2. Map source nodes to sources, evidence and claim nodes to findings, and note nodes to notes. Scope new record IDs to the project and preserve original nodes, including their IDs, in host-only migration metadata. Findings retain legacy uncertainty and status without claiming fresh verification.
+3. Preserve objectives, requirements, tasks, artifacts, reviews, and decisions as notes with their original kind, status, and attributes included in readable text as well as migration metadata. Findings also retain original attributes in their text. Carry artifact paths into file references. Planning documents are not overwritten.
+4. Convert provenance edges into origin references where representable. Preserve other semantic edges as related-record references with their original relationship names. Event nodes remain in legacy history; project metadata and the original root remain in the retained snapshot. Legacy statuses do not automatically mark new unresolved questions.
+5. Use the updated tool schemas and preset protocol together. Existing graph payloads receive a compatibility error rather than being silently reinterpreted.
+6. Read a bounded memory summary in Paper status. The guided question-finding workflow remains available and records memory rather than maintaining graph lenses.
 
-Completion requires checks for shared workspace identity, subagent attribution and append-only permissions, reference and path validation, version conflicts, interrupted-write recovery, bounded reads, and migration without lost legacy content. Package-composition and shipped-artifact changes also require the repository's typecheck, test, and package checks.
+Migration trims display titles and supplies a legacy-kind/ID fallback for blank titles. Blank citation keys, file paths, and locators are omitted from normalized fields; quotations without a usable locator remain findings without the quotation flag. Opaque identities and workspace paths retain their exact values, and original nodes and the graph snapshot retain every original display value. An inspected or verified legacy source without a summary retains its historical inspection state with an explicit description that no inspected content was recorded and migration did not inspect the source. This preserves the historical claim without inventing evidence and permits subsequent title or archive updates.
+
+Regression coverage includes shared workspace identity, subagent attribution and append-only permissions, reference and path validation, version conflicts, interrupted writes, bounded reads, and migration without lost legacy content. Package-composition and shipped-artifact changes also require the repository's typecheck, test, and package checks.
 
 ## Extension boundary
 

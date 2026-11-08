@@ -3,145 +3,82 @@ import { defineTool } from '@deepseek-ai/dsh-tools'
 import type { ToolDefinition } from '@deepseek-ai/dsh-tools'
 import type { JsonValue } from '@deepseek-ai/dsh-util-values'
 import type { PaperProjectService } from './service.js'
-import { PAPER_EDGE_KINDS, PAPER_NODE_KINDS } from './types.js'
-import type { PaperMutationInput, PaperStateInput } from './types.js'
+import { MEMORY_KINDS, memoryMutationSchema, memoryStateSchema, rejectLegacyPayload } from './memory-spec.js'
 
-const MUTABLE_NODE_KINDS = PAPER_NODE_KINDS.filter(kind => kind !== 'project' && kind !== 'event')
-
-const nodeInputSchema = {
-  type: 'object',
-  additionalProperties: false,
-  properties: {
-    ref: { type: 'string', required: true, description: 'Unique call-local alias used by edges in this batch.' },
-    kind: { type: 'string', enum: MUTABLE_NODE_KINDS, required: true },
-    title: { type: 'string', required: true },
-    summary: { type: 'string' },
-    status: { type: 'string', description: 'Kind-specific status. Omit for the kind default.' },
-    attributes: { type: 'json', description: 'Kind-specific attributes; unknown fields are rejected.' },
-  },
+const fields = {
+  title: { type: 'string' }, text: { type: 'string' },
+  archived: { type: 'boolean' }, unresolved: { type: 'boolean', description: 'Author-marked unresolved question in a finding or note.' },
+  quotation: { type: 'boolean', description: 'Finding is a direct quotation; requires an origin with a precise locator.' },
+  uncertainty: { type: 'string', description: 'Describe uncertainty or explicitly identify an unsupported hypothesis.' },
+  source: { type: 'object', additionalProperties: false, properties: {
+    inspection: { type: 'string', enum: ['discovered', 'inspected'], required: true },
+    inspectedContent: { type: 'string', description: 'Required when inspected: describe what was actually read.' },
+    doi: { type: 'string' }, url: { type: 'string' }, citationKey: { type: 'string' }, bibliographicMetadata: { type: 'string' },
+  } },
+  references: { type: 'array', items: { type: 'object', additionalProperties: false, properties: {
+    kind: { type: 'string', enum: ['origin', 'related', 'file'], required: true },
+    recordId: { type: 'string', description: 'Existing ID or call-local alias. An origin record must be a source.' },
+    path: { type: 'string', description: 'Workspace-relative file path. Origin requires exactly one recordId or path; file requires path.' },
+    locator: { type: 'string', description: 'Exact page, section, lines, or other location for an origin or file.' },
+    explanation: { type: 'string', description: 'Optional explanation for a related record.' },
+  } } },
 } as const
-
-const updateInputSchema = {
-  type: 'object',
-  additionalProperties: false,
-  properties: {
-    id: { type: 'string', required: true },
-    expectedVersion: { type: 'integer', required: true, description: 'Current version returned by ipaper_state.' },
-    title: { type: 'string' },
-    summary: { type: 'string' },
-    status: { type: 'string' },
-    attributesPatch: { type: 'json', description: 'Object merged into the existing kind-specific attributes.' },
-  },
-} as const
-
-const edgeInputSchema = {
-  type: 'object',
-  additionalProperties: false,
-  properties: {
-    source: { type: 'string', required: true, description: 'Existing node ID or call-local ref.' },
-    kind: { type: 'string', enum: PAPER_EDGE_KINDS, required: true },
-    target: { type: 'string', required: true, description: 'Existing node ID or call-local ref.' },
-  },
-} as const
-
-function mutationSummary(input: { nodes?: readonly unknown[]; updates?: readonly unknown[]; edges?: readonly unknown[] }): string {
-  return `Record paper graph batch: create ${String(input.nodes?.length ?? 0)}, update ${String(input.updates?.length ?? 0)}, relate ${String(input.edges?.length ?? 0)}.`
-}
 
 function jsonValue(value: unknown): JsonValue {
   return JSON.parse(JSON.stringify(value)) as JsonValue
 }
 
+function withLegacyError(tool: ToolDefinition): ToolDefinition {
+  return {
+    ...tool,
+    async execute(args, exec) {
+      rejectLegacyPayload(args)
+      return await tool.execute(args, exec)
+    },
+  }
+}
+
 export function createIPaperRecordTool(service: PaperProjectService): ToolDefinition {
-  return defineTool({
+  return withLegacyError(defineTool({
     name: 'ipaper_record',
-    description: 'Atomically record scholarly nodes, optimistic-version updates, and provenance edges in the current workspace Paper Project Graph. Use call-local refs to connect nodes created together. Root agents may create and update model-owned nodes. Subagents must provide their delegated taskId, may append only source/evidence/proposed-claim/artifact/review/note checkpoints, and cannot update existing nodes.',
+    description: 'Record durable sources, findings, and notes in shared workspace research memory. Creates and updates commit as one batch. Subagents may append only, without a taskId. Use expectedVersion for updates and archived=true to archive. References and source metadata are replaced when supplied. Graph nodes/edges payloads are no longer supported.',
     parameters: {
-      taskId: { type: 'string', description: 'Required for a subagent: the existing delegated task node ID.' },
-      nodes: { type: 'array', items: nodeInputSchema },
-      updates: { type: 'array', items: updateInputSchema },
-      edges: { type: 'array', items: edgeInputSchema },
+      records: { type: 'array', items: { type: 'object', additionalProperties: false, properties: {
+        ...fields, ref: { type: 'string', required: true }, kind: { type: 'string', enum: MEMORY_KINDS, required: true },
+        title: { type: 'string', required: true }, text: { type: 'string', required: true },
+      } } },
+      updates: { type: 'array', items: { type: 'object', additionalProperties: false, properties: {
+        ...fields, id: { type: 'string', required: true }, expectedVersion: { type: 'integer', required: true },
+      } } },
     },
-    output: {
-      schema: {
-        type: 'object',
-        additionalProperties: false,
-        properties: {
-          projectId: { type: 'string', required: true },
-          revision: { type: 'integer', required: true },
-          created: { type: 'object', additionalProperties: true, required: true },
-          updated: {
-            type: 'array',
-            required: true,
-            items: {
-              type: 'object',
-              additionalProperties: false,
-              properties: {
-                id: { type: 'string', required: true },
-                version: { type: 'integer', required: true },
-              },
-            },
-          },
-          edgeIds: { type: 'array', required: true, items: { type: 'string' } },
-          eventId: { type: 'string', required: true },
-        },
-      },
-      render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }],
-    },
+    output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
     async execute(args, exec) {
       if (exec.agent === undefined) throw new Error('ipaper_record requires a calling agent')
-      const input: PaperMutationInput = {
-        operationSummary: mutationSummary(args),
-        ...(args.taskId === undefined ? {} : { taskId: args.taskId }),
-        ...(args.nodes === undefined ? {} : { nodes: args.nodes }),
-        ...(args.updates === undefined ? {} : { updates: args.updates }),
-        ...(args.edges === undefined ? {} : { edges: args.edges }),
-      }
-      const result = await service.recordForAgent(exec.agent, input, exec.signal)
-      return {
-        projectId: result.projectId,
-        revision: result.revision,
-        created: { ...result.created },
-        updated: result.updated.map(item => ({ ...item })),
-        edgeIds: [...result.edgeIds],
-        eventId: result.eventId,
-      }
+      rejectLegacyPayload(args)
+      return jsonValue(await service.recordForAgent(exec.agent, memoryMutationSchema.parse(args), exec.signal))
     },
-  })
+  }))
 }
 
 export function createIPaperStateTool(service: PaperProjectService): ToolDefinition {
-  return defineTool({
+  return withLegacyError(defineTool({
     name: 'ipaper_state',
-    description: 'Read a compact view of the current workspace Paper Project Graph. Defaults to overview. Use graph for filtered nodes, related for one node neighborhood, and history for immutable mutation events. Follow returned cursors for later pages.',
+    description: 'Read shared workspace research memory. Summary gives counts, recent records and author-marked unresolved questions. Search returns bounded snippets; record returns full content and references; history returns change summaries. Follow cursors with the same query; restart after a revision change.',
     parameters: {
-      view: { type: 'string', enum: ['overview', 'graph', 'related', 'history'], default: 'overview' },
-      nodeId: { type: 'string', description: "Required by 'related'; optional history filter." },
-      kinds: { type: 'array', items: { type: 'string', enum: PAPER_NODE_KINDS } },
-      statuses: { type: 'array', items: { type: 'string' } },
-      query: { type: 'string', description: 'Case-insensitive ID, title, and summary search.' },
-      cursor: { type: 'string' },
-      limit: { type: 'integer', description: 'Page size from 1 to 100.' },
+      view: { type: 'string', enum: ['summary', 'search', 'record', 'history'], default: 'summary' },
+      recordId: { type: 'string', description: 'Required for record; optional history filter.' },
+      kinds: { type: 'array', items: { type: 'string', enum: MEMORY_KINDS } },
+      query: { type: 'string' }, cursor: { type: 'string' },
+      limit: { type: 'integer', description: 'Page size from 1 to 100.' }, includeArchived: { type: 'boolean' },
     },
-    output: {
-      schema: { type: 'json' },
-      render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }],
-    },
+    output: { schema: { type: 'json' }, render: (_args, value) => [{ type: 'text', text: JSON.stringify(value) }] },
     isConcurrencySafe: () => true,
     async execute(args, exec) {
       if (exec.agent === undefined) throw new Error('ipaper_state requires a calling agent')
-      const input: PaperStateInput = {
-        ...(args.view === undefined ? {} : { view: args.view }),
-        ...(args.nodeId === undefined ? {} : { nodeId: args.nodeId }),
-        ...(args.kinds === undefined ? {} : { kinds: args.kinds }),
-        ...(args.statuses === undefined ? {} : { statuses: args.statuses }),
-        ...(args.query === undefined ? {} : { query: args.query }),
-        ...(args.cursor === undefined ? {} : { cursor: args.cursor }),
-        ...(args.limit === undefined ? {} : { limit: args.limit }),
-      }
-      return jsonValue(await service.stateForAgent(exec.agent, input, exec.signal))
+      rejectLegacyPayload(args)
+      return jsonValue(await service.stateForAgent(exec.agent, memoryStateSchema.parse(args), exec.signal))
     },
-  })
+  }))
 }
 
 export const name = 'paper-project-tools'

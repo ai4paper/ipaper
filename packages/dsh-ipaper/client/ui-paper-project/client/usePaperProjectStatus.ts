@@ -16,11 +16,15 @@ export function usePaperProjectStatus(rpc: ClientConnectionRpc, workspaceId: str
 
   const refresh = useCallback(async (signal?: AbortSignal): Promise<void> => {
     if (workspaceId === undefined) { setStatus(null); return }
-    const result = await rpc.call(CHANNEL, ENDPOINT, { workspaceId }, signal)
-    if (signal?.aborted === true) return
-    if (!result.ok) { setError(result.error.message); return }
-    setError(undefined)
-    setStatus(result.value as PaperProjectStatus | null)
+    try {
+      const result = await rpc.call(CHANNEL, ENDPOINT, { workspaceId }, signal)
+      if (signal?.aborted === true) return
+      if (!result.ok) { setError(result.error.message); return }
+      setError(undefined)
+      setStatus(result.value as PaperProjectStatus | null)
+    } catch (error) {
+      if (!signal?.aborted) setError(error instanceof Error ? error.message : String(error))
+    }
   }, [rpc, workspaceId])
 
   useEffect(() => {

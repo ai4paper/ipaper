@@ -10,29 +10,14 @@ import {
 } from '../lib/paper-project-remote.js'
 
 const snapshot = {
-  projectId: 'paper-workspace-a',
-  workspaceId: 'workspace-a',
-  revision: 2,
-  root: {
-    id: 'paper-workspace-a',
-    projectId: 'paper-workspace-a',
-    kind: 'project',
-    title: 'Paper Project',
-    summary: '',
-    status: 'active',
-    attributes: { workspacePath: '/paper' },
-    version: 1,
-    createdBySessionId: 'session-a',
-    updatedBySessionId: 'session-a',
-    createdAt: '2026-01-01T00:00:00.000Z',
-    updatedAt: '2026-01-01T00:00:00.000Z',
-  },
-  nodes: [],
-  edges: [],
+  project: { projectId: 'paper-workspace-a', workspaceId: 'workspace-a', revision: 2 },
+  records: [],
+  history: [],
+  legacySnapshot: { private: 'legacy data must not be sent to browsers' },
 }
 
 const source = {
-  getSnapshot(workspaceId) {
+  async statusSnapshot(workspaceId) {
     return workspaceId === 'workspace-a' ? snapshot : undefined
   },
 }
@@ -40,22 +25,21 @@ const source = {
 const signal = new AbortController().signal
 const owner = { principal: { kind: 'owner' } }
 
-test('projects one workspace snapshot into a dashboard status payload', () => {
-  const status = paperProjectStatus(source, 'workspace-a')
-  assert.equal(status.snapshot, snapshot)
-  assert.equal(status.overview.workspaceId, 'workspace-a')
-  assert.equal(status.overview.revision, 2)
-  assert.equal(status.overview.lenses.framing.status, 'clear')
-  assert.deepEqual(status.problemMap.questions, [])
-  assert.equal(status.problemMap.paperCount, 0)
-  assert.equal(paperProjectStatus(source, 'missing'), null)
+test('projects one workspace snapshot into a dashboard status payload', async () => {
+  const status = await paperProjectStatus(source, 'workspace-a')
+  assert.equal(status.snapshot, undefined)
+  assert.equal(status.summary.workspaceId, 'workspace-a')
+  assert.equal(status.summary.revision, 2)
+  assert.deepEqual(status.summary.counts, { source: 0, finding: 0, note: 0 })
+  assert.equal(status.legacySnapshot, undefined)
+  assert.equal(await paperProjectStatus(source, 'missing'), null)
 })
 
 test('serves only the typed paper-project status endpoint', async () => {
   const handler = createPaperProjectRpcHandler(source)
   const result = await handler(IPAPER_STATUS_ENDPOINT, { workspaceId: 'workspace-a' }, signal, owner)
   assert.equal(result.ok, true)
-  assert.equal(result.value.overview.projectId, 'paper-workspace-a')
+  assert.equal(result.value.summary.projectId, 'paper-workspace-a')
 
   const missingId = await handler(IPAPER_STATUS_ENDPOINT, {}, signal, owner)
   assert.equal(missingId.ok, false)
@@ -66,7 +50,7 @@ test('serves only the typed paper-project status endpoint', async () => {
 })
 
 test('denies authenticated non-owner peers before reading workspace graphs', async () => {
-  const handler = createPaperProjectRpcHandler({ getSnapshot() { assert.fail('must not read a graph') } })
+  const handler = createPaperProjectRpcHandler({ async statusSnapshot() { assert.fail('must not read memory') } })
   const result = await handler(IPAPER_STATUS_ENDPOINT, { workspaceId: 'workspace-a' }, signal, { principal: { kind: 'session', sessionId: 'session-a' } })
   assert.equal(result.ok, false)
   assert.equal(result.error.code, 'forbidden')
@@ -103,7 +87,7 @@ test('mounts the RPC through real Connection and WebServer with explicit service
   assert.equal(response.status, 200)
   const envelope = await response.json()
   assert.equal(envelope.result.ok, true)
-  assert.equal(envelope.result.value.overview.projectId, 'paper-workspace-a')
+  assert.equal(envelope.result.value.summary.projectId, 'paper-workspace-a')
   await fiber.dispose()
   assert.equal((await fetch(endpoint, { method: 'POST', headers: { cookie } })).status, 404)
 })

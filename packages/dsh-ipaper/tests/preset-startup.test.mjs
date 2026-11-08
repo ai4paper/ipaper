@@ -60,7 +60,7 @@ test('ships an academic integrity persona and complete useful tools', async () =
   const protocol = await import('../lib/product-protocol.js')
   assert.equal(protocol.IPAPER_PROTOCOL_SECTION, 'ipaper:paper-project-protocol')
   assert.equal(protocol.IPAPER_PROTOCOL_ORDER, 10)
-  for (const phrase of ['ipaper_record', 'ipaper_state', 'taskId', 'expectedVersion', 'call-local refs', 'no fixed stages', 'Never promote a claim']) {
+  for (const phrase of ['ipaper_record', 'ipaper_state', 'expectedVersion', 'call-local refs', 'sources, findings, and notes', 'Never fabricate']) {
     assert.match(protocol.IPAPER_PRODUCT_PROTOCOL, new RegExp(phrase, 'i'))
   }
 })

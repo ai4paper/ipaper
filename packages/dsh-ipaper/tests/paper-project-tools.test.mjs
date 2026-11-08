@@ -50,42 +50,37 @@ test('ipaper_record derives caller identity from exec.agent and returns compact 
         revision: 3,
         created: { source: 'source-1' },
         updated: [],
-        edgeIds: ['edge-1'],
-        eventId: 'event-3',
       }
     },
   }
   const tool = createIPaperRecordTool(service)
   const result = await tool.execute({
-    taskId: 'task-1',
-    nodes: [{ ref: 'source', kind: 'source', title: 'Inspected source' }],
+    records: [{ ref: 'source', kind: 'source', title: 'Discovered source', text: 'Search result' }],
   }, exec)
   assert.equal(invocation.caller, agent)
   assert.equal(invocation.callerSignal, signal)
-  assert.equal(invocation.input.taskId, 'task-1')
-  assert.match(invocation.input.operationSummary, /create 1, update 0, relate 0/)
+  assert.equal(invocation.input.records[0].kind, 'source')
+  assert.equal(invocation.input.taskId, undefined)
   assert.deepEqual(result, {
     projectId: 'paper-workspace-a',
     revision: 3,
     created: { source: 'source-1' },
     updated: [],
-    edgeIds: ['edge-1'],
-    eventId: 'event-3',
   })
 })
 
-test('ipaper_state defaults to overview and forwards bounded view arguments', async () => {
+test('ipaper_state defaults to summary and forwards bounded view arguments', async () => {
   const inputs = []
   const service = {
     async stateForAgent(caller, input, callerSignal) {
       inputs.push({ caller, input, callerSignal })
-      return { view: 'overview', projectId: 'paper-a', workspaceId: 'a', revision: 0 }
+      return { view: 'summary', projectId: 'paper-a', workspaceId: 'a', revision: 0 }
     },
   }
   const tool = createIPaperStateTool(service)
   const result = await tool.execute({}, exec)
   assert.deepEqual(inputs[0], { caller: agent, input: {}, callerSignal: signal })
-  assert.deepEqual(result, { view: 'overview', projectId: 'paper-a', workspaceId: 'a', revision: 0 })
+  assert.deepEqual(result, { view: 'summary', projectId: 'paper-a', workspaceId: 'a', revision: 0 })
 })
 
 test('both Paper Project tools reject agentless execution', async () => {
@@ -96,4 +91,14 @@ test('both Paper Project tools reject agentless execution', async () => {
   const agentless = { ...exec, agent: undefined }
   await assert.rejects(createIPaperRecordTool(service).execute({}, agentless), /requires a calling agent/)
   await assert.rejects(createIPaperStateTool(service).execute({}, agentless), /requires a calling agent/)
+})
+
+test('legacy graph payloads fail before reaching the service', async () => {
+  const service = {
+    async recordForAgent() { assert.fail('must not forward legacy graph mutations') },
+    async stateForAgent() { assert.fail('must not forward legacy graph reads') },
+  }
+  await assert.rejects(createIPaperRecordTool(service).execute({ nodes: [] }, exec), /Legacy Paper Project Graph/)
+  await assert.rejects(createIPaperRecordTool(service).execute({ updates: [{ id: 'note-1', expectedVersion: 1, status: 'archived' }] }, exec), /Legacy Paper Project Graph/)
+  await assert.rejects(createIPaperStateTool(service).execute({ view: 'graph' }, exec), /Legacy Paper Project Graph/)
 })

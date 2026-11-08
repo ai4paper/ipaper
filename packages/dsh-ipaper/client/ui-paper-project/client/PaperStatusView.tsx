@@ -1,14 +1,8 @@
 import type { ClientConnectionRpc, SessionId } from '@deepseek-ai/dsh-client-connection/client'
 import type { SessionListState } from '@deepseek-ai/dsh-api-session-controller/client'
-import { useMemo, useState, useSyncExternalStore } from 'react'
-import { attentionNodes } from './attentionNodes.ts'
-import { counted } from './counted.ts'
+import { useState, useSyncExternalStore } from 'react'
 import { Empty } from './Empty.tsx'
-import { FindProblemView } from './FindProblemView.tsx'
-import { nodesOf } from './nodesOf.ts'
-import { OverviewView } from './OverviewView.tsx'
-import { RecordsView } from './RecordsView.tsx'
-import { TABS, type Observable, type Tab, type WorkspaceState } from './types.ts'
+import type { Observable, WorkspaceState } from './types.ts'
 import { usePaperProjectStatus } from './usePaperProjectStatus.ts'
 import { workspaceForSession } from './workspaceForSession.ts'
 
@@ -20,14 +14,11 @@ export interface PaperStatusViewProps {
   readonly startFindProblem: (sessionId: SessionId) => Promise<void>
 }
 
-const TAB_LABELS: Record<Tab, string> = { questions: 'Find a question', overview: 'Overview', research: 'Research & argument', manuscript: 'Manuscript', activity: 'Activity' }
-
-/** Full workspace status surface rendered in place of the conversation view. */
+/** Bounded read-only memory summary; documents remain in the workspace. */
 export function PaperStatusView({ sessionId, rpc, sessions, workspaces, startFindProblem }: PaperStatusViewProps) {
   const sessionState = useSyncExternalStore(sessions.subscribe, sessions.getSnapshot, sessions.getSnapshot)
   const workspaceState = useSyncExternalStore(workspaces.subscribe, workspaces.getSnapshot, workspaces.getSnapshot)
   const workspace = workspaceForSession(sessionId, sessionState, workspaceState)
-  const [tab, setTab] = useState<Tab>('questions')
   const [submissionError, setSubmissionError] = useState<string>()
   const { status, error } = usePaperProjectStatus(rpc, workspace?.workspaceId)
   const start = (): void => {
@@ -36,40 +27,27 @@ export function PaperStatusView({ sessionId, rpc, sessions, workspaces, startFin
       setSubmissionError(error instanceof Error ? error.message : String(error))
     })
   }
-
-  const research = useMemo(() => status == null ? [] : nodesOf(status, ['source', 'evidence', 'claim']), [status])
-  const manuscript = useMemo(() => status == null ? [] : nodesOf(status, ['artifact', 'review', 'decision']), [status])
-  const events = useMemo(() => status == null ? [] : nodesOf(status, ['event']), [status])
-  const openWork = useMemo(() => status == null ? [] : nodesOf(status, ['objective', 'requirement', 'task']).filter(node => !['done', 'resolved', 'retired', 'satisfied', 'waived', 'cancelled'].includes(node.status)), [status])
-  const attention = useMemo(() => attentionNodes(status), [status])
-
   if (workspace === undefined) return <Empty title="No paper workspace" copy="Select a session belonging to a registered workspace." />
   if (error !== undefined && status === undefined) return <Empty title="Status unavailable" copy={error} />
-  if (status === undefined) return <div className="ipaper-view-loading">Reading the Paper Project Graph…</div>
-  if (status === null) return <main className="ipaper-view" data-testid="ipaper-status-view"><section className="ipaper-question-empty">
-    <h1>A clean sheet</h1>
-    <p>Start with a research question. The guided workflow helps search the literature, compare candidates, and record the project's evidence.</p>
-    <button type="button" className="ipaper-question-start" onClick={start}>Start guided workflow</button>
-    {submissionError !== undefined && <p role="alert">{submissionError}</p>}
-  </section></main>
-
-  const semanticCount = status.snapshot.nodes.filter(node => node.kind !== 'project' && node.kind !== 'event').length
-  const sourceCount = status.overview.countsByKind.source ?? 0
-  const claimCount = status.overview.countsByKind.claim ?? 0
-  const artifactCount = status.overview.countsByKind.artifact ?? 0
-  const gapCount = status.overview.integrityGaps.length
-
+  if (status === undefined) return <div className="ipaper-view-loading">Reading shared research memory…</div>
+  const summary = status?.summary
   return <main className="ipaper-view" data-testid="ipaper-status-view"><div className="ipaper-view-shell">
     <header className="ipaper-view-hero">
-      <div className="ipaper-view-title-row"><div><p className="ipaper-view-kicker">Paper status</p><h1>{workspace.title}</h1></div><span>Revision {status.snapshot.revision}</span></div>
-      <p className="ipaper-view-summary">{counted(semanticCount, 'project record')}: {counted(sourceCount, 'source')}, {counted(claimCount, 'claim')}, and {counted(artifactCount, 'artifact')}. {gapCount === 0 ? 'No integrity gaps.' : `${counted(gapCount, 'integrity gap')}.`}</p>
+      <div className="ipaper-view-title-row"><div><p className="ipaper-view-kicker">Paper status</p><h1>{workspace.title}</h1></div><span>Revision {summary?.revision ?? 0}</span></div>
+      <p className="ipaper-view-summary">Shared research memory: {summary?.counts.source ?? 0} sources, {summary?.counts.finding ?? 0} findings, {summary?.counts.note ?? 0} notes.</p>
+      <p>Manuscripts and working plans live in workspace files. Recorded findings are not automatically verified.</p>
+      <button type="button" className="ipaper-question-start" onClick={start}>Start guided workflow</button>
     </header>
-    <nav className="ipaper-view-tabs" aria-label="Paper project views">{TABS.map(key => <button key={key} type="button" aria-selected={tab === key} onClick={() => { setTab(key) }}>{TAB_LABELS[key]}</button>)}</nav>
     {submissionError !== undefined && <p role="alert">{submissionError}</p>}
-    {tab === 'questions' && <FindProblemView problemMap={status.problemMap} onStart={start} />}
-    {tab === 'overview' && <OverviewView status={status} attention={attention} openWork={openWork} />}
-    {tab === 'research' && <RecordsView title="Research & argument" countLabel="records" nodes={research} empty="No sources, evidence, or claims recorded yet." />}
-    {tab === 'manuscript' && <RecordsView title="Manuscript & review" countLabel="records" nodes={manuscript} empty="No artifacts, reviews, or decisions recorded yet." />}
-    {tab === 'activity' && <RecordsView title="Project activity" countLabel="changes" nodes={events} empty="No committed graph changes yet." />}
+    {error !== undefined && <p role="alert">Refresh failed: {error}</p>}
+    <section><h2>Unresolved questions ({summary?.unresolvedCount ?? 0})</h2>
+      {(summary?.unresolved.length ?? 0) === 0 && <p>No author-marked unresolved questions.</p>}
+      {summary?.unresolved.map(record => <article key={record.id}><h3>{record.title}</h3><p>{record.text}</p><small>{record.id} · {record.kind}</small></article>)}
+    </section>
+    <section><h2>Recent records</h2>
+      {(summary?.recent.length ?? 0) === 0 && <p>No research memory yet. Start a conversation to record sources, findings, and notes.</p>}
+      {summary?.recent.map(record => <article key={record.id}><h3>{record.title}</h3><p>{record.text}</p><small>{record.id} · {record.kind} · version {record.version}</small></article>)}
+      <p>Showing up to ten records per section. Ask the agent to search memory or inspect a record by ID for details.</p>
+    </section>
   </div></main>
 }

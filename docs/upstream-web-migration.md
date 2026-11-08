@@ -1,6 +1,6 @@
 # Upstream Web migration
 
-This reference records IPaper's implemented migration from the shared Web fork to upstream DSH Web `0.2.2-rc.1`, the retained compatibility adaptations, and verification evidence. The migration adopts upstream interaction policies; it does not claim parity with every historical fork feature. The [shared research memory design](arch.md) defines the target scholarly process model and its migration from the implemented graph.
+This reference records IPaper's implemented migration from the shared Web fork to upstream DSH Web `0.2.2-rc.1`, the retained compatibility adaptations, and verification evidence. The migration adopts upstream interaction policies; it does not claim parity with every historical fork feature. The [shared research memory design](arch.md) defines the scholarly process model and its migration from the earlier graph.
 
 ## Composition and ownership
 
@@ -58,7 +58,7 @@ The initial comparison inspected source and package documentation. Final compati
 | Presentation | Upstream controls, layout, headline, and version labels, with IPaper artwork, document branding, and Paper status. Academic preset filtering and citation integrity remain product-owned. |
 | Colorblind palette | Optional blue/orange dual-mode token overrides through the public theme API. Upstream persists light/dark/system selection; the profile owns the palette switch, applied on page load. Custom upstream theme IDs are not persisted, so IPaper does not use one. |
 
-Paper status uses a public sidebar/main panel for access before the first message, alongside a visible conversation-view tab. Both use the selected session's workspace. The empty graph offers **Start guided workflow**; successful `/find-the-problem` submission returns to chat, while rejected receipts remain visible as inline errors. No hidden tab, sidebar portal, or global layout manipulation is needed.
+Paper status uses a public sidebar/main panel for access before the first message, alongside a visible conversation-view tab. Both use the selected session's workspace. Empty research memory offers **Start guided workflow**; successful `/find-the-problem` submission returns to chat, while rejected receipts remain visible as inline errors. No hidden tab, sidebar portal, or global layout manipulation is needed.
 
 ### Reference latency and cancellation
 

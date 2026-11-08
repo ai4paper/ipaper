@@ -19,6 +19,7 @@ const run = (command, args, options = {}) => {
 }
 
 let server
+let serverClosed = Promise.resolve()
 try {
   run('pnpm', ['--filter', '@ai4paper/dsh-ipaper', 'pack', '--pack-destination', temp])
   const tarballs = (await readdir(temp)).filter(file => file.endsWith('.tgz'))
@@ -51,6 +52,7 @@ try {
   server = spawn('pnpm', ['exec', 'dsh', '--profile', 'pack-check', '--host', '127.0.0.1', '--port', '0', '--no-open'], {
     cwd: profile, env, stdio: ['ignore', 'pipe', 'pipe'], detached: true,
   })
+  serverClosed = new Promise(resolve => { server.once('close', resolve) })
   let logs = ''
   const authenticatedUrl = await new Promise((resolve, reject) => {
     const timer = setTimeout(() => reject(new Error(`Packed profile did not start:\n${logs}`)), 90000)
@@ -132,7 +134,11 @@ try {
 } finally {
   if (server?.pid) {
     try { process.kill(-server.pid, 'SIGTERM') } catch (error) { if (error.code !== 'ESRCH') throw error }
+    const timeout = setTimeout(() => {
+      try { process.kill(-server.pid, 'SIGKILL') } catch (error) { if (error.code !== 'ESRCH') console.error(error) }
+    }, 5000)
+    try { await serverClosed } finally { clearTimeout(timeout) }
   }
   if (process.env.PACK_CHECK_KEEP === '1') console.log(`Retained packed profile: DSH_HOME=${home} pnpm --dir ${join(home, 'profiles/pack-check')} exec dsh --profile pack-check --no-open`)
-  else await rm(temp, { recursive: true, force: true })
+  else await rm(temp, { recursive: true, force: true, maxRetries: 3 })
 }

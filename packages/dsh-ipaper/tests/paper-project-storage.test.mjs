@@ -1,11 +1,9 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import {
-  PaperGraphInvariantError,
-  PaperNodeVersionConflictError,
-  PaperProjectStore,
-  paperProjectDomainSpec,
-} from '../lib/paper-project/index.js'
+// Retained coverage for the v1 loader that recovers pending commits before migration.
+import { PaperGraphInvariantError } from '../lib/paper-project/legacy/invariants.js'
+import { PaperNodeVersionConflictError, PaperProjectStore } from '../lib/paper-project/legacy/store.js'
+import { paperProjectDomainSpec } from '../lib/paper-project/legacy/spec.js'
 
 class MemoryTable {
   records = new Map()

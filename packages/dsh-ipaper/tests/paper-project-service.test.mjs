@@ -1,15 +1,12 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { resolvePaperWorkspace } from '../lib/paper-project/index.js'
+import { PaperProjectService, resolvePaperWorkspace } from '../lib/paper-project/index.js'
 
 function snapshot(workspaceId) {
   return {
-    projectId: `paper-${workspaceId}`,
-    workspaceId,
-    revision: 0,
-    root: { id: 'project-1' },
-    nodes: [],
-    edges: [],
+    project: { projectId: `paper-${workspaceId}`, workspaceId, revision: 0 },
+    records: [],
+    history: [],
   }
 }
 
@@ -119,4 +116,22 @@ test('rejects cyclic saved lineage and cancellation without creating a paper pro
   const controller = new AbortController()
   const ctx = context({ onList: () => controller.abort(new Error('cancel saved lookup')) })
   await assert.rejects(resolvePaperWorkspace(ctx, child, ensure, controller.signal), /cancel saved lookup/)
+})
+
+test('parent lineage also enforces append-only caller identity when origin is omitted', async () => {
+  const agent = { id: 'child', session: { header: { id: 'child', cwd: '/paper', parentSession: 'root' } } }
+  const resolved = await resolvePaperWorkspace(context(), agent, async workspaceId => snapshot(workspaceId))
+  assert.equal(resolved.caller.origin, 'subagent')
+})
+
+test('browser first read creates memory only for a registered workspace using its trusted path', async () => {
+  const calls = []
+  const receiver = {
+    ctx: { workspaceRegistry: { list: () => [{ id: 'a', path: '/registered' }] } },
+    async ensurePaperProject(...args) { calls.push(args); return snapshot('a') },
+  }
+  assert.equal(await PaperProjectService.prototype.statusSnapshot.call(receiver, 'missing'), undefined)
+  const result = await PaperProjectService.prototype.statusSnapshot.call(receiver, 'a')
+  assert.equal(result.project.workspaceId, 'a')
+  assert.deepEqual(calls, [['a', '/registered', 'host']])
 })

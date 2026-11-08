@@ -1,3 +1,4 @@
+// Legacy graph persistence is opened only during memory migration.
 import { randomUUID } from 'node:crypto'
 import { realpath, stat } from 'node:fs/promises'
 import { relative, resolve } from 'node:path'

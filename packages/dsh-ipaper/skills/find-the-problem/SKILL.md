@@ -36,7 +36,7 @@ Read `ipaper_state` before adding duplicate work. Determine:
 
 Inspect available project files before asking. If the author has not supplied a direction or essential feasibility constraints, ask only for the missing author-owned choices. Prefer a narrow frame such as “Y problem for LLMs in X setting” over a whole field.
 
-Record the direction and concrete research tasks in the Paper Project Graph.
+Keep the direction and concrete research tasks in the workspace working plan. Record durable context as notes in shared research memory.
 
 ### 2. Search live, with provenance
 
@@ -51,7 +51,7 @@ Search complementary sources:
 
 For every retained source, record the provider, exact query, filters, and search date. Merge duplicates without losing provenance. Rank by relevance, explain each match in one sentence, and ask the author to confirm the shortlist when judgment is material. Aim for about five primary papers, not an unfiltered bibliography.
 
-Record papers as `source` nodes with `sourceType: "paper"`, authors, publication date, venue, BibTeX/DOI/URL when available, `searchProvenance`, and `shortlisted`. Never mark bibliographic metadata verified without an actual verification basis.
+Record papers as `source` records. Put authors, publication date, venue, and BibTeX in `source.bibliographicMetadata`, and available DOI/URL in their named source fields. Describe search provenance and shortlist choices in the record text. Distinguish discovery from inspection and describe the content actually inspected. Never imply verification without an actual verification basis.
 
 ### 3. Read PDFs and extract structured coverage
 
@@ -63,13 +63,13 @@ Download and inspect the shortlisted full texts. For each paper extract separate
 - explicit limitations and future work;
 - inferred boundaries such as dataset scale, scenario assumptions, excluded populations, missing baselines, or resource demands.
 
-Record questions as `objective` nodes with `objectiveType: "question"`. Connect each paper to the question with `addresses`. Record contribution, method, limitation, and boundary claims with the matching `claimType`; connect each claim to its paper with `derived_from` and to its question with `addresses`. Set `inferenceType` to `explicit` or `inferred` truthfully.
+Record durable questions as `note` records with `unresolved: true`. Record contributions, methods, limitations, and boundaries as `finding` records with source origin references and related references to the question. Explain in the text whether each finding is explicit in the paper or inferred, and state uncertainty. Keep the comparison and working plan in workspace documents.
 
 Keep author statements separate from agent inference. A useful summary is not a substitute for these relations.
 
 ### 4. Verify the boundary
 
-For every proposed gap, return to the original paper. Capture paper plus section/page and, when useful, the exact quotation as evidence. Evidence must derive from the inspected paper before it supports a claim.
+For every proposed gap, return to the original paper. Capture the source and section/page as an origin reference on the finding. Set `quotation: true` only for exact quotations, with a precise locator. Explain how the inspected material supports the proposed gap rather than treating a recorded reference as proof.
 
 Use these states:
 
@@ -86,7 +86,7 @@ For each candidate question, assess three gates independently:
 - **novelty** — what evidence shows no satisfactory solution exists;
 - **feasibility** — whether the author can produce evidence with available data, equipment, time, and skills.
 
-Use `questionStage: "gap"` while evaluating and `questionStage: "selected"` only after the author chooses. Record gate levels and concise bases. Do not hide a weak gate behind a combined score.
+Describe candidate gaps, gate levels, and concise bases in the working plan. Record the author's selection in a note, and resolve its open question with `unresolved: false` only after the author chooses. Do not hide a weak gate behind a combined score.
 
 If existing candidates fail, formulate a narrower new question from the mapped boundary and verify it with another live search. Do not force a selection.
 

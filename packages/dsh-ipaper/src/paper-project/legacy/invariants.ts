@@ -1,3 +1,4 @@
+// Frozen graph validation for legacy storage recovery.
 import { isAbsolute, relative, resolve } from 'node:path'
 import type {
   PaperEdge,
