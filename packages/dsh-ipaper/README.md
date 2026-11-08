@@ -35,6 +35,19 @@ DSH_HOME="$HOME/.ipaper" pnpm --dir "$HOME/.ipaper/profiles/ipaper" exec dsh --p
 
 The profile's `dsh.profile.bundles` order is `@deepseek-ai/dsh-base`, `@deepseek-ai/dsh-web-app`, then `@ai4paper/dsh-ipaper`. The CLI and APaper are direct plain dependencies, not bundles. Launch and manage the product through the profile-local CLI so its runtime and profile plugins share service identities. Upstream Web owns launch flags, transport, and the standard browser roster. Use `--host`, `--port`, or repeated `--trusted-host` options when the browser must be reachable beyond the default `127.0.0.1:3080`.
 
+## Browser authentication
+
+The local `@ai4paper/dsh-ipaper/connection` adapter uses upstream DSH `0.2.2-rc.1` transport with browser authentication enabled by default. For local browser automation, merge this row into `~/.ipaper/profiles/ipaper-dev/cordis.patch.yml` and restart DSH:
+
+```yaml
+- id: ipaper-connection
+  config:
+    browserAuth:
+      enabled: false
+```
+
+DSH then prints a clean URL and browser page, RPC, and connection admission work without a token or cookie. Trusted requests receive owner access; use this setting only for a development instance accessible to trusted users. Host/Origin checks remain active. The separate `/connect` API credential exchange retains upstream token authentication. Set `enabled: true` or remove the override to restore browser authentication. Transport options remain on the upstream `connection` row; the `ipaper-connection` row owns only this authentication policy.
+
 ## Update or remove
 
 Keep the supported DSH and APaper versions exact when updating the product:

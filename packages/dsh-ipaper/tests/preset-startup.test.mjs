@@ -70,6 +70,8 @@ test('product patch inherits upstream startup and only contributes product rows'
   assert.doesNotMatch(source, /name: '@deepseek-ai\/dsh-(?:web-app|client-|host-)/)
   assert.doesNotMatch(source, /webRuntime|trustedHosts|typert-loader/)
   assert.match(source, /id: connection\n  inject: \[webStartup, webServer\]/)
+  assert.match(source, /id: ipaper-connection\n      name: '@ai4paper\/dsh-ipaper\/connection'\n      inject: \[connection\]/)
+  assert.match(source, /browserAuth:\n          enabled: true/)
   for (const id of ['standard', 'minimal', 'cordis', 'ptc']) assert.match(source, new RegExp(`id: preset-${id}\\n  disabled: true`))
   assert.match(source, /id: agent-preset-registry\n  config:\n    default: ipaper/)
 })

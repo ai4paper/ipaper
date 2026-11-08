@@ -10,6 +10,7 @@
   "types": "lib/types/index.d.ts",
   "exports": {
     ".": { "types": "./lib/types/index.d.ts", "default": "./lib/index.js" },
+    "./connection": { "types": "./lib/types/connection.d.ts", "default": "./lib/connection.js" },
     "./academic-writing-preset": { "types": "./lib/types/academic-writing-preset.d.ts", "default": "./lib/academic-writing-preset.js" },
     "./paper-project": { "types": "./lib/types/paper-project/index.d.ts", "default": "./lib/paper-project/index.js" },
     "./paper-project-remote": { "types": "./lib/types/paper-project-remote.d.ts", "default": "./lib/paper-project-remote.js" },

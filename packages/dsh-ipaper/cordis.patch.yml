@@ -26,6 +26,14 @@
   disabled: true
 
 - insert:
+    # Keep the upstream connection row for browser-module discovery.
+    - id: ipaper-connection
+      name: '@ai4paper/dsh-ipaper/connection'
+      inject: [connection]
+      config:
+        browserAuth:
+          enabled: true
+
     - id: ipaper-brand
       name: '@ai4paper/dsh-ipaper'
       inject: [webServer]

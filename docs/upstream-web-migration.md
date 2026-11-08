@@ -16,7 +16,11 @@ IPaper publishes one package-root `./client` browser module with a `dsh.client` 
 
 The host uses `webServer.tapIndex()` and exact resource routes for title metadata, favicon, manifest, and product configuration metadata. The build copies only the two product-owned branding assets. A public shell-slot contribution maintains the live document title, as detailed under retained adaptations.
 
-Cordis patches change specific rows. Overriding `config` replaces that entire field, so an override must restate every owned key. The product's Connection compatibility override changes only `inject`, preserving upstream transport configuration.
+Cordis patches change specific rows. Overriding `config` replaces that entire field, so an override must restate every owned key. The upstream Connection row retains transport configuration and browser-module discovery. Its explicit WebServer injection preserves the rc.1 custom-channel registrar's service access. The dependent `ipaper-connection` adapter owns the optional browser authentication policy.
+
+### Development browser authentication
+
+Browser MCP automation can opt out of token exchange through the [connection adapter configuration](../packages/dsh-ipaper/README.md#browser-authentication). Authentication remains enabled by default. A startup-only change cannot implement this policy because index, RPC, and connection admission each consult Connection. The adapter adjusts one service instance's public admission, index authorization, and advertised-URL methods; it retains upstream routing, peer ownership, Host/Origin checks, browser assets, and the separate API credential exchange. Disposal restores the original methods. This version-pinned adaptation avoids copying upstream transport source; upgrades require integration checks for authenticated defaults, credential-free access, origin rejection, and connection admission.
 
 ## Installation and runtime identity
 
